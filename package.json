@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:wasm": "./scripts/build-wasm.sh",
+    "build:wasm": "bash ./scripts/build-wasm.sh",
     "prepublishOnly": "npm run build:wasm && npm run build",
     "dev": "vite",
     "format": "prettier --write .",
