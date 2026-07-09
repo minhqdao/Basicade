@@ -2,17 +2,21 @@
   "name": "bwbasic-wasm",
   "version": "0.1.0",
   "description": "WebAssembly build of the Bywater BASIC interpreter.",
-  "license": "GPL-2.0-only",
   "type": "module",
+  "license": "GPL-2.0-only",
   "files": [
     "dist",
     "wasm",
     "LICENSE",
     "README.md"
   ],
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "types": "./dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "build:wasm": "./scripts/build-wasm.sh",
-    "build": "vite build",
     "dev": "vite"
   },
   "keywords": [

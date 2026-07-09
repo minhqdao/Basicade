@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 mkdir -p "$ROOT/wasm"
 
-cd "$ROOT/src"
+cd "$ROOT/native"
 
 emcc \
     bw*.c \
