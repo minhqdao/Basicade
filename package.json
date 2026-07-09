@@ -21,6 +21,7 @@
   "scripts": {
     "build": "tsc",
     "build:wasm": "./scripts/build-wasm.sh",
+    "prepublish": "npm run build:wasm && npm run build",
     "dev": "vite"
   },
   "keywords": [
