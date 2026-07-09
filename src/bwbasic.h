@@ -1750,7 +1750,9 @@ extern GlobalType *My;
 ** putenv() is not part of Standard C
 **
 */
+#if !HAVE_UNIX
 extern int putenv (const char *buffer);
+#endif
 
 #if HAVE_UNIX_GCC
 /*
