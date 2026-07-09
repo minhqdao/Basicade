@@ -1,0 +1,52 @@
+# Produce Windows executables
+# links with PDPCLIB created by makefile.s64
+
+
+CC=gccw64
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=
+AS=pdas --oformat coff --64
+AR=xar
+COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdos/pdpclib -D__WIN32__ \
+    -DHAVE_PUREISO -D__64BIT__ -fno-builtin -D__NOBIVA__
+
+all: clean bwbasic.exe renum.exe
+
+OBJS= \
+    bwbasic.obj \
+    bwb_int.obj \
+    bwb_tbl.obj \
+    bwb_cmd.obj \
+    bwb_prn.obj \
+    bwb_exp.obj \
+    bwb_var.obj \
+    bwb_inp.obj \
+    bwb_fnc.obj \
+    bwb_cnd.obj \
+    bwb_dio.obj \
+    bwb_str.obj \
+    bwb_stc.obj \
+    bwx_tty.obj \
+    bwd_cmd.obj \
+    bwd_fun.obj \
+    unixio.obj
+
+bwbasic.exe: $(OBJS)
+# Be aware that because all symbols are exported when using cc64,
+# x64supa.obj needs to be explicitly included for setjmp to work
+# Don't let it get resolved by msvcrt.lib
+# We could stop using cc64 to resolve the issue - but cc64 is our
+# public domain compiler and we need to work within its limits
+  $(LD) $(LDFLAGS) -s -o bwbasic.exe ../pdos/pdpclib/w32start.obj $(OBJS) ../pdos/pdpclib/x64supa.obj ../pdos/pdpclib/msvcrt.lib
+
+renum.exe: renum.obj
+  $(LD) $(LDFLAGS) -s -o renum.exe ../pdos/pdpclib/w32start.obj renum.obj ../pdos/pdpclib/msvcrt.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.obj bwbasic.exe renum.exe

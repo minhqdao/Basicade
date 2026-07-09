@@ -1,0 +1,48 @@
+# Produce Windows executables
+# links with PDPCLIB created by makefile.std
+
+CC=gccwin
+CFLAGS=-O2
+LD=pdld --no-insert-timestamp -s -nostdlib
+LDFLAGS=
+AS=pdas --oformat coff
+AR=xar
+COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdos/pdpclib -D__WIN32__ -DHAVE_PUREISO
+
+all: clean bwbasic.exe renum.exe
+
+bwbasic.exe: \
+    bwbasic.obj \
+    bwb_int.obj \
+    bwb_tbl.obj \
+    bwb_cmd.obj \
+    bwb_prn.obj \
+    bwb_exp.obj \
+    bwb_var.obj \
+    bwb_inp.obj \
+    bwb_fnc.obj \
+    bwb_cnd.obj \
+    bwb_dio.obj \
+    bwb_str.obj \
+    bwb_stc.obj \
+    bwx_tty.obj \
+    bwd_cmd.obj \
+    bwd_fun.obj \
+    unixio.obj
+  rm -f temp.lib
+  $(AR) r temp.lib bwb_int.obj bwb_tbl.obj bwb_cmd.obj bwb_prn.obj bwb_exp.obj bwb_var.obj bwb_inp.obj
+  $(AR) r temp.lib bwb_fnc.obj bwb_cnd.obj bwb_dio.obj bwb_str.obj bwb_stc.obj bwx_tty.obj bwd_cmd.obj
+  $(AR) r temp.lib bwd_fun.obj unixio.obj
+  $(AR) s temp.lib
+  $(LD) $(LDFLAGS) -s -o bwbasic.exe ../pdos/pdpclib/w32start.obj bwbasic.obj temp.lib ../pdos/pdpclib/msvcrt.lib ../pdos/pdpclib/winsupa.obj ../pdos/pdpclib/setjmp.obj
+
+renum.exe: renum.obj
+  $(LD) $(LDFLAGS) -s -o renum.exe ../pdos/pdpclib/w32start.obj renum.obj temp.lib ../pdos/pdpclib/msvcrt.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.obj bwbasic.exe renum.exe
