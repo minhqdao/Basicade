@@ -21,8 +21,11 @@
   "scripts": {
     "build": "tsc",
     "build:wasm": "./scripts/build-wasm.sh",
-    "prepublish": "npm run build:wasm && npm run build",
-    "dev": "vite"
+    "prepublishOnly": "npm run build:wasm && npm run build",
+    "dev": "vite",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "tsc --noEmit"
   },
   "keywords": [
     "basic",
@@ -34,6 +37,7 @@
     "oregon-trail"
   ],
   "devDependencies": {
+    "prettier": "^3.9.5",
     "typescript": "^7.0.2",
     "vite": "^8.1.4"
   }
