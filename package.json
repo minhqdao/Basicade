@@ -1,0 +1,31 @@
+{
+  "name": "bwbasic-wasm",
+  "version": "0.1.0",
+  "description": "WebAssembly build of the Bywater BASIC interpreter.",
+  "license": "GPL-2.0-only",
+  "type": "module",
+  "files": [
+    "dist",
+    "wasm",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build:wasm": "./scripts/build-wasm.sh",
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "keywords": [
+    "basic",
+    "bywater-basic",
+    "wasm",
+    "webassembly",
+    "interpreter",
+    "retro",
+    "oregon-trail"
+  ],
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.1.4"
+  }
+}
