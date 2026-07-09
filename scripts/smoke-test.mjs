@@ -74,9 +74,31 @@ function check(label, ok) {
 console.log("smoke-test: Oregon Trail");
 console.log("");
 
-check("purchase confirmation appears", full.includes("AFTER ALL YOUR PURCHASES, YOU NOW HAVE"));
-check("total mileage appears at least twice", (full.match(/TOTAL MILEAGE IS/g) || []).length >= 2);
-check("mileage increases between turns", /TOTAL MILEAGE IS\s+[1-9]\d*/.test(full));
+// 1. Purchase Confirmation
+const hasPurchase = full.includes("AFTER ALL YOUR PURCHASES, YOU NOW HAVE");
+check("purchase confirmation appears", hasPurchase);
+if (hasPurchase) {
+  const purchaseLine = outputs.find(line => line.includes("AFTER ALL YOUR PURCHASES, YOU NOW HAVE"));
+  if (purchaseLine) {
+    console.log(`     👉 [Visual Check]: "${purchaseLine.trim()}"`);
+  }
+}
+
+console.log("");
+
+// 2 & 3. Mileage Checks
+const mileageCount = (full.match(/TOTAL MILEAGE IS/g) || []).length;
+check("total mileage appears at least twice", mileageCount >= 2);
+
+const mileageIncreases = /TOTAL MILEAGE IS\s+[1-9]\d*/.test(full);
+check("mileage increases between turns", mileageIncreases);
+
+if (mileageCount > 0) {
+  console.log("     👉 [Visual Check] Mileage Progression:");
+  outputs
+    .filter(line => line.includes("TOTAL MILEAGE IS"))
+    .forEach(line => console.log(`        - ${line.trim()}`));
+}
 
 console.log("");
 console.log(`${passed} passed, ${failed} failed`);
