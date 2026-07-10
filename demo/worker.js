@@ -9,7 +9,7 @@ self.onmessage = async (e) => {
         sharedBuffer = new Int32Array(buffer);
         sharedKeys = new Uint8Array(keys);
 
-        let hasProvidedInput = false;
+        let keyIndex = 0;
 
         const mod = await createModule({
             noInitialRun: true,
@@ -17,36 +17,27 @@ self.onmessage = async (e) => {
                 self.postMessage({ type: "STDOUT", text });
             },
             stdin: () => {
-                // Read the current input length from index 0
-                let inputLength = Atomics.load(sharedKeys, 0);
+                const inputLength = Atomics.load(sharedKeys, 0);
 
-                if (inputLength === 0) {
-                    if (hasProvidedInput) {
-                        // We already returned a line, but the TTY read loop wants
-                        // more to fill its buffer. Signal end-of-batch to let the
-                        // current read complete with the data we already gave it.
-                        hasProvidedInput = false;
+                if (keyIndex >= inputLength) {
+                    if (keyIndex > 0) {
+                        // We already returned characters for this batch, but the
+                        // read loop wants more to fill its buffer. Signal EOF to
+                        // let the current read complete with what we gave it.
+                        keyIndex = 0;
+                        Atomics.store(sharedKeys, 0, 0);
                         return null;
                     }
-                    // Genuinely waiting for the user to type something
+                    // No input yet — block and wait for the user to type
                     self.postMessage({ type: "REQUEST_INPUT" });
+                    keyIndex = 0;
                     Atomics.wait(sharedBuffer, 0, 0);
                     Atomics.store(sharedBuffer, 0, 0);
-                    inputLength = Atomics.load(sharedKeys, 0);
-                    if (inputLength === 0) return null;
                 }
 
-                // Mark that we've given data this round, and clear consumed length
-                hasProvidedInput = true;
-                Atomics.store(sharedKeys, 0, 0);
-
-                // Build the complete input string
-                const chars = [];
-                for (let i = 0; i < inputLength; i++) {
-                    chars.push(String.fromCharCode(Atomics.load(sharedKeys, 2 + i)));
-                }
-
-                return chars.join("");
+                const charCode = Atomics.load(sharedKeys, 2 + keyIndex);
+                keyIndex++;
+                return charCode;
             }
         });
 
