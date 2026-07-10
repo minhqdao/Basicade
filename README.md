@@ -38,6 +38,21 @@ await runBasic({
 });
 ```
 
+## Demo
+
+A terminal-style demo runs [The Oregon Trail](examples/oregon-trail/) in a CRT monitor simulation.
+
+```bash
+npm run build:wasm
+npm run dev
+```
+
+Then open [http://localhost:5173/demo/](http://localhost:5173/demo/).
+
+The demo uses a Web Worker to run the interpreter off the main thread and
+`SharedArrayBuffer` + `Atomics` for synchronous stdin. The Vite dev server
+serves the required COOP/COEP headers automatically.
+
 ## Development
 
 ```bash
@@ -49,6 +64,12 @@ npm run build
 
 # Start the Vite dev server (demo)
 npm run dev
+
+# Check formatting
+npm run format:check
+
+# Type-check
+npm run lint
 
 # Build natively (macOS/Linux)
 gcc -o native/bwbasic -ansi -pedantic -Wall native/bw*.c -lm

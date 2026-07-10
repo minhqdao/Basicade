@@ -22,7 +22,7 @@
     "build": "tsc",
     "build:wasm": "bash ./scripts/build-wasm.sh",
     "prepublishOnly": "npm run build:wasm && npm run build",
-    "dev": "vite",
+    "dev": "vite --open /demo/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "tsc --noEmit"
