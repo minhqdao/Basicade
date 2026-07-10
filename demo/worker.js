@@ -9,7 +9,7 @@ self.onmessage = async (e) => {
         sharedBuffer = new Int32Array(buffer);
         sharedKeys = new Uint8Array(keys);
 
-        let keyIndex = 0;
+        let hasProvidedInput = false;
 
         const mod = await createModule({
             noInitialRun: true,
@@ -17,25 +17,39 @@ self.onmessage = async (e) => {
                 self.postMessage({ type: "STDOUT", text });
             },
             stdin: () => {
-                // If we have exhausted our current input buffer line, wait for the main thread
-                if (keyIndex >= sharedKeys[0]) {
+                // Read the current input length from index 0
+                let inputLength = Atomics.load(sharedKeys, 0);
+
+                if (inputLength === 0) {
+                    if (hasProvidedInput) {
+                        // We already returned a line, but the TTY read loop wants
+                        // more to fill its buffer. Signal end-of-batch to let the
+                        // current read complete with the data we already gave it.
+                        hasProvidedInput = false;
+                        return null;
+                    }
+                    // Genuinely waiting for the user to type something
                     self.postMessage({ type: "REQUEST_INPUT" });
-
-                    // Force worker thread to sleep synchronously until main thread increments index 1
                     Atomics.wait(sharedBuffer, 0, 0);
-
-                    // Reset the index once woke up
-                    keyIndex = 0;
-                    Atomics.store(sharedBuffer, 0, 0); // Reset wait flag
+                    Atomics.store(sharedBuffer, 0, 0);
+                    inputLength = Atomics.load(sharedKeys, 0);
+                    if (inputLength === 0) return null;
                 }
 
-                const charCode = sharedKeys[2 + keyIndex];
-                keyIndex++;
-                return charCode;
+                // Mark that we've given data this round, and clear consumed length
+                hasProvidedInput = true;
+                Atomics.store(sharedKeys, 0, 0);
+
+                // Build the complete input string
+                const chars = [];
+                for (let i = 0; i < inputLength; i++) {
+                    chars.push(String.fromCharCode(Atomics.load(sharedKeys, 2 + i)));
+                }
+
+                return chars.join("");
             }
         });
 
-        // Load the code and boot!
         mod.FS.writeFile("/oregon.bas", source);
         mod.callMain(["/oregon.bas"]);
 
