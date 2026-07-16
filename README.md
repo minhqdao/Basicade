@@ -2,7 +2,7 @@
 
 The [Bywater BASIC](https://github.com/commandbasic/bwbasic) interpreter compiled to WebAssembly.
 
-Run classic BASIC programs — including [The Oregon Trail](examples/oregon-trail/) — in Node.js or the browser.
+Run classic BASIC programs — like [The Oregon Trail](examples/oregon-trail/) — in Node.js or the browser.
 
 ## Usage
 
@@ -78,4 +78,4 @@ gcc -o native/renum native/renum.c -lm
 
 ## License
 
-GPL-2.0-only — see [LICENSE](LICENSE).
+[GPL-2.0](LICENSE)
