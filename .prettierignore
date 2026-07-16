@@ -5,7 +5,6 @@ build/
 wasm/
 native/
 examples/
-demo/
 scripts/
 package-lock.json
 LICENSE
