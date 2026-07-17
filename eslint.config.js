@@ -29,6 +29,7 @@ export default [
   {
     ignores: [
       "node_modules/",
+      "emsdk-cache/",
       "dist/",
       "build/",
       "wasm/",
