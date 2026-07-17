@@ -59,19 +59,11 @@ await runBasic({
 
 ## Demo
 
-A terminal-style demo runs [The Oregon Trail](examples/oregon-trail/) in a CRT monitor simulation.
-
-Run in the project root:
-```bash
-npm install
-npm run build:wasm
-npm run dev
-```
-
-Then open [http://localhost:5173/demo/](http://localhost:5173/demo/).
-
+The repository includes a browser demo running the original [The Oregon Trail](examples/oregon-trail/) BASIC program in an interactive retro terminal.
 
 ## Development
+
+> Building the WASM binary requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html).
 
 ```bash
 # Build the WASM binary
