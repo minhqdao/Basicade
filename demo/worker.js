@@ -10,34 +10,70 @@ self.onmessage = async (e) => {
         sharedKeys = new Uint8Array(keys);
 
         let keyIndex = 0;
+        let awaitingEOF = false;
+        let stdoutBuffer = "";
+
+        // Flush unflushed characters (like prompts without newlines) to the UI
+        function flushStdout() {
+            if (stdoutBuffer.length > 0) {
+                self.postMessage({ type: "STDOUT", text: stdoutBuffer });
+                stdoutBuffer = "";
+            }
+        }
 
         const mod = await createModule({
             noInitialRun: true,
-            print: (text) => {
-                self.postMessage({ type: "STDOUT", text });
-            },
-            stdin: () => {
-                const inputLength = Atomics.load(sharedKeys, 0);
+            preRun: (m) => {
+                // Override standard I/O to gain character-by-character control
+                m.FS.init(
+                    // 1. Custom STDIN
+                    () => {
+                        // Push any invisible prompts to the screen right before we wait
+                        flushStdout();
 
-                if (keyIndex >= inputLength) {
-                    if (keyIndex > 0) {
-                        // We already returned characters for this batch, but the
-                        // read loop wants more to fill its buffer. Signal EOF to
-                        // let the current read complete with what we gave it.
-                        keyIndex = 0;
-                        Atomics.store(sharedKeys, 0, 0);
-                        return null;
+                        let inputLength = Atomics.load(sharedKeys, 0);
+
+                        // Break Emscripten's greedy TTY read loop so it returns the line to C
+                        if (awaitingEOF) {
+                            awaitingEOF = false;
+                            keyIndex = 0;
+                            Atomics.store(sharedKeys, 0, 0);
+                            return null;
+                        }
+
+                        // Block and wait for the main thread if buffer is empty
+                        if (keyIndex >= inputLength) {
+                            self.postMessage({ type: "REQUEST_INPUT" });
+                            Atomics.wait(sharedBuffer, 0, 0);
+                            Atomics.store(sharedBuffer, 0, 0);
+                            keyIndex = 0;
+                            inputLength = Atomics.load(sharedKeys, 0);
+                        }
+
+                        const charCode = Atomics.load(sharedKeys, 2 + keyIndex);
+                        keyIndex++;
+
+                        if (keyIndex >= inputLength) {
+                            awaitingEOF = true;
+                        }
+
+                        return charCode;
+                    },
+                    // 2. Custom STDOUT (Char by Char)
+                    (charCode) => {
+                        const ch = String.fromCharCode(charCode);
+                        if (ch === '\n') {
+                            self.postMessage({ type: "STDOUT", text: stdoutBuffer + '\n' });
+                            stdoutBuffer = "";
+                        } else {
+                            stdoutBuffer += ch;
+                        }
+                    },
+                    // 3. Custom STDERR
+                    (charCode) => {
+                        console.warn(String.fromCharCode(charCode));
                     }
-                    // No input yet — block and wait for the user to type
-                    self.postMessage({ type: "REQUEST_INPUT" });
-                    keyIndex = 0;
-                    Atomics.wait(sharedBuffer, 0, 0);
-                    Atomics.store(sharedBuffer, 0, 0);
-                }
-
-                const charCode = Atomics.load(sharedKeys, 2 + keyIndex);
-                keyIndex++;
-                return charCode;
+                );
             }
         });
 

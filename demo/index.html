@@ -1,101 +1,126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>DECwriter II - Oregon Trail Terminal</title>
-  <style>
-    body {
-      background-color: #0d0d0d;
-      color: #33ff33;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 18px;
-      margin: 0;
-      padding: 20px;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>DECwriter II - Oregon Trail Terminal</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-    /* Screen Frame */
-    #terminal-container {
-      width: 800px;
-      height: 600px;
-      background: #020a02;
-      border: 20px solid #222;
-      border-radius: 20px;
-      box-shadow: inset 0 0 80px rgba(0, 0, 0, 1), 0 0 30px rgba(51, 255, 51, 0.2);
-      position: relative;
-      overflow: hidden;
-    }
+      body {
+        background: #0a0a0a;
+        color: #33ff33;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 18px;
+        margin: 0;
+        padding: 20px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
 
-    /* CRT Scanlines and Flickering overlay */
-    #terminal-container::before {
-      content: " ";
-      display: block;
-      position: absolute;
-      top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-      z-index: 2;
-      background-size: 100% 4px, 6px 100%;
-      pointer-events: none;
-    }
+      /* Screen */
+      #terminal-container {
+        width: 800px;
+        height: 600px;
+        background: #020a02;
+        border-radius: 4px;
+        box-shadow:
+          0 0 60px rgba(51, 255, 51, 0.06),
+          /* faint ambient bloom on the desk */ 0 0 0 1px
+            rgba(51, 255, 51, 0.15); /* hairline edge, like glass catching light */
+        position: relative;
+        overflow: hidden;
+      }
 
-    /* Monitor Glass Glow */
-    #screen {
-      width: 100%;
-      height: 100%;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      text-shadow: 0 0 5px #33ff33;
-      animation: flicker 0.15s infinite;
-    }
+      /* Scanlines + subtle RGB fringe */
+      #terminal-container::before {
+        content: " ";
+        display: block;
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+          linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.06),
+            rgba(0, 255, 0, 0.02),
+            rgba(0, 0, 255, 0.06)
+          );
+        background-size:
+          100% 4px,
+          6px 100%;
+        z-index: 2;
+        pointer-events: none;
+      }
 
-    /* Scrollbar Styling */
-    #screen::-webkit-scrollbar { width: 8px; }
-    #screen::-webkit-scrollbar-thumb { background: #1a5c1a; }
+      #screen {
+        width: 100%;
+        height: 100%;
+        padding: 28px 32px;
+        overflow-y: auto;
+        text-shadow: 0 0 5px #33ff33;
+        animation: flicker 0.15s infinite;
+      }
 
-    #input-line {
-      display: flex;
-      margin-top: 10px;
-    }
+      #screen::-webkit-scrollbar {
+        width: 8px;
+      }
+      #screen::-webkit-scrollbar-thumb {
+        background: #1a5c1a;
+      }
 
-    #prompt {
-      margin-right: 10px;
-    }
+      #input-line {
+        display: flex;
+        margin: 0;
+        min-height: 1.2em;
+        line-height: 1.2;
+      }
 
-    #input-field {
-      background: transparent;
-      border: none;
-      color: #33ff33;
-      font-family: inherit;
-      font-size: inherit;
-      outline: none;
-      flex-grow: 1;
-      text-shadow: 0 0 5px #33ff33;
-    }
+      #prompt {
+        margin-right: 10px;
+      }
 
-    @keyframes flicker {
-      0% { opacity: 0.99; }
-      50% { opacity: 0.98; }
-      100% { opacity: 1; }
-    }
-  </style>
-</head>
-<body>
+      #input-field {
+        background: transparent;
+        border: none;
+        padding: 0;
+        color: #33ff33;
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        outline: none;
+        flex-grow: 1;
+        text-shadow: 0 0 5px #33ff33;
+      }
 
-<div id="terminal-container">
-  <div id="screen">
-    <div id="history"></div>
-    <div id="input-line">
-      <span id="prompt">?</span>
-      <input type="text" id="input-field" autofocus autocomplete="off" />
+      @keyframes flicker {
+        0% {
+          opacity: 0.99;
+        }
+        50% {
+          opacity: 0.98;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="terminal-container">
+      <div id="screen">
+        <div id="history"></div>
+        <div id="input-line" hidden>
+          <span id="prompt">?</span>
+          <input type="text" id="input-field" disabled autocomplete="off" />
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<script src="./main.js" type="module"></script>
-</body>
+    <script src="./main.js" type="module"></script>
+  </body>
 </html>
