@@ -90,10 +90,9 @@
       }
 
       #input-line {
-        display: flex;
-        margin: 0;
-        min-height: 1.2em;
-        line-height: 1.2;
+        position: absolute;
+        left: -9999px;
+        top: 0;
       }
 
       #input-field {
@@ -137,8 +136,8 @@
       <div id="terminal-header">The Oregon Trail (1978)</div>
       <div id="screen">
         <pre id="history"></pre>
-        <div id="input-line" hidden>
-          <input type="text" id="input-field" disabled autocomplete="off" />
+        <div id="input-line">
+          <input type="text" id="input-field" autocomplete="off" />
         </div>
       </div>
     </div>

@@ -1,13 +1,17 @@
 const history = document.getElementById("history");
 const inputField = document.getElementById("input-field");
 const screen = document.getElementById("screen");
-const inputLine = document.getElementById("input-line");
 
 // Initialize buffers explicitly
 const buffer = new SharedArrayBuffer(4);
 const keys = new SharedArrayBuffer(256);
 const sharedBuffer = new Int32Array(buffer);
 const sharedKeys = new Uint8Array(keys);
+
+let terminalText = "";
+let currentInput = "";
+let waitingForInput = false;
+let cursorVisible = true;
 
 // Ensure memory is completely cleared out at start
 Atomics.store(sharedBuffer, 0, 0);
@@ -19,12 +23,14 @@ const source = await response.text();
 const worker = new Worker("./worker.js", { type: "module" });
 
 worker.postMessage({ type: "START", source, buffer, keys });
+inputField.focus();
 
 document.addEventListener(
   "mousedown",
   (e) => {
-    if (!inputField.disabled && e.target !== inputField) {
+    if (e.target !== inputField) {
       e.preventDefault();
+      inputField.focus();
     }
   },
   true,
@@ -38,45 +44,78 @@ worker.onmessage = (e) => {
     // Remove it because the browser handles input natively.
     removeTrailingQuestionMark();
 
-    inputLine.hidden = false;
-    inputField.disabled = false;
+    inputField.value = "";
+    currentInput = "";
+    waitingForInput = true;
+    render();
     inputField.focus();
   } else if (e.data.type === "EXIT") {
     appendOutput("\n*** SYSTEM OFFLINE ***");
-    inputField.disabled = true;
   }
 };
 
 function appendOutput(text) {
-  history.textContent += text;
-  screen.scrollTop = screen.scrollHeight;
+  terminalText += text;
+  render();
 }
 
 function removeTrailingQuestionMark() {
-  history.textContent = history.textContent.replace(/\?\s*$/, "");
+  terminalText = terminalText.replace(/\?\s*$/, "");
+  render();
+}
+
+function render() {
+  let text = terminalText;
+
+  if (waitingForInput) {
+    text += currentInput;
+
+    if (cursorVisible) {
+      text += "_";
+    }
+  }
+
+  history.textContent = text;
+  screen.scrollTop = screen.scrollHeight;
 }
 
 inputField.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    const enteredText = inputField.value.toUpperCase();
-    const value = enteredText + "\n";
-
-    // Replace the live input row with an identical permanent history row.
-    appendOutput(enteredText);
-    inputField.value = "";
-    inputField.disabled = true;
-    inputLine.hidden = true;
-
-    // 1. Atomically fill characters into safe buffer locations
-    for (let i = 0; i < value.length; i++) {
-      Atomics.store(sharedKeys, 2 + i, value.charCodeAt(i));
-    }
-
-    // 2. Set total string length at index 0 explicitly
-    Atomics.store(sharedKeys, 0, value.length);
-
-    // 3. Flip control flag and notify the background worker to wake up
-    Atomics.store(sharedBuffer, 0, 1);
-    Atomics.notify(sharedBuffer, 0, 1);
+  if (e.key !== "Enter" || !waitingForInput) {
+    return;
   }
+
+  const enteredText = currentInput;
+  const value = enteredText + "\n";
+
+  terminalText += value;
+  currentInput = "";
+  inputField.value = "";
+  waitingForInput = false;
+  render();
+
+  // 1. Atomically fill characters into safe buffer locations
+  for (let i = 0; i < value.length; i++) {
+    Atomics.store(sharedKeys, 2 + i, value.charCodeAt(i));
+  }
+
+  // 2. Set total string length at index 0 explicitly
+  Atomics.store(sharedKeys, 0, value.length);
+
+  // 3. Flip control flag and notify the background worker to wake up
+  Atomics.store(sharedBuffer, 0, 1);
+  Atomics.notify(sharedBuffer, 0, 1);
 });
+
+inputField.addEventListener("input", () => {
+  if (!waitingForInput) {
+    return;
+  }
+
+  currentInput = inputField.value.toUpperCase();
+  render();
+});
+
+setInterval(() => {
+  cursorVisible = !cursorVisible;
+  render();
+}, 500);
