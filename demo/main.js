@@ -13,7 +13,7 @@ const sharedKeys = new Uint8Array(keys);
 let terminalText = "";
 let currentInput = "";
 let waitingForInput = false;
-let cursorVisible = true;
+let cursorVisible = false;
 
 // Ensure memory is completely cleared out at start
 Atomics.store(sharedBuffer, 0, 0);
@@ -49,6 +49,7 @@ worker.onmessage = (e) => {
     inputField.value = "";
     currentInput = "";
     waitingForInput = true;
+    cursorVisible = true;
     render();
     inputField.focus();
   } else if (e.data.type === "EXIT") {
@@ -70,7 +71,8 @@ function removeTrailingQuestionMark() {
 function render() {
   output.textContent = terminalText;
   input.textContent = waitingForInput ? currentInput : "";
-  cursor.hidden = !waitingForInput || !cursorVisible;
+  cursor.textContent =
+    waitingForInput && cursorVisible ? "_" : "";
 }
 
 inputField.addEventListener("keydown", (e) => {
