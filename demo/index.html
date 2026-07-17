@@ -15,7 +15,6 @@
         font-size: 18px;
         margin: 0;
         padding-top: 70px;
-        overflow: hidden;
         display: flex;
         justify-content: center;
         align-items: flex-start;
@@ -88,10 +87,6 @@
         line-height: 1.2;
       }
 
-      #prompt {
-        margin-right: 10px;
-      }
-
       #input-field {
         background: transparent;
         border: none;
@@ -101,7 +96,8 @@
         font-size: inherit;
         line-height: inherit;
         outline: none;
-        flex-grow: 1;
+        display: block;
+        width: 100%;
         text-shadow: 0 0 2px rgba(200, 248, 200, 0.35);
       }
 
@@ -123,7 +119,6 @@
       <div id="screen">
         <div id="history"></div>
         <div id="input-line" hidden>
-          <span id="prompt">?</span>
           <input type="text" id="input-field" disabled autocomplete="off" />
         </div>
       </div>

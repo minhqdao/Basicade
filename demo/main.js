@@ -34,9 +34,9 @@ worker.onmessage = (e) => {
   if (e.data.type === "STDOUT") {
     appendLine(e.data.text);
   } else if (e.data.type === "REQUEST_INPUT") {
-    // BwBASIC already printed "?" to stdout. Remove that history entry:
-    // the live input row below renders the one visible prompt instead.
-    removeTrailingInterpreterPrompt();
+    // BwBASIC prints a standalone "?" before every INPUT.
+    // Remove it because the browser handles input natively.
+    removeTrailingQuestionMark();
 
     inputLine.hidden = false;
     inputField.disabled = false;
@@ -54,7 +54,7 @@ function appendLine(text) {
   screen.scrollTop = screen.scrollHeight;
 }
 
-function removeTrailingInterpreterPrompt() {
+function removeTrailingQuestionMark() {
   const lastLine = history.lastElementChild;
 
   if (lastLine && /^\?\s*$/.test(lastLine.textContent)) {
@@ -68,7 +68,7 @@ inputField.addEventListener("keydown", (e) => {
     const value = enteredText + "\n";
 
     // Replace the live input row with an identical permanent history row.
-    appendLine("? " + enteredText);
+    appendLine(enteredText);
     inputField.value = "";
     inputField.disabled = true;
     inputLine.hidden = true;
