@@ -42,16 +42,15 @@ await runBasic({
 
 A terminal-style demo runs [The Oregon Trail](examples/oregon-trail/) in a CRT monitor simulation.
 
+Run in the project root:
 ```bash
+npm install
 npm run build:wasm
 npm run dev
 ```
 
 Then open [http://localhost:5173/demo/](http://localhost:5173/demo/).
 
-The demo uses a Web Worker to run the interpreter off the main thread and
-`SharedArrayBuffer` + `Atomics` for synchronous stdin. The Vite dev server
-serves the required COOP/COEP headers automatically.
 
 ## Development
 
@@ -59,14 +58,14 @@ serves the required COOP/COEP headers automatically.
 # Build the WASM binary
 npm run build:wasm
 
-# Build the TypeScript wrapper
-npm run build
-
 # Start the Vite dev server (demo)
 npm run dev
 
 # Format, lint, and test in one command
 npm run all
+
+# Run formatting
+npm run format
 
 # Check formatting
 npm run format:check
