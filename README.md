@@ -4,6 +4,12 @@ The [Bywater BASIC](https://github.com/commandbasic/bwbasic) interpreter compile
 
 Run classic BASIC programs — like [The Oregon Trail](examples/oregon-trail/) — in Node.js or the browser.
 
+## Install
+
+```bash
+npm install bwbasic-wasm
+```
+
 ## Usage
 
 ### Node.js
@@ -37,6 +43,19 @@ await runBasic({
   },
 });
 ```
+
+### Options
+
+| Option | Type | Description |
+|---|---|---|
+| `source` | `string` | The BASIC program source code |
+| `onStdout` | `(line: string) => void` | Called for each line of standard output |
+| `onStderr` | `(line: string) => void` | Called for each line of standard error |
+
+### Return value
+
+`runBasic()` returns a `Promise<number>` — the BASIC interpreter's exit code.
+`0` typically indicates success; non-zero values indicate an error or `STOP` statement.
 
 ## Demo
 
