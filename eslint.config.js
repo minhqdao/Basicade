@@ -1,0 +1,39 @@
+import js from "@eslint/js";
+import globals from "globals";
+
+export default [
+  js.configs.recommended,
+  {
+    rules: {
+      eqeqeq: "error",
+    },
+  },
+  {
+    files: ["demo/**/*.js"],
+    languageOptions: {
+      sourceType: "module",
+      globals: {
+        ...globals.browser,
+      },
+    },
+  },
+  {
+    files: ["scripts/**/*.mjs", "scripts/**/*.js"],
+    languageOptions: {
+      sourceType: "module",
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
+    ignores: [
+      "node_modules/",
+      "dist/",
+      "build/",
+      "wasm/",
+      "native/",
+      "examples/",
+    ],
+  },
+];

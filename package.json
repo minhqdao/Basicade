@@ -25,7 +25,7 @@
     "dev": "vite --open /demo/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "tsc --noEmit"
+    "lint": "eslint . && tsc --noEmit"
   },
   "keywords": [
     "basic",
@@ -37,6 +37,9 @@
     "oregon-trail"
   ],
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
     "prettier": "^3.9.5",
     "typescript": "^7.0.2",
     "vite": "^8.1.4"
