@@ -32,7 +32,7 @@ document.addEventListener(
 
 worker.onmessage = (e) => {
   if (e.data.type === "STDOUT") {
-    appendLine(e.data.text);
+    appendOutput(e.data.text);
   } else if (e.data.type === "REQUEST_INPUT") {
     // BwBASIC prints a standalone "?" before every INPUT.
     // Remove it because the browser handles input natively.
@@ -42,24 +42,18 @@ worker.onmessage = (e) => {
     inputField.disabled = false;
     inputField.focus();
   } else if (e.data.type === "EXIT") {
-    appendLine("\n*** SYSTEM OFFLINE ***");
+    appendOutput("\n*** SYSTEM OFFLINE ***");
     inputField.disabled = true;
   }
 };
 
-function appendLine(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  history.appendChild(div);
+function appendOutput(text) {
+  history.textContent += text;
   screen.scrollTop = screen.scrollHeight;
 }
 
 function removeTrailingQuestionMark() {
-  const lastLine = history.lastElementChild;
-
-  if (lastLine && /^\?\s*$/.test(lastLine.textContent)) {
-    lastLine.remove();
-  }
+  history.textContent = history.textContent.replace(/\?\s*$/, "");
 }
 
 inputField.addEventListener("keydown", (e) => {
@@ -68,7 +62,7 @@ inputField.addEventListener("keydown", (e) => {
     const value = enteredText + "\n";
 
     // Replace the live input row with an identical permanent history row.
-    appendLine(enteredText);
+    appendOutput(enteredText);
     inputField.value = "";
     inputField.disabled = true;
     inputLine.hidden = true;

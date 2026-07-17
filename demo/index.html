@@ -102,7 +102,15 @@
       }
 
       #history {
+        margin: 0;
+        padding: 0;
+
+        font: inherit;
+        color: inherit;
+        text-shadow: inherit;
+
         white-space: pre-wrap;
+        overflow-wrap: break-word;
       }
 
       @keyframes phosphor {
@@ -121,7 +129,7 @@
     <div id="terminal-container">
       <div id="terminal-header">The Oregon Trail (1978)</div>
       <div id="screen">
-        <div id="history"></div>
+        <pre id="history"></pre>
         <div id="input-line" hidden>
           <input type="text" id="input-field" disabled autocomplete="off" />
         </div>
