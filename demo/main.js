@@ -62,8 +62,7 @@ function appendOutput(text) {
 function render() {
   output.textContent = terminalText;
   input.textContent = waitingForInput ? currentInput : "";
-  cursor.textContent =
-    waitingForInput && cursorVisible ? "_" : "";
+  cursor.textContent = waitingForInput && cursorVisible ? "_" : "";
 }
 
 inputField.addEventListener("keydown", (e) => {
