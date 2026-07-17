@@ -1,7 +1,6 @@
 const output = document.getElementById("output");
 const input = document.getElementById("input");
 const cursor = document.getElementById("cursor");
-const inputField = document.getElementById("input-field");
 const screen = document.getElementById("screen");
 
 // Initialize buffers explicitly
@@ -25,29 +24,15 @@ const source = await response.text();
 const worker = new Worker("./worker.js", { type: "module" });
 
 worker.postMessage({ type: "START", source, buffer, keys });
-inputField.focus();
-
-document.addEventListener(
-  "mousedown",
-  (e) => {
-    if (e.target !== inputField) {
-      e.preventDefault();
-      inputField.focus();
-    }
-  },
-  true,
-);
 
 worker.onmessage = (e) => {
   if (e.data.type === "STDOUT") {
     appendOutput(e.data.text);
   } else if (e.data.type === "REQUEST_INPUT") {
-    inputField.value = "";
     currentInput = "";
     waitingForInput = true;
     cursorVisible = true;
     render();
-    inputField.focus();
   } else if (e.data.type === "EXIT") {
     appendOutput("\n*** SYSTEM OFFLINE ***");
   }
@@ -65,41 +50,47 @@ function render() {
   cursor.textContent = waitingForInput && cursorVisible ? "_" : "";
 }
 
-inputField.addEventListener("keydown", (e) => {
-  if (e.key !== "Enter" || !waitingForInput) {
-    return;
-  }
-
-  const enteredText = currentInput;
-  const value = enteredText + "\n";
-
-  terminalText += value;
-  currentInput = "";
-  inputField.value = "";
-  waitingForInput = false;
-  render();
-
-  // 1. Atomically fill characters into safe buffer locations
-  for (let i = 0; i < value.length; i++) {
-    Atomics.store(sharedKeys, 2 + i, value.charCodeAt(i));
-  }
-
-  // 2. Set total string length at index 0 explicitly
-  Atomics.store(sharedKeys, 0, value.length);
-
-  // 3. Flip control flag and notify the background worker to wake up
-  Atomics.store(sharedBuffer, 0, 1);
-  Atomics.notify(sharedBuffer, 0, 1);
-});
-
-inputField.addEventListener("input", () => {
+document.addEventListener("keydown", (e) => {
   if (!waitingForInput) {
     return;
   }
 
-  currentInput = inputField.value.toUpperCase();
-  render();
-  screen.scrollTop = screen.scrollHeight;
+  if (e.key === "Enter") {
+    e.preventDefault();
+
+    const value = currentInput + "\n";
+
+    terminalText += value;
+    currentInput = "";
+    waitingForInput = false;
+    render();
+
+    for (let i = 0; i < value.length; i++) {
+      Atomics.store(sharedKeys, 2 + i, value.charCodeAt(i));
+    }
+
+    Atomics.store(sharedKeys, 0, value.length);
+
+    Atomics.store(sharedBuffer, 0, 1);
+    Atomics.notify(sharedBuffer, 0, 1);
+
+    return;
+  }
+
+  if (e.key === "Backspace") {
+    e.preventDefault();
+
+    currentInput = currentInput.slice(0, -1);
+    render();
+    return;
+  }
+
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+
+    currentInput += e.key.toUpperCase();
+    render();
+  }
 });
 
 setInterval(() => {
