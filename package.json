@@ -25,7 +25,9 @@
     "dev": "vite --open /demo/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint . && tsc --noEmit"
+    "lint": "eslint . && tsc --noEmit",
+    "test": "node scripts/smoke-test.mjs",
+    "all": "npm run format && npm run lint && npm run test"
   },
   "keywords": [
     "basic",

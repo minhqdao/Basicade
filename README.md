@@ -56,20 +56,26 @@ serves the required COOP/COEP headers automatically.
 ## Development
 
 ```bash
-# Start the Vite dev server (demo)
-npm run dev
-
 # Build the WASM binary
 npm run build:wasm
 
 # Build the TypeScript wrapper
 npm run build
 
+# Start the Vite dev server (demo)
+npm run dev
+
+# Format, lint, and test in one command
+npm run all
+
 # Check formatting
 npm run format:check
 
-# Type-check
+# Check linting
 npm run lint
+
+# Run smoke tests (The Oregon Trail)
+npm run test
 
 # Build natively (macOS/Linux)
 gcc -o native/bwbasic -ansi -pedantic -Wall native/bw*.c -lm
