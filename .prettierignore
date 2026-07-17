@@ -1,10 +1,5 @@
-node_modules/
-emsdk-cache/
-dist/
-build/
-wasm/
-native/
-examples/
-scripts/
-package-lock.json
-LICENSE
+*
+!src/
+!src/**
+!demo/
+!demo/**
