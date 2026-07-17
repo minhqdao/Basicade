@@ -9,16 +9,16 @@
       }
 
       body {
-        background: #0a0a0a;
-        color: #33ff33;
+        background: #0b0c0b;
+        color: #c8f8c8;
         font-family: "Courier New", Courier, monospace;
         font-size: 18px;
         margin: 0;
-        padding: 20px;
+        padding-top: 70px;
         overflow: hidden;
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
         height: 100vh;
       }
 
@@ -26,12 +26,12 @@
       #terminal-container {
         width: 800px;
         height: 600px;
-        background: #020a02;
-        border-radius: 4px;
+        background: #111512;
+        border-radius: 12px;
         box-shadow:
-          0 0 60px rgba(51, 255, 51, 0.06),
-          /* faint ambient bloom on the desk */ 0 0 0 1px
-            rgba(51, 255, 51, 0.15); /* hairline edge, like glass catching light */
+          inset 0 0 30px rgba(255, 255, 255, 0.03),
+          0 0 70px rgba(0, 0, 0, 0.65),
+          0 0 0 1px rgba(255, 255, 255, 0.05);
         position: relative;
         overflow: hidden;
       }
@@ -42,28 +42,36 @@
         display: block;
         position: absolute;
         inset: 0;
-        background:
-          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-          linear-gradient(
-            90deg,
-            rgba(255, 0, 0, 0.06),
-            rgba(0, 255, 0, 0.02),
-            rgba(0, 0, 255, 0.06)
-          );
-        background-size:
-          100% 4px,
-          6px 100%;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 2px,
+          rgba(255, 255, 255, 0.025) 3px
+        );
         z-index: 2;
+        pointer-events: none;
+      }
+
+      #terminal-header {
+        position: absolute;
+        top: 12px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
         pointer-events: none;
       }
 
       #screen {
         width: 100%;
         height: 100%;
-        padding: 28px 32px;
+        padding: 48px 40px 40px;
         overflow-y: auto;
-        text-shadow: 0 0 5px #33ff33;
-        animation: flicker 0.15s infinite;
+        text-shadow: 0 0 2px rgba(200, 248, 200, 0.35);
+        animation: phosphor 8s ease-in-out infinite;
       }
 
       #screen::-webkit-scrollbar {
@@ -88,30 +96,30 @@
         background: transparent;
         border: none;
         padding: 0;
-        color: #33ff33;
+        color: #c8f8c8;
         font-family: inherit;
         font-size: inherit;
         line-height: inherit;
         outline: none;
         flex-grow: 1;
-        text-shadow: 0 0 5px #33ff33;
+        text-shadow: 0 0 2px rgba(200, 248, 200, 0.35);
       }
 
-      @keyframes flicker {
-        0% {
-          opacity: 0.99;
-        }
-        50% {
-          opacity: 0.98;
-        }
+      @keyframes phosphor {
+        0%,
         100% {
-          opacity: 1;
+          filter: brightness(1);
+        }
+
+        50% {
+          filter: brightness(0.992);
         }
       }
     </style>
   </head>
   <body>
     <div id="terminal-container">
+      <div id="terminal-header">The Oregon Trail (1978)</div>
       <div id="screen">
         <div id="history"></div>
         <div id="input-line" hidden>
