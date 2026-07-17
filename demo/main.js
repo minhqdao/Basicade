@@ -1,4 +1,4 @@
-const history = document.getElementById("history");
+const terminal = document.getElementById("terminal");
 const inputField = document.getElementById("input-field");
 const screen = document.getElementById("screen");
 
@@ -75,7 +75,7 @@ function render() {
     }
   }
 
-  history.textContent = text;
+  terminal.textContent = text;
   screen.scrollTop = screen.scrollHeight;
 }
 
