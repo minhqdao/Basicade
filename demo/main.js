@@ -20,11 +20,15 @@ const worker = new Worker("./worker.js", { type: "module" });
 
 worker.postMessage({ type: "START", source, buffer, keys });
 
-document.addEventListener("mousedown", (e) => {
-    if (!inputField.disabled && e.target !== inputField) {
-        e.preventDefault();
-    }
-}, true);
+document.addEventListener(
+    "mousedown",
+    (e) => {
+        if (!inputField.disabled && e.target !== inputField) {
+            e.preventDefault();
+        }
+    },
+    true,
+);
 
 worker.onmessage = (e) => {
     if (e.data.type === "STDOUT") {

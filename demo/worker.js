@@ -62,8 +62,8 @@ self.onmessage = async (e) => {
                     // 2. Custom STDOUT (Char by Char)
                     (charCode) => {
                         const ch = String.fromCharCode(charCode);
-                        if (ch === '\n') {
-                            self.postMessage({ type: "STDOUT", text: stdoutBuffer + '\n' });
+                        if (ch === "\n") {
+                            self.postMessage({ type: "STDOUT", text: stdoutBuffer + "\n" });
                             stdoutBuffer = "";
                         } else {
                             stdoutBuffer += ch;
@@ -72,9 +72,9 @@ self.onmessage = async (e) => {
                     // 3. Custom STDERR
                     (charCode) => {
                         console.warn(String.fromCharCode(charCode));
-                    }
+                    },
                 );
-            }
+            },
         });
 
         mod.FS.writeFile("/oregon.bas", source);
