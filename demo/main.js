@@ -42,10 +42,6 @@ worker.onmessage = (e) => {
   if (e.data.type === "STDOUT") {
     appendOutput(e.data.text);
   } else if (e.data.type === "REQUEST_INPUT") {
-    // BwBASIC prints a standalone "?" before every INPUT.
-    // Remove it because the browser handles input natively.
-    removeTrailingQuestionMark();
-
     inputField.value = "";
     currentInput = "";
     waitingForInput = true;
@@ -61,11 +57,6 @@ function appendOutput(text) {
   terminalText += text;
   render();
   screen.scrollTop = screen.scrollHeight;
-}
-
-function removeTrailingQuestionMark() {
-  terminalText = terminalText.replace(/\?\s*$/, "");
-  render();
 }
 
 function render() {
