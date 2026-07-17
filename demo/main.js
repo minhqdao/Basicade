@@ -1,4 +1,6 @@
-const terminal = document.getElementById("terminal");
+const output = document.getElementById("output");
+const input = document.getElementById("input");
+const cursor = document.getElementById("cursor");
 const inputField = document.getElementById("input-field");
 const screen = document.getElementById("screen");
 
@@ -57,6 +59,7 @@ worker.onmessage = (e) => {
 function appendOutput(text) {
   terminalText += text;
   render();
+  screen.scrollTop = screen.scrollHeight;
 }
 
 function removeTrailingQuestionMark() {
@@ -65,18 +68,9 @@ function removeTrailingQuestionMark() {
 }
 
 function render() {
-  let text = terminalText;
-
-  if (waitingForInput) {
-    text += currentInput;
-
-    if (cursorVisible) {
-      text += "_";
-    }
-  }
-
-  terminal.textContent = text;
-  screen.scrollTop = screen.scrollHeight;
+  output.textContent = terminalText;
+  input.textContent = waitingForInput ? currentInput : "";
+  cursor.hidden = !waitingForInput || !cursorVisible;
 }
 
 inputField.addEventListener("keydown", (e) => {
@@ -113,6 +107,7 @@ inputField.addEventListener("input", () => {
 
   currentInput = inputField.value.toUpperCase();
   render();
+  screen.scrollTop = screen.scrollHeight;
 });
 
 setInterval(() => {
