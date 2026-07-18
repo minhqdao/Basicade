@@ -35,6 +35,7 @@ export default [
       "wasm/",
       "native/",
       "examples/",
+      "test/",
     ],
   },
 ];
