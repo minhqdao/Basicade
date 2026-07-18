@@ -26,6 +26,10 @@ jobs:
         with:
           actions-cache-folder: "emsdk-cache"
 
+      - name: Install bison and flex (Windows)
+        if: runner.os == 'Windows'
+        run: choco install winflexbison
+
       - run: npm ci
 
       - name: Check formatting
@@ -41,6 +45,9 @@ jobs:
       - name: Build retrobasic WASM
         run: npm run build:wasm:retrobasic
         shell: bash
+        env:
+          BISON: ${{ runner.os == 'Windows' && 'win_bison' || 'bison' }}
+          FLEX: ${{ runner.os == 'Windows' && 'win_flex' || 'flex' }}
 
       - name: Build TypeScript
         run: npm run build
