@@ -6,7 +6,7 @@ let sharedKeys;
 self.onmessage = async (e) => {
   if (e.data.type === "INIT") {
     const { wasmUrl } = e.data;
-    const mod = await import(wasmUrl);
+    const mod = await import(/* @vite-ignore */ wasmUrl);
     createModule = mod.default;
     self.postMessage({ type: "READY" });
     return;
