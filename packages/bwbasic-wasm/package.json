@@ -34,8 +34,7 @@
   "scripts": {
     "build": "tsc",
     "build:wasm": "bash ./scripts/build-wasm.sh",
-    "test": "npm run test:integration && npm run test:clk",
-    "test:integration": "node test/integration.mjs",
+    "test": "npm run test:clk",
     "test:clk": "node test/clk.mjs",
     "prepublishOnly": "npm run build:wasm && npm run build && npm run test"
   },

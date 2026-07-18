@@ -46,11 +46,11 @@ await runBasic({
 
 ### Options
 
-| Option | Type | Description |
-|---|---|---|
-| `source` | `string` | The BASIC program source code |
+| Option     | Type                     | Description                             |
+| ---------- | ------------------------ | --------------------------------------- |
+| `source`   | `string`                 | The BASIC program source code           |
 | `onStdout` | `(line: string) => void` | Called for each line of standard output |
-| `onStderr` | `(line: string) => void` | Called for each line of standard error |
+| `onStderr` | `(line: string) => void` | Called for each line of standard error  |
 
 ### Return value
 

@@ -244,6 +244,7 @@ TIME      { return TIME; }
 TI\$      { return TIME_STR; }
 TI        { return TIME; }
 CLK\$     { return TIME_STR; } // from BASIC-PLUS, Univac System 9 has CLK(x) where x is numeric
+CLK       { return CLK; }     // numeric CLK(x) — hours since midnight with sub-second precision
 
  /* HEX, OCT and BIN conversions */
 BIN       { return BIN; }

@@ -14,7 +14,9 @@
     "build:wasm:bwbasic": "npm run build:wasm -w packages/bwbasic-wasm",
     "build:wasm:retrobasic": "npm run build:wasm -w packages/retrobasic-wasm",
     "lint": "eslint . && tsc --noEmit -p packages/bwbasic-wasm && tsc --noEmit -p packages/retrobasic-wasm",
-    "test": "npm run test -w packages/bwbasic-wasm && npm run test -w packages/retrobasic-wasm",
+    "test": "npm run test:integration && npm run test:clk",
+    "test:integration": "node test/integration.mjs bwbasic && node test/integration.mjs retrobasic",
+    "test:clk": "npm run test:clk -w packages/bwbasic-wasm",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "all": "npm run format && npm run lint && npm run test"

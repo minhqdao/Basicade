@@ -66,7 +66,9 @@ check("all 25 tests pass in WASM", allPassed);
 // Count pass/fail from output
 const passCount = (full.match(/PASS:/g) || []).length;
 const failCount = (full.match(/FAIL:/g) || []).length;
-console.log(`     (got ${passCount} passes, ${failCount} fails from BASIC test suite)`);
+console.log(
+  `     (got ${passCount} passes, ${failCount} fails from BASIC test suite)`,
+);
 check("zero failures in BASIC output", failCount === 0);
 check("got 25 test assertions", passCount === 25);
 

@@ -1,23 +1,31 @@
 #!/usr/bin/env node
 
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const wasmPath = resolve(__dirname, "..", "wasm", "retrobasic.js");
 
-if (!existsSync(wasmPath)) {
-  console.log("test:integration: SKIPPED (retrobasic.wasm not built yet)");
-  console.log("Run 'npm run build:wasm -w packages/retrobasic-wasm' first.");
-  process.exit(0);
+const interpreter = process.argv[2];
+if (!interpreter) {
+  console.error("Usage: node test/integration.mjs <interpreter>");
+  console.error("  interpreter: bwbasic | retrobasic");
+  process.exit(1);
 }
 
-const { default: createModule } = await import(wasmPath);
-const oregonPath = resolve(
+const wasmPath = resolve(
   __dirname,
   "..",
-  "..",
+  "packages",
+  `${interpreter}-wasm`,
+  "wasm",
+  `${interpreter}.js`,
+);
+
+const { default: createModule } = await import(wasmPath);
+
+const oregonPath = resolve(
+  __dirname,
   "..",
   "examples",
   "oregon-trail",
@@ -29,17 +37,17 @@ const source = readFileSync(oregonPath, "utf8");
 // Feed a sequence of inputs to play through ~2-3 turns
 const lines = [
   "NO",                 // instructions
-  "3",                  // shooting skill
+  "3",                  // shooting skill (fair to middlin')
   "200",                // oxen
   "200",                // food
   "50",                 // ammunition
   "50",                 // clothing
   "50",                 // misc supplies
-  "1",                  // first turn: HUNT
-  "BANG",               // shooting word
+  "1",                  // first turn: HUNT (triggers shooting subroutine)
+  "BANG",               // shooting word (one of BANG/BLAM/POW/WHAM)
   "2",                  // eat moderately
   "3",                  // riders attack: continue
-  "3",                  // second turn: continue
+  "3",                  // second turn: continue (fort/hunt/continue)
   "2",                  // eat moderately
   "3",                  // third turn: continue
   "2",                  // eat moderately
@@ -71,6 +79,7 @@ const mod = await createModule({
   },
 });
 
+// Write to virtual root using POSIX paths to ensure cross-platform compatibility
 mod.FS.writeFile("/oregon.bas", source);
 mod.callMain(["/oregon.bas"]);
 
@@ -91,7 +100,7 @@ function check(label, ok) {
   }
 }
 
-console.log("test:integration: Oregon Trail (RetroBASIC)");
+console.log(`test:integration: Oregon Trail (${interpreter})`);
 console.log("");
 
 // 1. Purchase Confirmation
@@ -109,7 +118,7 @@ const hasShootResult =
   );
 check("shooting result appears", hasShootResult);
 
-// 4. No runtime errors from CLK calls
+// 4. No runtime errors
 check("no runtime errors on stderr", stderr.length === 0);
 if (stderr.length > 0) {
   console.log(`     stderr: ${stderr.substring(0, 200)}`);

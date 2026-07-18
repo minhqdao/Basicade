@@ -28,6 +28,7 @@ export default [
       "interpreters/",
       "examples/",
       "packages/*/test/",
+      "test/",
     ],
   },
 ];

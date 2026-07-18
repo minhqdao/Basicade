@@ -1520,6 +1520,17 @@ value_t evaluate_expression(const expression_t *expression)
             result.string = str_new(c);
           }
             break;
+          case CLK:
+          {
+            // CLK(X) returns hours since midnight with sub-second precision
+            // The parameter X is ignored (matches bwbasic behavior)
+            struct timeval tv;
+            gettimeofday(&tv, NULL);
+            struct tm *lt = localtime(&tv.tv_sec);
+            double sec_since_midnight = lt->tm_hour * 3600.0 + lt->tm_min * 60.0 + lt->tm_sec + (double)tv.tv_usec / 1000000.0;
+            result.number = sec_since_midnight / 3600.0;
+          }
+            break;
           case CLOG:
             result.number = log10(a);
             break;
@@ -2258,8 +2269,7 @@ static void print_value(value_t v, const char *format, FILE* fp)
       {
         // for some reason, PRINT adds a space at the end of numbers
         char* a = number_to_string(v.number);
-        interpreter_state.cursor_column += fprintf(out, "%s", a);
-              interpreter_state.cursor_column += fprintf(out, "%s ", a); // note the trailing space
+        interpreter_state.cursor_column += fprintf(out, "%s ", a); // note the trailing space
         }
         break;
       case STRING:
@@ -3075,9 +3085,24 @@ static void perform_statement(list_t *statement_entry)
 							break;
 						}
 						
-						// see if there already are dimensions, if so report a redim
+						// see if there already are dimensions, if so check if they're the same
             if (storage->dimed_dimensions != NULL) {
-              handle_error(ern_REDIM_ARRAY, "DIM of already DIMmed variable.");
+              // allow re-DIM with same or smaller dimensions (common in GOSUB patterns)
+              bool compatible = true;
+              list_t *old = storage->dimed_dimensions;
+              list_t *new_dim = var->subscripts;
+              while (old && new_dim) {
+                int old_val = POINTER_TO_INT(old->data);
+                int new_val = (int)floor(evaluate_expression(new_dim->data).number);
+                if (new_val > old_val) { compatible = false; break; }
+                old = lst_next(old);
+                new_dim = lst_next(new_dim);
+              }
+              if (!compatible) {
+                handle_error(ern_REDIM_ARRAY, "DIM of already DIMmed variable with larger dimensions.");
+                break;
+              }
+              // same or smaller — skip re-allocation, just continue
               break;
             }
 						
@@ -3634,6 +3659,11 @@ REDO_INPUT:
           }
           if (input_result <= 0)
             exit(EXIT_FAILURE);
+          
+          // strip trailing newline/carriage return if present (fgets may include them)
+          size_t input_len = strlen(line);
+          while (input_len > 0 && (line[input_len - 1] == '\n' || line[input_len - 1] == '\r'))
+            line[--input_len] = '\0';
           
           // test to see if the input is zero length, if so,
           // exit INPUT and continue running the program with the old values
