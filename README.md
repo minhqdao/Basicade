@@ -88,8 +88,8 @@ npm run lint
 npm run test
 
 # Build natively (macOS/Linux)
-gcc -o native/bwbasic -ansi -pedantic -Wall native/bw*.c -lm
-gcc -o native/renum native/renum.c -lm
+gcc -o interpreters/bwbasic/bwbasic -ansi -pedantic -Wall interpreters/bwbasic/bw*.c -lm
+gcc -o interpreters/bwbasic/renum interpreters/bwbasic/renum.c -lm
 ```
 
 ## License

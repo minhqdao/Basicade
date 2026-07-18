@@ -33,7 +33,7 @@ export default [
       "dist/",
       "build/",
       "wasm/",
-      "native/",
+      "interpreters/",
       "examples/",
       "test/",
     ],

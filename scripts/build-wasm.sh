@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 mkdir -p "$ROOT/wasm"
-cd "$ROOT/native"
+cd "$ROOT/interpreters/bwbasic"
 
 emcc \
     bw*.c \
