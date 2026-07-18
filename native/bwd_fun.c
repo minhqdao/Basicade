@@ -539,7 +539,7 @@ IntrinsicFunctionType IntrinsicFunctionTable[ /* NUM_FUNCTIONS */ ] =
   1, /* ParameterCount */
   P1NUM, /* ParameterTypes */
   P1ANY, /* ParameterTests */
-  G74 | G65 | G67 /* OptionVersionBitmask */
+  B15 | G74 | G65 | G67 /* OptionVersionBitmask */
 },
 {
   F_CLK_X_S, /* UniqueID */

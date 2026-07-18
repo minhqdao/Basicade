@@ -61,6 +61,8 @@
 
 static time_t t;
 static struct tm *lt;
+static struct timespec ts_clk;
+static clock_t clk_val;
 
 
 /*  ORD() Table 1    */
@@ -2541,15 +2543,27 @@ IntrinsicFunction_execute (int argc, VariableType * argv,
     /* N = CLK( X ) ' value of X is ignored */
     {
       /* PNONE */
-      time (&t);
-      lt = localtime (&t);
-      N = lt->tm_hour;
-      N *= 60;
-      N += lt->tm_min;
-      N *= 60;
-      N += lt->tm_sec;
-      N /= 3600;
-      /* decimal hours: 3:30 PM = 15.50 */
+      if (clock_gettime (CLOCK_REALTIME, &ts_clk) == 0)
+      {
+        /* sub-second precision using nanosecond clock */
+        double sec_since_midnight = (double) (ts_clk.tv_sec % 86400);
+        sec_since_midnight += (double) ts_clk.tv_nsec / 1000000000.0;
+        N = sec_since_midnight / 3600.0;
+        /* hours since midnight with sub-second precision */
+      }
+      else
+      {
+        /* fallback to time() if clock_gettime is unavailable */
+        time (&t);
+        lt = localtime (&t);
+        N = lt->tm_hour;
+        N *= 60;
+        N += lt->tm_min;
+        N *= 60;
+        N += lt->tm_sec;
+        N /= 3600;
+        /* decimal hours: 3:30 PM = 15.50 */
+      }
     }
     break;
 
