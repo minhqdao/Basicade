@@ -18,7 +18,7 @@ let cursorVisible = false;
 Atomics.store(sharedBuffer, 0, 0);
 Atomics.store(sharedKeys, 0, 0);
 
-const response = await fetch("../examples/oregon-trail/oregon.bas");
+const response = await fetch("../../examples/oregon-trail/oregon.bas");
 const source = await response.text();
 
 const cursorTimer = setInterval(() => {

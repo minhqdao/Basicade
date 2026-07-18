@@ -9,7 +9,7 @@ export default [
     },
   },
   {
-    files: ["demo/**/*.js"],
+    files: ["demos/**/*.js"],
     languageOptions: {
       sourceType: "module",
       globals: {

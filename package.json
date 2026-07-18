@@ -34,7 +34,7 @@
     "build": "tsc",
     "build:wasm": "bash ./scripts/build-wasm.sh",
     "prepublishOnly": "npm run lint && npm run build:wasm && npm run build && npm run test",
-    "dev": "vite --open /demo/",
+    "dev": "vite --open /demos/oregon-trail/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . && tsc --noEmit",

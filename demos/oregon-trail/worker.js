@@ -1,4 +1,4 @@
-import createModule from "../wasm/bwbasic.js";
+import createModule from "../../wasm/bwbasic.js";
 
 let sharedBuffer;
 let sharedKeys;
