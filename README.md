@@ -1,8 +1,8 @@
 # bwbasic-wasm
 
-The [Bywater BASIC](https://github.com/commandbasic/bwbasic) interpreter compiled to WebAssembly.
+The [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) interpreter compiled to WebAssembly.
 
-Run classic BASIC programs — like [The Oregon Trail](examples/oregon-trail/) — in Node.js or the browser.
+Run classic BASIC programs — like [The Oregon Trail](https://minhqdao.github.io/bwbasic-wasm/oregon-trail/) — in Node.js or the browser.
 
 ## Install
 
@@ -59,7 +59,7 @@ await runBasic({
 
 ## Demo
 
-The repository includes a browser demo running the original [The Oregon Trail](examples/oregon-trail/) BASIC program in an interactive retro terminal.
+The repository includes a browser demo running the original [The Oregon Trail](https://minhqdao.github.io/bwbasic-wasm/oregon-trail/) BASIC program in an interactive retro terminal.
 
 ## Development
 
