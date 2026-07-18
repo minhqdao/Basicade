@@ -41,6 +41,6 @@ jobs:
       - name: Build TypeScript wrapper
         run: npm run build
 
-      - name: Smoke test (The Oregon Trail)
+      - name: Run tests
         run: npm run test
         shell: bash

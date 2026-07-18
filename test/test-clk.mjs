@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import createModule from "../wasm/bwbasic.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const testPath = resolve(__dirname, "..", "examples", "oregon-trail", "test_clk.bas");
+const testPath = resolve(__dirname, "basic", "test_clk.bas");
 const source = readFileSync(testPath, "utf8");
 
 const inputQueue = ["\n"].reverse();

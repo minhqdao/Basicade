@@ -71,7 +71,7 @@ function check(label, ok) {
   }
 }
 
-console.log("smoke-test: Oregon Trail");
+console.log("test:integration: Oregon Trail");
 console.log("");
 
 // 1. Purchase Confirmation
