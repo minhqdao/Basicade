@@ -10,7 +10,8 @@ const interpreter = urlParams.get("interpreter") || "bwbasic";
 const wasmUrl = `../../packages/${interpreter}-wasm/wasm/${interpreter}.js`;
 
 if (terminalHeader) {
-  const engineName = interpreter === "retrobasic" ? "RetroBASIC" : "Bywater BASIC";
+  const engineName =
+    interpreter === "retrobasic" ? "RetroBASIC" : "Bywater BASIC";
   terminalHeader.textContent = `The Oregon Trail (1978) — ${engineName}`;
 }
 
