@@ -11,6 +11,7 @@ const oregonPath = resolve(__dirname, "..", "examples", "oregon-trail", "oregon.
 const source = readFileSync(oregonPath, "utf8");
 
 // Feed a sequence of inputs to play through ~2-3 turns
+// First turn: hunt (triggers the CLK-based shooting subroutine at line 6210)
 const lines = [
   "NO",                 // instructions
   "3",                  // shooting skill (fair to middlin')
@@ -19,7 +20,8 @@ const lines = [
   "50",                 // ammunition
   "50",                 // clothing
   "50",                 // misc supplies
-  "2",                  // first turn: continue (hunt/continue)
+  "1",                  // first turn: HUNT (triggers shooting subroutine)
+  "BANG",               // shooting word (one of BANG/BLAM/POW/WHAM)
   "2",                  // eat moderately
   "3",                  // riders attack: continue
   "3",                  // second turn: continue (fort/hunt/continue)
@@ -32,13 +34,14 @@ const chars = lines.join("\n") + "\n";
 const inputQueue = chars.split("").reverse();
 
 const outputs = [];
+const stderrOutput = [];
 let emptyPollCount = 0;
 const MAX_EMPTY_POLLS = 100;
 
 const mod = await createModule({
   noInitialRun: true,
   print: (line) => outputs.push(line),
-  printErr: (line) => console.warn(`[WASM STDERR] ${line}`), // Catch runtime panics
+  printErr: (line) => stderrOutput.push(line),
   stdin: () => {
     if (inputQueue.length === 0) {
       emptyPollCount++;
@@ -56,6 +59,7 @@ mod.FS.writeFile("/oregon.bas", source);
 mod.callMain(["/oregon.bas"]);
 
 const full = outputs.join("\n");
+const stderr = stderrOutput.join("\n");
 
 // — assertions —
 let passed = 0;
@@ -77,16 +81,24 @@ console.log("");
 // 1. Purchase Confirmation
 const hasPurchase = full.includes("AFTER ALL YOUR PURCHASES, YOU NOW HAVE");
 check("purchase confirmation appears", hasPurchase);
-if (hasPurchase) {
-  const purchaseLine = outputs.find(line => line.includes("AFTER ALL YOUR PURCHASES, YOU NOW HAVE"));
-  if (purchaseLine) {
-    console.log(`     👉 [Visual Check]: "${purchaseLine.trim()}"`);
-  }
+
+// 2. Shooting subroutine invoked (CLK-based timing at lines 6210-6240)
+const hasShootPrompt = /TYPE (BANG|BLAM|POW|WHAM)/.test(full);
+check("shooting prompt appears (CLK subroutine invoked)", hasShootPrompt);
+
+// 3. Shooting result printed (depends on CLK timing calculation)
+const hasShootResult = /NICE SHOT|RIGHT BETWEEN|BETWEEN THE EYES|MISSED|LOUSY SHOT|SLOW ON THE DRAW|QUICKEST DRAW/.test(full);
+check("shooting result appears (CLK timing used)", hasShootResult);
+
+// 4. No runtime errors from CLK calls
+check("no runtime errors on stderr", stderr.length === 0);
+if (stderr.length > 0) {
+  console.log(`     stderr: ${stderr.substring(0, 200)}`);
 }
 
 console.log("");
 
-// 2 & 3. Mileage Checks
+// 5 & 6. Mileage Checks
 const mileageCount = (full.match(/TOTAL MILEAGE IS/g) || []).length;
 check("total mileage appears at least twice", mileageCount >= 2);
 
