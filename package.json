@@ -39,8 +39,8 @@
     "format:check": "prettier --check .",
     "lint": "eslint . && tsc --noEmit",
     "test": "npm run test:integration && npm run test:clk",
-    "test:integration": "node scripts/smoke-test.mjs",
-    "test:clk": "node test/test-clk.mjs",
+    "test:integration": "node test/integration.mjs",
+    "test:clk": "node test/clk.mjs",
     "all": "npm run format && npm run lint && npm run test"
   },
   "keywords": [
