@@ -2,16 +2,16 @@ const output = document.getElementById("output");
 const input = document.getElementById("input");
 const cursor = document.getElementById("cursor");
 const screen = document.getElementById("screen");
-const interpreterLabel = document.getElementById("interpreter-label");
+const terminalHeader = document.getElementById("terminal-header");
 
 // Determine which interpreter to use (default: bwbasic)
 const urlParams = new URLSearchParams(window.location.search);
 const interpreter = urlParams.get("interpreter") || "bwbasic";
 const wasmUrl = `../../packages/${interpreter}-wasm/wasm/${interpreter}.js`;
 
-if (interpreterLabel) {
-  interpreterLabel.textContent =
-    interpreter === "retrobasic" ? "RetroBASIC" : "Bywater BASIC";
+if (terminalHeader) {
+  const engineName = interpreter === "retrobasic" ? "RetroBASIC" : "Bywater BASIC";
+  terminalHeader.textContent = `The Oregon Trail (1978) — ${engineName}`;
 }
 
 // Initialize buffers explicitly
