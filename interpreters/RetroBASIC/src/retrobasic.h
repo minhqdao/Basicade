@@ -1,0 +1,287 @@
+/* Interpreter (header) for RetroBASIC
+ Copyright (C) 2020 Maury Markowitz
+ 
+ Based on gnbasic
+ Copyright (C) 1998 James Bowman
+ 
+ This file is part of RetroBASIC.
+ 
+ RetroBASIC is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2, or (at your option)
+ any later version.
+ 
+ RetroBASIC is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with RetroBASIC; see the file COPYING.  If not, write to
+ the Free Software Foundation, 59 Temple Place - Suite 330,
+ Boston, MA 02111-1307, USA.  */
+
+#ifndef __RETROBASIC_H__
+#define __RETROBASIC_H__
+
+#include "stdhdr.h"
+
+/**
+ * @file retrobasic.h
+ * @author Maury Markowitz
+ * @brief Core interpreter code
+ *
+ * This is the core of the RetroBASIC interpreter. It performs all of the
+ * underlying BASIC functionality including parsing the original file using
+ * lex/yacc, cleaning up the resulting tokenized code, and then running it.
+ */
+
+
+/** current version string */
+#define VERSION_STRING "3.0.2"
+
+/** retrobasic allows line numbers up to FF */
+#define MAX_LINE_NUMBER 65535
+
+/** defines the maximum length of an input/print */
+#define MAX_INPUT_LENGTH 132
+
+/** various internal state variables used for I/O and other tasks */
+extern bool run_program;                // default to running the program, not just parsing it
+extern bool print_stats;                // when the program finishes running, should we print statistics?
+extern bool write_stats;                // ... or write them to a file?
+
+extern int tab_columns;                 // based on PET BASIC, which is a good enough target
+extern bool trace_lines;
+extern bool upper_case;                 // force INPUT to upper case
+extern int array_base;                  // lower bound of arrays, can also be set to 0 with OPTION BASE
+extern bool string_slicing;             // are references like A$(1,1) referring to an array entry or doing slicing?
+extern bool goto_next_highest;          // if a branch targets a non-existent line, should we go to the next line?
+extern bool ansi_on_boundaries;         // if the value for an ON statement <1 or >num entries, should it continue, or error?
+extern bool ansi_tab_behaviour;         // if a TAB < current column, ANSI inserts a CR, MS does not
+extern int random_seed;                 // reset with RANDOMIZE, if -1 then auto-seeds
+
+extern char *source_file;
+extern char *input_file;
+extern char *print_file;
+extern char *stats_file;
+
+extern volatile sig_atomic_t pause_requested;
+
+extern char *cli_prompt;
+extern double determinant;
+
+/** variable **references**
+ * variable_reference_t is used to record a reference to a variable in the code,
+ * not it's value. So this might be A or A$ or A(1,2). The actual value is held
+ * in a variable_value_t in the variable_values list of the interpreter_state.
+ */
+typedef struct {
+  char *name;
+  list_t *subscripts;   // subscripts, list of expressions
+  list_t *slicing;      // up to two expressions holding string slicing limits
+} variable_reference_t;
+
+/** either_t is used within variable_value_t for the actual data */
+/* note, it seems we could simply use value_t for these, this saves four bytes */
+typedef union {
+  char *string;
+  double number;
+} either_t;
+
+/* value_t is used to store (and process) the results of an evaluation */
+typedef struct {
+  int type;            /* NUMBER, STRING */
+  char *string;
+  double number;
+} value_t;
+
+/** variable_storage_t holds the *value* of a variable in memory */
+typedef struct {
+  int type;                     // NUMBER, STRING
+  list_t *actual_dimensions;    // actual dimensions, even if auto-DIMmed
+  list_t *dimed_dimensions;     // subscript definitions, if any (from a DIM)
+  either_t *value;              // actual value(s), malloced
+  either_t *array;              // actual value(s), malloced
+  bool common;                  // true when this variable is DECLAREd COMMON
+} variable_storage_t;
+
+/** expression types */
+typedef enum {
+  number, string, variable, op, fn
+} expression_type_t;
+
+/** expression_struct holds the structure of a single expression in BASIC */
+typedef struct expression_struct {
+  expression_type_t type;
+  union {
+    double number;                    // if it's a constant
+    char *string;                     // or a string constant
+    variable_reference_t *variable;   // also used for user-defined function names and parameters
+    struct {
+      int arity;
+      int opcode;
+      struct expression_struct *p[3]; // arity can be up to 3 in BASIC
+    } op;
+  } parms;
+} expression_t;
+
+/** printitem_t holds a print list, which are different from other lists in
+ * BASIC because they have three possible separators, nulls, commas and semis.
+ * most just use the comma.
+ */
+typedef struct {
+  expression_t *expression;
+  int separator;			/* ';' ',' or 0 */
+} printitem_t;
+
+/** every statement in the program gets a statement_t entry. the most
+ * basic forms are simply a type, which contains the token value. Other
+ * statements can store additional parameters in the params union.
+ */
+typedef struct statement_struct {
+  int type; // the enum for this is in parse.h
+  bool let_explicit;            // true for explicit LET, false for invisible LET
+  union {
+    struct {
+      variable_reference_t *generic_variable;
+      expression_t *generic_parameter, *generic_parameter2, *generic_parameter3;
+    } generic;
+    struct {
+      variable_reference_t *var1;
+      variable_reference_t *var2;
+    } change;
+    list_t *data; // list of values for data statements
+    struct {
+      variable_reference_t *signature;
+      expression_t *formula;
+    } def;
+    struct {
+      list_t *vars;
+      int type;
+    } deftype; // used in DEFINT etc.
+    list_t *dim; // list of variable definitions
+    struct {
+      list_t *varlist;
+      int preserve;
+    } redim; // used in REDIM and REDIM PRESERVE
+    struct {
+      variable_reference_t *variable;
+      expression_t *begin, *end, *step;
+    } _for;
+    expression_t *gosub;
+    expression_t *_goto;
+    struct {
+      expression_t *condition;
+      list_t *then_expression;
+      int then_linenumber; // implicit goto case
+    } _if;
+    list_t *input;
+    struct {
+      variable_reference_t *variable;
+      int linenumber;
+    } label;
+    struct {
+      variable_reference_t *variable;
+      expression_t *expression;
+    } let;
+    struct {
+      variable_reference_t *variable;   // the variable on the LHS
+      variable_reference_t *variable2;  // ... and RHS
+      variable_reference_t *variable3;  // ... and other RHS
+      expression_t *expression; // used in multiplication
+    } mat;
+    struct {
+      int type; /* GOTO or GOSUB */
+      expression_t *expression;
+      list_t *numbers;
+    } on;
+    list_t *next;
+    struct {
+      expression_t *channel;
+      expression_t *format;
+      list_t *item_list;
+    } print;
+    list_t *read;
+    char *rem;
+    //        struct {
+    //            list_t *numbers;
+    //        } _sys;
+  } parms;
+} statement_t;
+
+/* runtime stacks */
+/* used for tracking GOSUB, FOR/NEXT, etc. It is not clear that there needs to
+ be two separate types here, as this might making popping a FOR from an early
+ RETURN more difficult?
+ */
+typedef enum {
+  for_entry, gosub_entry
+} stack_entry_type_e;
+
+typedef struct {
+  stack_entry_type_e type;
+  union {
+    struct {
+      list_t *head, *tail;
+      variable_reference_t *index_variable;
+      double begin, end, step;
+    } _for;
+    struct {
+      list_t *returnpoint;
+    } gosub;
+  };
+} stack_entry_t;
+
+/* this is the main state for the interpreter, largely consisting of the lines of
+ code, a pointer to the first line for easy lookup, a pointer to the current
+ statement, a list of variables and their values, and the runtime stack for
+ GOSUB and FOR/NEXT. Other bits include the list of user functions, TRAP lines
+ and the current error code, the cursor column, etc. */
+typedef struct {
+  list_t *lines[MAX_LINE_NUMBER]; // the lines in the program, stored as an array of statement lists
+  int first_line;		              // index of the first line in the lines array, often 10
+  list_t *current_statement;      // currently executing statement
+  list_t *next_statement;         // next statement to run, might change for GOTO and such
+  list_t *current_data_statement;	// current 'DATA' statement
+  list_t *current_data_element;	  // current 'DATA' expression within current_data_statement
+  list_t *variable_values;		    // name/value pairs used to store variable values
+  list_t *functions;              // name/expression pairs for user-defined functions
+  list_t *runtime_stack;	        // stack of FOR and GOSUB statements
+  int error_num;                  // the last error, 0 if no error or reset
+  int error_line;                 // line number where an error occurred, -1 for none
+  int trapped_error_num;          // error number saved when trap fires, so ER works inside the handler
+  list_t *error_statement;        // statement where the error occurred, so RESUME can continue properly
+  int trap_line;                  // line to TRAP or ON ERROR to, -1 for none
+  int break_trap_line;            // line to ON BREAK to, 0 for none
+  list_t *break_resume_point;     // where to resume after BREAK, for CONT command
+  int cursor_column;              // current column of the output cursor
+  int running_state;              // is the program running (1), paused/stopped (0), or setting up a function (-1)
+  int interactive_mode;           // 1 if started without filename, 0 if batch mode
+  int exit_requested;             // set by BYE to signal the CLI loop to exit
+} interpreterstate_t;
+
+/* and here's the link to an instance of interpreterstate_t defined in the c side */
+extern interpreterstate_t interpreter_state;
+
+/* the only piece of the interpreter the parser needs to know about is the variable table */
+void insert_variable(const variable_reference_t *variable);
+
+/* these are needed in the matrix functions */
+int variable_type(const variable_reference_t *variable);
+value_t evaluate_expression(const expression_t *expression);
+
+/* called by main to set up the interpreter state */
+void interpreter_setup(void);
+
+/* perform post-parse setup */
+void interpreter_post_parse(void);
+
+/* the interpreter entry point */
+void interpreter_run(void);
+
+/* CLI helper functions */
+int interpreter_parse_cli_input(const char *input, list_t **statements);
+void interpreter_execute_statement_list(list_t *statement_list);
+
+#endif

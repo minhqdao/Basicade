@@ -1,0 +1,59 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds 32-bit bwbasic.exe for ARM
+# makefile.aga in PDPCLIB must be used before using this makefile
+
+CC=gccarm
+CFLAGS=-O0
+COPTS=$(CFLAGS) -S -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__ \
+    -I. -I../pdos/pdpclib -I../pdos/generic -DHAVE_PUREISO \
+    -ansi -fno-common -fno-builtin -mapcs-32 \
+    -msoft-float
+LD=ldarm -N -e ___crt0 
+LDFLAGS=
+AS=asarm
+AR=ararm
+
+all: clean bwbasic.exe renum.exe
+
+bwbasic.exe: \
+    bwbasic.o \
+    bwb_int.o \
+    bwb_tbl.o \
+    bwb_cmd.o \
+    bwb_prn.o \
+    bwb_exp.o \
+    bwb_var.o \
+    bwb_inp.o \
+    bwb_fnc.o \
+    bwb_cnd.o \
+    bwb_dio.o \
+    bwb_str.o \
+    bwb_stc.o \
+    bwx_tty.o \
+    bwd_cmd.o \
+    bwd_fun.o \
+    unixio.o
+  rm -f temp.a
+  $(AR) r temp.a bwb_int.o bwb_tbl.o bwb_cmd.o bwb_prn.o bwb_exp.o bwb_var.o bwb_inp.o
+  $(AR) r temp.a bwb_fnc.o bwb_cnd.o bwb_dio.o bwb_str.o bwb_stc.o bwx_tty.o bwd_cmd.o
+  $(AR) r temp.a bwd_fun.o unixio.o
+  $(LD) $(LDFLAGS) -s -o bwbasic.exe ../pdos/pdpclib/pgastart.o bwbasic.o temp.a ../pdos/pdpclib/armsupa.o ../pdos/pdpclib/fpfuncsa.o
+
+renum.exe: renum.o
+  $(LD) $(LDFLAGS) -s -o renum.exe ../pdos/pdpclib/pgastart.o renum.o temp.a ../pdos/pdpclib/armsupa.o
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.o bwbasic.exe renum.exe
