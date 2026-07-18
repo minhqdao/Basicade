@@ -7,11 +7,13 @@ SRC_DIR="$ROOT/../../interpreters/RetroBASIC/src"
 
 mkdir -p "$ROOT/wasm"
 
-# Generate lex/yacc sources
+# Generate lex/yacc sources (skip if not available; pre-generated files are in the repo)
 cd "$SRC_DIR"
-bison -d -o parse.tab.c parse.y
-cp parse.tab.h parse.h
-flex -o lex.yy.c scan.l
+if command -v bison &>/dev/null && command -v flex &>/dev/null; then
+  bison -d -o parse.tab.c parse.y
+  cp parse.tab.h parse.h
+  flex -o lex.yy.c scan.l
+fi
 
 # Compile to WASM
 emcc \
