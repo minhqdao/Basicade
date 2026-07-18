@@ -2,7 +2,7 @@
 
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -22,7 +22,7 @@ const wasmPath = resolve(
   `${interpreter}.js`,
 );
 
-const { default: createModule } = await import(wasmPath);
+const { default: createModule } = await import(pathToFileURL(wasmPath).href);
 
 const oregonPath = resolve(
   __dirname,
