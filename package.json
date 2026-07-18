@@ -7,6 +7,8 @@
   ],
   "scripts": {
     "dev": "vite --open /demos/oregon-trail/",
+    "dev:bwbasic": "vite --open '/demos/oregon-trail/?interpreter=bwbasic'",
+    "dev:retrobasic": "vite --open '/demos/oregon-trail/?interpreter=retrobasic'",
     "build": "npm run build -w packages/bwbasic-wasm && npm run build -w packages/retrobasic-wasm",
     "build:bwbasic": "npm run build -w packages/bwbasic-wasm",
     "build:retrobasic": "npm run build -w packages/retrobasic-wasm",
