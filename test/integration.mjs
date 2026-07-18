@@ -81,7 +81,12 @@ const mod = await createModule({
 
 // Write to virtual root using POSIX paths to ensure cross-platform compatibility
 mod.FS.writeFile("/oregon.bas", source);
+
+// retrobasic calls exit(EXIT_FAILURE) when stdin is exhausted mid-INPUT,
+// which Emscripten propagates to the process exit code. Reset it so only
+// our own assertions determine the final exit code.
 mod.callMain(["/oregon.bas"]);
+process.exitCode = undefined;
 
 const full = outputs.join("\n");
 const stderr = stderrOutput.join("\n");
