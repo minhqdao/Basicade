@@ -1,66 +1,24 @@
 {
-  "name": "bwbasic-wasm",
-  "version": "0.1.0",
-  "description": "An isomorphic WebAssembly (WASM) port of the Bywater BASIC interpreter (bwbasic). Execute legacy ANSI BASIC code and retro text games like The Oregon Trail seamlessly in both Node.js and browser environments.",
+  "name": "basic-wasm-monorepo",
+  "private": true,
   "type": "module",
-  "license": "GPL-2.0-only",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/minhqdao/bwbasic-wasm.git"
-  },
-  "homepage": "https://github.com/minhqdao/bwbasic-wasm#readme",
-  "bugs": {
-    "url": "https://github.com/minhqdao/bwbasic-wasm/issues"
-  },
-  "engines": {
-    "node": ">=16"
-  },
-  "sideEffects": false,
-  "files": [
-    "dist",
-    "wasm",
-    "LICENSE",
-    "README.md"
+  "workspaces": [
+    "packages/*"
   ],
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
   "scripts": {
-    "build": "tsc",
-    "build:wasm": "bash ./scripts/build-wasm.sh",
-    "prepublishOnly": "npm run lint && npm run build:wasm && npm run build && npm run test",
     "dev": "vite --open /demos/oregon-trail/",
+    "build": "npm run build -w packages/bwbasic-wasm && npm run build -w packages/retrobasic-wasm",
+    "build:bwbasic": "npm run build -w packages/bwbasic-wasm",
+    "build:retrobasic": "npm run build -w packages/retrobasic-wasm",
+    "build:wasm": "npm run build:wasm -w packages/bwbasic-wasm && npm run build:wasm -w packages/retrobasic-wasm",
+    "build:wasm:bwbasic": "npm run build:wasm -w packages/bwbasic-wasm",
+    "build:wasm:retrobasic": "npm run build:wasm -w packages/retrobasic-wasm",
+    "lint": "eslint . && tsc --noEmit -p packages/bwbasic-wasm && tsc --noEmit -p packages/retrobasic-wasm",
+    "test": "npm run test -w packages/bwbasic-wasm && npm run test -w packages/retrobasic-wasm",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint . && tsc --noEmit",
-    "test": "npm run test:integration && npm run test:clk",
-    "test:integration": "node test/integration.mjs",
-    "test:clk": "node test/clk.mjs",
     "all": "npm run format && npm run lint && npm run test"
   },
-  "keywords": [
-    "basic",
-    "bywater-basic",
-    "bwbasic",
-    "ansi-basic",
-    "wasm",
-    "webassembly",
-    "emscripten",
-    "compiler",
-    "interpreter",
-    "emulator",
-    "retro",
-    "retro-gaming",
-    "vintage-computing",
-    "classic-games",
-    "text-adventure",
-    "oregon-trail"
-  ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.7.0",

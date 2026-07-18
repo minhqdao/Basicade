@@ -1,9 +1,17 @@
-import createModule from "../../wasm/bwbasic.js";
+let createModule;
 
 let sharedBuffer;
 let sharedKeys;
 
 self.onmessage = async (e) => {
+  if (e.data.type === "INIT") {
+    const { wasmUrl } = e.data;
+    const mod = await import(wasmUrl);
+    createModule = mod.default;
+    self.postMessage({ type: "READY" });
+    return;
+  }
+
   if (e.data.type === "START") {
     const { source, buffer, keys } = e.data;
     sharedBuffer = new Int32Array(buffer);

@@ -2,6 +2,17 @@ const output = document.getElementById("output");
 const input = document.getElementById("input");
 const cursor = document.getElementById("cursor");
 const screen = document.getElementById("screen");
+const interpreterLabel = document.getElementById("interpreter-label");
+
+// Determine which interpreter to use (default: bwbasic)
+const urlParams = new URLSearchParams(window.location.search);
+const interpreter = urlParams.get("interpreter") || "bwbasic";
+const wasmUrl = `../../packages/${interpreter}-wasm/wasm/${interpreter}.js`;
+
+if (interpreterLabel) {
+  interpreterLabel.textContent =
+    interpreter === "retrobasic" ? "RetroBASIC" : "Bywater BASIC";
+}
 
 // Initialize buffers explicitly
 const buffer = new SharedArrayBuffer(4);
@@ -28,10 +39,13 @@ const cursorTimer = setInterval(() => {
 
 const worker = new Worker("./worker.js", { type: "module" });
 
-worker.postMessage({ type: "START", source, buffer, keys });
+// Two-phase init: tell worker which WASM module to load, then start
+worker.postMessage({ type: "INIT", wasmUrl });
 
 worker.onmessage = (e) => {
-  if (e.data.type === "STDOUT") {
+  if (e.data.type === "READY") {
+    worker.postMessage({ type: "START", source, buffer, keys });
+  } else if (e.data.type === "STDOUT") {
     appendOutput(e.data.text);
   } else if (e.data.type === "REQUEST_INPUT") {
     currentInput = "";

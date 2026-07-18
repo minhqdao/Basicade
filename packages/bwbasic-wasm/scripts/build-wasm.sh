@@ -3,9 +3,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$ROOT/../.." && pwd)"
 
 mkdir -p "$ROOT/wasm"
-cd "$ROOT/interpreters/bwbasic"
+cd "$REPO_ROOT/interpreters/bwbasic"
 
 emcc \
     bw*.c \

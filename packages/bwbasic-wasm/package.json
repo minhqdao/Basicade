@@ -1,0 +1,60 @@
+{
+  "name": "bwbasic-wasm",
+  "version": "0.1.0",
+  "description": "An isomorphic WebAssembly (WASM) port of the Bywater BASIC interpreter (bwbasic). Execute legacy ANSI BASIC code and retro text games like The Oregon Trail seamlessly in both Node.js and browser environments.",
+  "type": "module",
+  "license": "GPL-2.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minhqdao/bwbasic-wasm.git",
+    "directory": "packages/bwbasic-wasm"
+  },
+  "homepage": "https://github.com/minhqdao/bwbasic-wasm#readme",
+  "bugs": {
+    "url": "https://github.com/minhqdao/bwbasic-wasm/issues"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "wasm",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:wasm": "bash ./scripts/build-wasm.sh",
+    "test": "npm run test:integration && npm run test:clk",
+    "test:integration": "node test/integration.mjs",
+    "test:clk": "node test/clk.mjs",
+    "prepublishOnly": "npm run build:wasm && npm run build && npm run test"
+  },
+  "keywords": [
+    "basic",
+    "bywater-basic",
+    "bwbasic",
+    "ansi-basic",
+    "wasm",
+    "webassembly",
+    "emscripten",
+    "compiler",
+    "interpreter",
+    "emulator",
+    "retro",
+    "retro-gaming",
+    "vintage-computing",
+    "classic-games",
+    "text-adventure",
+    "oregon-trail"
+  ]
+}

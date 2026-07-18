@@ -18,24 +18,16 @@ export default [
     },
   },
   {
-    files: ["scripts/**/*.mjs", "scripts/**/*.js"],
-    languageOptions: {
-      sourceType: "module",
-      globals: {
-        ...globals.node,
-      },
-    },
-  },
-  {
     ignores: [
       "node_modules/",
       "emsdk-cache/",
-      "dist/",
+      "packages/*/dist/",
+      "packages/*/wasm/",
+      "packages/*/node_modules/",
       "build/",
-      "wasm/",
       "interpreters/",
       "examples/",
-      "test/",
+      "packages/*/test/",
     ],
   },
 ];

@@ -31,14 +31,18 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
-      - name: Type-check (lint)
+      - name: Type-check
         run: npm run lint
 
-      - name: Build WASM compiler
-        run: npm run build:wasm
+      - name: Build bwbasic WASM
+        run: npm run build:wasm:bwbasic
         shell: bash
 
-      - name: Build TypeScript wrapper
+      - name: Build retrobasic WASM
+        run: npm run build:wasm:retrobasic
+        shell: bash
+
+      - name: Build TypeScript
         run: npm run build
 
       - name: Run tests

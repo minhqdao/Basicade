@@ -1,30 +1,45 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import createModule from "../wasm/bwbasic.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const oregonPath = resolve(__dirname, "..", "examples", "oregon-trail", "oregon.bas");
+const wasmPath = resolve(__dirname, "..", "wasm", "retrobasic.js");
+
+if (!existsSync(wasmPath)) {
+  console.log("test:integration: SKIPPED (retrobasic.wasm not built yet)");
+  console.log("Run 'npm run build:wasm -w packages/retrobasic-wasm' first.");
+  process.exit(0);
+}
+
+const { default: createModule } = await import(wasmPath);
+const oregonPath = resolve(
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "examples",
+  "oregon-trail",
+  "oregon.bas",
+);
 
 const source = readFileSync(oregonPath, "utf8");
 
 // Feed a sequence of inputs to play through ~2-3 turns
-// First turn: hunt (triggers the CLK-based shooting subroutine at line 6210)
 const lines = [
   "NO",                 // instructions
-  "3",                  // shooting skill (fair to middlin')
+  "3",                  // shooting skill
   "200",                // oxen
   "200",                // food
   "50",                 // ammunition
   "50",                 // clothing
   "50",                 // misc supplies
-  "1",                  // first turn: HUNT (triggers shooting subroutine)
-  "BANG",               // shooting word (one of BANG/BLAM/POW/WHAM)
+  "1",                  // first turn: HUNT
+  "BANG",               // shooting word
   "2",                  // eat moderately
   "3",                  // riders attack: continue
-  "3",                  // second turn: continue (fort/hunt/continue)
+  "3",                  // second turn: continue
   "2",                  // eat moderately
   "3",                  // third turn: continue
   "2",                  // eat moderately
@@ -46,7 +61,9 @@ const mod = await createModule({
     if (inputQueue.length === 0) {
       emptyPollCount++;
       if (emptyPollCount > MAX_EMPTY_POLLS) {
-        throw new Error("Execution stalled: Program requested more input than was provided in the test script.");
+        throw new Error(
+          "Execution stalled: Program requested more input than was provided in the test script.",
+        );
       }
       return null;
     }
@@ -54,14 +71,13 @@ const mod = await createModule({
   },
 });
 
-// Write to virtual root using POSIX paths to ensure cross-platform compatibility
 mod.FS.writeFile("/oregon.bas", source);
 mod.callMain(["/oregon.bas"]);
 
 const full = outputs.join("\n");
 const stderr = stderrOutput.join("\n");
 
-// — assertions —
+// -- assertions --
 let passed = 0;
 let failed = 0;
 
@@ -75,20 +91,23 @@ function check(label, ok) {
   }
 }
 
-console.log("test:integration: Oregon Trail");
+console.log("test:integration: Oregon Trail (RetroBASIC)");
 console.log("");
 
 // 1. Purchase Confirmation
 const hasPurchase = full.includes("AFTER ALL YOUR PURCHASES, YOU NOW HAVE");
 check("purchase confirmation appears", hasPurchase);
 
-// 2. Shooting subroutine invoked (CLK-based timing at lines 6210-6240)
+// 2. Shooting subroutine invoked
 const hasShootPrompt = /TYPE (BANG|BLAM|POW|WHAM)/.test(full);
-check("shooting prompt appears (CLK subroutine invoked)", hasShootPrompt);
+check("shooting prompt appears", hasShootPrompt);
 
-// 3. Shooting result printed (depends on CLK timing calculation)
-const hasShootResult = /NICE SHOT|RIGHT BETWEEN|BETWEEN THE EYES|MISSED|LOUSY SHOT|SLOW ON THE DRAW|QUICKEST DRAW/.test(full);
-check("shooting result appears (CLK timing used)", hasShootResult);
+// 3. Shooting result printed
+const hasShootResult =
+  /NICE SHOT|RIGHT BETWEEN|BETWEEN THE EYES|MISSED|LOUSY SHOT|SLOW ON THE DRAW|QUICKEST DRAW/.test(
+    full,
+  );
+check("shooting result appears", hasShootResult);
 
 // 4. No runtime errors from CLK calls
 check("no runtime errors on stderr", stderr.length === 0);
@@ -106,10 +125,10 @@ const mileageIncreases = /TOTAL MILEAGE IS\s+[1-9]\d*/.test(full);
 check("mileage increases between turns", mileageIncreases);
 
 if (mileageCount > 0) {
-  console.log("     👉 [Visual Check] Mileage Progression:");
+  console.log("     Mileage Progression:");
   outputs
-    .filter(line => line.includes("TOTAL MILEAGE IS"))
-    .forEach(line => console.log(`        - ${line.trim()}`));
+    .filter((line) => line.includes("TOTAL MILEAGE IS"))
+    .forEach((line) => console.log(`        - ${line.trim()}`));
 }
 
 console.log("");
