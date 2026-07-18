@@ -66,7 +66,7 @@ interpreterstate_t interpreter_state;
 bool run_program = true;							// default to running the program, not just parsing it
 bool print_stats = false;							// do not print or write stats by default
 bool write_stats = false;
-int tab_columns = 10;									// based on PET BASIC, which is a good enough target
+int tab_columns = 14;									// standard BASIC zone width, matches bwbasic
 bool trace_lines = false;
 bool upper_case = false;							// force INPUT to upper case
 int array_base = 1;										// lower bound of arrays, can be set to 0 with OPTION BASE
