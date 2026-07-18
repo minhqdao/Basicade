@@ -21,6 +21,11 @@ Atomics.store(sharedKeys, 0, 0);
 const response = await fetch("../examples/oregon-trail/oregon.bas");
 const source = await response.text();
 
+const cursorTimer = setInterval(() => {
+  cursorVisible = !cursorVisible;
+  render();
+}, 500);
+
 const worker = new Worker("./worker.js", { type: "module" });
 
 worker.postMessage({ type: "START", source, buffer, keys });
@@ -35,6 +40,9 @@ worker.onmessage = (e) => {
     render();
   } else if (e.data.type === "EXIT") {
     appendOutput("\n*** SYSTEM OFFLINE ***");
+    waitingForInput = false;
+    clearInterval(cursorTimer);
+    worker.terminate();
   }
 };
 
@@ -92,8 +100,3 @@ document.addEventListener("keydown", (e) => {
     render();
   }
 });
-
-setInterval(() => {
-  cursorVisible = !cursorVisible;
-  render();
-}, 500);

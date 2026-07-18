@@ -84,5 +84,6 @@ self.onmessage = async (e) => {
     mod.callMain(["/oregon.bas"]);
 
     self.postMessage({ type: "EXIT" });
+    self.close();
   }
 };
