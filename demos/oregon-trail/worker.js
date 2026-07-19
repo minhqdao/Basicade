@@ -13,7 +13,7 @@ self.onmessage = async (e) => {
   }
 
   if (e.data.type === "START") {
-    const { source, buffer, keys } = e.data;
+    const { source, filename, buffer, keys } = e.data;
     sharedBuffer = new Int32Array(buffer);
     sharedKeys = new Uint8Array(keys);
 
@@ -88,8 +88,8 @@ self.onmessage = async (e) => {
       },
     });
 
-    mod.FS.writeFile("/oregon.bas", source);
-    mod.callMain(["/oregon.bas"]);
+    mod.FS.writeFile(`/${filename}`, source);
+    mod.callMain([`/${filename}`]);
 
     self.postMessage({ type: "EXIT" });
     self.close();

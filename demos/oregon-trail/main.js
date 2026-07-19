@@ -4,15 +4,20 @@ const cursor = document.getElementById("cursor");
 const screen = document.getElementById("screen");
 const terminalHeader = document.getElementById("terminal-header");
 
-// Determine which interpreter to use (default: bwbasic)
 const urlParams = new URLSearchParams(window.location.search);
 const interpreter = urlParams.get("interpreter") || "bwbasic";
+const game = urlParams.get("game") || "examples/oregon-trail/oregon.bas";
 const wasmUrl = `../../packages/${interpreter}-wasm/wasm/${interpreter}.js`;
+
+const gameName = game
+  .split("/")
+  .pop()
+  .replace(/\.bas$/i, "");
 
 if (terminalHeader) {
   const engineName =
     interpreter === "retrobasic" ? "RetroBASIC" : "Bywater BASIC";
-  terminalHeader.textContent = `The Oregon Trail (1978) — ${engineName}`;
+  terminalHeader.textContent = `${gameName} — ${engineName}`;
 }
 
 // Initialize buffers explicitly
@@ -30,7 +35,7 @@ let cursorVisible = false;
 Atomics.store(sharedBuffer, 0, 0);
 Atomics.store(sharedKeys, 0, 0);
 
-const response = await fetch("../../examples/oregon-trail/oregon.bas");
+const response = await fetch(`../../${game}`);
 const source = await response.text();
 
 const cursorTimer = setInterval(() => {
@@ -45,7 +50,8 @@ worker.postMessage({ type: "INIT", wasmUrl });
 
 worker.onmessage = (e) => {
   if (e.data.type === "READY") {
-    worker.postMessage({ type: "START", source, buffer, keys });
+    const filename = game.split("/").pop();
+    worker.postMessage({ type: "START", source, filename, buffer, keys });
   } else if (e.data.type === "STDOUT") {
     appendOutput(e.data.text);
   } else if (e.data.type === "REQUEST_INPUT") {
