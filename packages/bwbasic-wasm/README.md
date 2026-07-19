@@ -84,4 +84,4 @@ npm run test -w packages/bwbasic-wasm
 
 ## License
 
-[GPL-2.0](https://github.com/minhqdao/basicade/blob/main/LICENSE)
+[GPL-2.0](LICENSE)
