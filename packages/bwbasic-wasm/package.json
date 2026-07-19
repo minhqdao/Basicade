@@ -6,12 +6,12 @@
   "license": "GPL-2.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/minhqdao/bwbasic-wasm.git",
+    "url": "git+https://github.com/minhqdao/basicade.git",
     "directory": "packages/bwbasic-wasm"
   },
-  "homepage": "https://github.com/minhqdao/bwbasic-wasm#readme",
+  "homepage": "https://github.com/minhqdao/basicade/tree/main/packages/bwbasic-wasm#readme",
   "bugs": {
-    "url": "https://github.com/minhqdao/bwbasic-wasm/issues"
+    "url": "https://github.com/minhqdao/basicade/issues"
   },
   "engines": {
     "node": ">=16"

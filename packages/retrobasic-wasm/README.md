@@ -74,4 +74,4 @@ npm run test
 
 ## License
 
-[GPL-2.0](https://github.com/minhqdao/bwbasic-wasm/blob/main/LICENSE)
+[GPL-2.0](https://github.com/minhqdao/basicade/blob/main/LICENSE)

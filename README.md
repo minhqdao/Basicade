@@ -1,4 +1,4 @@
-# basic-wasm
+# Basicade
 
 Monorepo containing WebAssembly ports of BASIC interpreters.
 
