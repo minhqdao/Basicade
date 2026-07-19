@@ -29,7 +29,6 @@ const sharedKeys = new Uint8Array(keys);
 let terminalText = "";
 let currentInput = "";
 let waitingForInput = false;
-let cursorVisible = false;
 
 // Ensure memory is completely cleared out at start
 Atomics.store(sharedBuffer, 0, 0);
@@ -37,11 +36,6 @@ Atomics.store(sharedKeys, 0, 0);
 
 const response = await fetch(`../../${game}`);
 const source = await response.text();
-
-const cursorTimer = setInterval(() => {
-  cursorVisible = !cursorVisible;
-  render();
-}, 500);
 
 const worker = new Worker("./worker.js", { type: "module" });
 
@@ -57,12 +51,10 @@ worker.onmessage = (e) => {
   } else if (e.data.type === "REQUEST_INPUT") {
     currentInput = "";
     waitingForInput = true;
-    cursorVisible = true;
     render();
   } else if (e.data.type === "EXIT") {
     appendOutput("\n*** SYSTEM OFFLINE ***");
     waitingForInput = false;
-    clearInterval(cursorTimer);
     worker.terminate();
   }
 };
@@ -76,7 +68,7 @@ function appendOutput(text) {
 function render() {
   output.textContent = terminalText;
   input.textContent = waitingForInput ? currentInput : "";
-  cursor.textContent = waitingForInput && cursorVisible ? "_" : "";
+  cursor.textContent = waitingForInput ? "_" : "";
 }
 
 document.addEventListener("keydown", (e) => {

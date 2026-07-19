@@ -130,6 +130,16 @@
         overflow-wrap: break-word;
       }
 
+      #cursor {
+        animation: cursor-blink 1s steps(1) infinite;
+      }
+
+      @keyframes cursor-blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
       @keyframes phosphor {
         0%,
         100% {
