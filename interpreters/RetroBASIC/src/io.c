@@ -460,7 +460,12 @@ int raw_mode_input_line(char *buffer, size_t size)
   /* Windows falls back to canonical fgets behavior for INPUT */
   return (fgets(buffer, size, stdin) == buffer) ? 1 : 0;
 #else
-  /* If stdin is not a TTY, use fgets instead of raw mode */
+  /* If stdin is not a TTY, use fgets instead of raw mode.
+   * Emscripten always reports isatty()=true for FS.init stdin, but select()
+   * cannot detect data on it, so we must use fgets there too. */
+#if defined(__EMSCRIPTEN__)
+  return (fgets(buffer, size, stdin) == buffer) ? 1 : 0;
+#else
   if (!isatty(STDIN_FILENO)) {
     return (fgets(buffer, size, stdin) == buffer) ? 1 : 0;
   }
@@ -532,5 +537,6 @@ int raw_mode_input_line(char *buffer, size_t size)
   
   buffer[pos] = '\0';
   return 1;  /* buffer full */
+#endif /* !__EMSCRIPTEN__ */
 #endif
 }
