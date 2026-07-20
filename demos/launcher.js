@@ -9,7 +9,6 @@ const output = document.getElementById("output");
 const input = document.getElementById("input");
 const cursor = document.getElementById("cursor");
 const screen = document.getElementById("screen");
-const terminalHeader = document.getElementById("terminal-header");
 const gameSelect = document.getElementById("game-select");
 const interpreterSelect = document.getElementById("interpreter-select");
 const status = document.getElementById("status");
@@ -21,7 +20,6 @@ if (canonicalUrl.href !== window.location.href) {
 }
 
 document.title = `${selection.game.title} — Basicade`;
-terminalHeader.textContent = `${selection.game.title} — ${selection.interpreter.name}`;
 
 const gameCollections = new Map();
 for (const game of Object.values(games)) {

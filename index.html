@@ -56,29 +56,13 @@
         position: absolute;
         z-index: 2;
       }
-      #terminal-header {
-        align-items: center;
-        background: #111512;
-        color: rgba(255,255,255,.35);
-        display: flex;
-        font-size: 12px;
-        height: 38px;
-        inset: 0 0 auto;
-        justify-content: center;
-        letter-spacing: .08em;
-        padding: 0 16px;
-        position: absolute;
-        text-align: center;
-        text-transform: uppercase;
-        z-index: 3;
-      }
       #screen {
         color: #c8f8c8;
         font: inherit;
         height: 100%;
         line-height: 1.2;
         overflow-y: auto;
-        padding: 54px 28px 28px;
+        padding: 28px;
         scrollbar-width: none;
         text-shadow: 0 0 2px rgba(200,248,200,.35);
       }
@@ -91,7 +75,7 @@
         .launcher { grid-template-columns: 1fr; }
         #status { grid-column: auto; }
         #terminal-container { height: calc(100vh - 200px); }
-        #screen { font-size: 14px; padding: 54px 18px 18px; }
+        #screen { font-size: 14px; padding: 18px; }
       }
     </style>
   </head>
@@ -110,7 +94,6 @@
         <p id="status" hidden role="status"></p>
       </section>
       <div id="terminal-container">
-        <div id="terminal-header"></div>
         <div id="screen">
           <pre id="terminal"><span id="output"></span><span id="input"></span><span id="cursor"></span></pre>
         </div>
