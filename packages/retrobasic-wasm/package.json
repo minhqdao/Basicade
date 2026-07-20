@@ -45,12 +45,11 @@
     "retrobasic",
     "wasm",
     "webassembly",
-    "emscripten",
-    "compiler",
     "interpreter",
+    "ms-basic",
+    "lex",
+    "yacc",
     "emulator",
-    "retro",
-    "retro-gaming",
-    "vintage-computing"
+    "retro"
   ]
 }

@@ -43,21 +43,14 @@
   },
   "keywords": [
     "basic",
-    "bywater-basic",
     "bwbasic",
+    "bywater-basic",
     "ansi-basic",
     "wasm",
     "webassembly",
-    "emscripten",
-    "compiler",
     "interpreter",
     "emulator",
-    "legacy",
-    "legacy-computing",
     "retro",
-    "retro-gaming",
-    "vintage-computing",
-    "classic-games",
-    "text-adventure"
+    "oregon-trail"
   ]
 }
