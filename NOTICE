@@ -1,0 +1,20 @@
+Basicade includes and builds on third-party software and program sources.
+
+Bywater BASIC
+  Copyright holders include Ted A. Campbell, Jon B. Volkoff, Howard Wulf, and
+  Ken Martin. The vendored source is in interpreters/bwbasic and is distributed
+  under GPL-2.0; its source notices are retained in the files.
+
+RetroBASIC
+  Copyright (C) 2020 Maury Markowitz. The vendored source is in
+  interpreters/RetroBASIC and is distributed under GPL-2.0-or-later; its source
+  notices are retained in the files.
+
+The Oregon Trail example
+  The example in examples/oregon-trail was sourced from
+  https://github.com/clintmoyer/oregon-trail and is provided there under the
+  Unlicense. See its local README.md and LICENSE.
+
+RetroBASIC test programs
+  Test fixtures in test/retrobasic originate from RetroBASIC and carry their
+  own GPL-2.0 licence and attribution.

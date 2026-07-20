@@ -20,6 +20,10 @@ export const games = Object.freeze({
     title: "The Oregon Trail (1978)",
     description: "The original BASIC edition of the trail survival classic.",
     sourcePath: "examples/oregon-trail/oregon.bas",
+    source: Object.freeze({
+      url: "https://github.com/clintmoyer/oregon-trail",
+      license: "Unlicense",
+    }),
     interpreters: Object.freeze(["bwbasic", "retrobasic"]),
   }),
 });

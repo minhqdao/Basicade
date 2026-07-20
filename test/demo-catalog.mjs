@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_GAME_ID,
   games,
+  interpreters,
   resolveSelection,
   selectionUrl,
 } from "../demos/catalog.js";
@@ -19,6 +20,15 @@ assert.equal(requestedSelection.interpreter.id, "retrobasic");
 const invalidSelection = resolveSelection("?game=missing&interpreter=missing");
 assert.equal(invalidSelection.game.id, DEFAULT_GAME_ID);
 assert.equal(invalidSelection.interpreter.id, "bwbasic");
+
+for (const game of Object.values(games)) {
+  assert.match(game.sourcePath, /^examples\/[a-z0-9-]+\/.+\.bas$/);
+  assert.ok(game.source.url.startsWith("https://"));
+  assert.equal(typeof game.source.license, "string");
+  for (const interpreterId of game.interpreters) {
+    assert.ok(interpreterId in interpreters);
+  }
+}
 
 const url = selectionUrl(new URL("https://example.test/basicade/?ref=readme"), {
   game: games["oregon-trail"],
