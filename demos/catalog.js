@@ -1,4 +1,4 @@
-export const DEFAULT_GAME_ID = "creative-computing-magazine";
+export const DEFAULT_GAME_ID = "oregon-trail";
 export const DEFAULT_INTERPRETER_ID = "bwbasic";
 
 export const interpreters = Object.freeze({
@@ -274,11 +274,12 @@ const basicComputerGames = basicComputerGamesFiles.map((file) => [
 ]);
 
 export const games = Object.freeze({
-  "creative-computing-magazine": Object.freeze({
-    id: "creative-computing-magazine",
+  "oregon-trail": Object.freeze({
+    id: "oregon-trail",
     title: "The Oregon Trail",
     collection: "Creative Computing Magazine",
     description: "The original BASIC edition of the trail survival classic.",
+    route: "oregon-trail",
     sourcePath: "examples/creative-computing-magazine/oregon.bas",
     source: Object.freeze({
       url: "https://github.com/clintmoyer/oregon-trail",
@@ -290,9 +291,21 @@ export const games = Object.freeze({
   ...Object.fromEntries(basicComputerGames),
 });
 
-export function resolveSelection(search = "") {
+function routeGameId(pathname) {
+  const route = pathname.split("/").filter(Boolean).at(-1);
+  if (!route) return undefined;
+  return Object.values(games).find((game) => game.route === route)?.id;
+}
+
+function basePathname(pathname) {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length && routeGameId(`/${parts.at(-1)}/`)) parts.pop();
+  return `/${parts.length ? `${parts.join("/")}/` : ""}`;
+}
+
+export function resolveSelection(search = "", pathname = "") {
   const params = new URLSearchParams(search);
-  const requestedGameId = params.get("game");
+  const requestedGameId = params.get("game") ?? routeGameId(pathname);
   const game = games[requestedGameId] ?? games[DEFAULT_GAME_ID];
   const requestedInterpreterId = params.get("interpreter");
   const interpreterId = game.interpreters.includes(requestedInterpreterId)
@@ -309,7 +322,20 @@ export function resolveSelection(search = "") {
 
 export function selectionUrl(location, { game, interpreter }) {
   const url = new URL(location.href);
-  url.searchParams.set("game", game.id);
-  url.searchParams.set("interpreter", interpreter.id);
+  const basePath = basePathname(url.pathname);
+
+  if (game.route) {
+    url.pathname = `${basePath}${game.route}/`;
+    url.searchParams.delete("game");
+    if (interpreter.id === DEFAULT_INTERPRETER_ID) {
+      url.searchParams.delete("interpreter");
+    } else {
+      url.searchParams.set("interpreter", interpreter.id);
+    }
+  } else {
+    url.pathname = basePath;
+    url.searchParams.set("game", game.id);
+    url.searchParams.set("interpreter", interpreter.id);
+  }
   return url;
 }

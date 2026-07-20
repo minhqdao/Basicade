@@ -14,9 +14,9 @@ assert.equal(defaultSelection.game.id, DEFAULT_GAME_ID);
 assert.equal(defaultSelection.interpreter.id, "bwbasic");
 
 const requestedSelection = resolveSelection(
-  "?game=creative-computing-magazine&interpreter=retrobasic",
+  "?game=oregon-trail&interpreter=retrobasic",
 );
-assert.equal(requestedSelection.game.id, "creative-computing-magazine");
+assert.equal(requestedSelection.game.id, "oregon-trail");
 assert.equal(requestedSelection.interpreter.id, "retrobasic");
 
 const basic101Selection = resolveSelection(
@@ -25,6 +25,10 @@ const basic101Selection = resolveSelection(
 assert.equal(basic101Selection.game.id, "101-aceydu");
 assert.equal(basic101Selection.game.collection, "101 BASIC Computer Games");
 assert.equal(basic101Selection.interpreter.id, "retrobasic");
+
+const oregonTrailSelection = resolveSelection("", "/basicade/oregon-trail/");
+assert.equal(oregonTrailSelection.game.id, "oregon-trail");
+assert.equal(oregonTrailSelection.interpreter.id, "bwbasic");
 
 const invalidSelection = resolveSelection("?game=missing&interpreter=missing");
 assert.equal(invalidSelection.game.id, DEFAULT_GAME_ID);
@@ -75,10 +79,20 @@ for (const source of basicComputerGamesCatalogSources) {
 }
 
 const url = selectionUrl(new URL("https://example.test/basicade/?ref=readme"), {
-  game: games["creative-computing-magazine"],
-  interpreter: requestedSelection.interpreter,
+  game: games["101-aceydu"],
+  interpreter: interpreters.retrobasic,
 });
 assert.equal(url.pathname, "/basicade/");
-assert.equal(url.search, "?ref=readme&game=creative-computing-magazine&interpreter=retrobasic");
+assert.equal(url.search, "?ref=readme&game=101-aceydu&interpreter=retrobasic");
+
+const oregonTrailUrl = selectionUrl(
+  new URL("https://example.test/basicade/?ref=readme"),
+  {
+    game: games["oregon-trail"],
+    interpreter: interpreters.bwbasic,
+  },
+);
+assert.equal(oregonTrailUrl.pathname, "/basicade/oregon-trail/");
+assert.equal(oregonTrailUrl.search, "?ref=readme");
 
 console.log("test: demo catalog URL selection");

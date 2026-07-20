@@ -5,7 +5,7 @@ JavaScript environments. It ports established BASIC interpreters to WebAssembly,
 publishes them as npm packages, and uses the same runtime in a browser game
 launcher.
 
-The project starts with Creative Computing Magazine's Oregon Trail and is being prepared for a carefully
+The project starts with Creative Computing Magazine's [Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) and is being prepared for a carefully
 sourced catalogue of the games in David Ahl's *101 BASIC Games*.
 
 ## What is here
@@ -33,11 +33,15 @@ npm run dev
 The launcher opens at:
 
 ```text
-http://localhost:5173/?game=creative-computing-magazine&interpreter=bwbasic
+http://localhost:5173/oregon-trail/
 ```
 
 Change `interpreter` to `retrobasic` to run the same program with RetroBASIC.
-Both the game and interpreter are explicit, shareable URL parameters.
+Named games can have clean, shareable paths; the catalogue also supports explicit
+game and interpreter URL parameters for every other selection.
+
+Production builds target the GitHub Pages project path `/basicade/` by default.
+Set `BASICADE_BASE_PATH` when deploying the static bundle somewhere else.
 
 ## How the launcher grows
 

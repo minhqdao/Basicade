@@ -52,12 +52,12 @@
     "compiler",
     "interpreter",
     "emulator",
+    "legacy",
+    "legacy-computing",
     "retro",
     "retro-gaming",
     "vintage-computing",
     "classic-games",
-    "text-adventure",
-    "oregon-trail",
-    "creative-computing-magazine"
+    "text-adventure"
   ]
 }

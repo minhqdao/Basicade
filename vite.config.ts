@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
-import { cp } from "node:fs/promises";
+import { cp, mkdir } from "node:fs/promises";
+import { staticRoutes } from "./demos/routes.js";
 
 function copyLauncherAssets() {
   return {
@@ -16,11 +17,21 @@ function copyLauncherAssets() {
           { recursive: true },
         ),
       ]);
+      await Promise.all(
+        staticRoutes.map(async (route) => {
+          await mkdir(`dist/${route}`, { recursive: true });
+          await cp("dist/index.html", `dist/${route}/index.html`);
+        }),
+      );
     },
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base:
+    command === "build"
+      ? process.env.BASICADE_BASE_PATH ?? "/basicade/"
+      : "/",
   server: {
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
@@ -28,4 +39,4 @@ export default defineConfig({
     },
   },
   plugins: [copyLauncherAssets()],
-});
+}));
