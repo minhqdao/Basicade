@@ -106,6 +106,78 @@ const basic101Games = basic101Files.map((file) => [
   }),
 ]);
 
+const basicComputerGamesFiles = Object.freeze([
+  "23matches", "3dplot", "aceyducey", "amazing", "animal", "awari",
+  "bagels", "banner", "basketball", "batnum", "battle", "blackjack",
+  "bombardment", "bombsaway", "bounce", "bowling", "boxing", "bug",
+  "bullfight", "bullseye", "bunny", "buzzword", "calendar", "change",
+  "checkers", "chemist", "chief", "chomp", "civilwar", "combat", "craps",
+  "cube", "depthcharge", "diamond", "dice", "digits", "evenwins", "flipflop",
+  "football", "ftball", "furtrader", "gameofevenwins", "golf", "gomoko",
+  "guess", "gunner", "hammurabi", "hangman", "hello", "hexapawn", "hi-lo",
+  "highiq", "hockey", "horserace", "hurkle", "kinema", "king", "lem", "letter",
+  "life", "lifefortwo", "litquiz", "love", "lunar", "mastermind", "mathdice",
+  "mugwump", "name", "nicomachus", "nim", "number", "onecheck", "orbit", "pizza",
+  "poetry", "poker", "qubit", "queen", "reverse", "rocket", "rockscissors",
+  "roulette", "russianroulette", "salvo", "sinewave", "slalom", "slots", "splat",
+  "stars", "stockmarket", "superstartrekins", "synonym", "target", "test", "test1",
+  "tictactoe1", "tictactoe2", "tower", "train", "trap", "war", "weekday", "word",
+]);
+
+const basicComputerGamesBwbasicOnly = new Set([
+  "bagels",
+  "banner",
+  "bug",
+  "flipflop",
+  "golf",
+  "lem",
+  "letter",
+  "orbit",
+]);
+
+const basicComputerGamesTitles = Object.freeze({
+  "23matches": "23 Matches",
+  "3dplot": "3D Plot",
+  aceyducey: "Acey-Ducey",
+  "hi-lo": "Hi-Lo",
+  gameofevenwins: "Game of Even Wins",
+  lifefortwo: "Life for Two",
+  mathdice: "Math Dice",
+  onecheck: "One Check",
+  rockscissors: "Rock, Scissors, Paper",
+  russianroulette: "Russian Roulette",
+  sinewave: "Sine Wave",
+  stockmarket: "Stock Market",
+  superstartrekins: "Super Star Trek Instructions",
+  tictactoe1: "Tic-Tac-Toe I",
+  tictactoe2: "Tic-Tac-Toe II",
+});
+
+function titleFromFile(file) {
+  return basicComputerGamesTitles[file] ?? file[0].toUpperCase() + file.slice(1);
+}
+
+const basicComputerGames = basicComputerGamesFiles.map((file) => [
+  `bcg-${file}`,
+  Object.freeze({
+    id: `bcg-${file}`,
+    title: titleFromFile(file),
+    collection: "BASIC Computer Games",
+    description: "A classic BASIC program verified to start in Basicade.",
+    sourcePath: `examples/basic-computer-games/${file}.bas`,
+    source: Object.freeze({
+      url: "https://archive.org/details/Basic_Computer_Games_Microcomputer_Edition_1978_Creative_Computing",
+      license: "Source provenance and licence record pending",
+    }),
+    interpreters: Object.freeze(
+      basicComputerGamesBwbasicOnly.has(file)
+        ? ["bwbasic"]
+        : ["bwbasic", "retrobasic"],
+    ),
+    compatibility: "smoke-tested",
+  }),
+]);
+
 export const games = Object.freeze({
   "creative-computing-magazine": Object.freeze({
     id: "creative-computing-magazine",
@@ -120,6 +192,7 @@ export const games = Object.freeze({
     interpreters: Object.freeze(["bwbasic", "retrobasic"]),
   }),
   ...Object.fromEntries(basic101Games),
+  ...Object.fromEntries(basicComputerGames),
 });
 
 export function resolveSelection(search = "") {

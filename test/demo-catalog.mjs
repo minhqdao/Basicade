@@ -48,6 +48,15 @@ for (const source of basic101CatalogSources) {
   assert.ok(existsSync(resolve("examples/101-basic-computer-games", source)));
 }
 
+const basicComputerGamesCatalogSources = Object.values(games)
+  .filter((game) => game.collection === "BASIC Computer Games")
+  .map((game) => game.sourcePath.split("/").pop())
+  .sort();
+assert.equal(basicComputerGamesCatalogSources.length, 103);
+for (const source of basicComputerGamesCatalogSources) {
+  assert.ok(existsSync(resolve("examples/basic-computer-games", source)));
+}
+
 const url = selectionUrl(new URL("https://example.test/basicade/?ref=readme"), {
   game: games["creative-computing-magazine"],
   interpreter: requestedSelection.interpreter,

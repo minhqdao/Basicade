@@ -24,3 +24,8 @@ compatibility work. Only its
 registered in the launcher. Its
 [licence status](101-basic-computer-games/LICENSE-STATUS.md) must be resolved
 before public deployment.
+
+The locally imported `basic-computer-games` collection has a separately
+smoke-tested subset in the launcher. Its source provenance and licence record
+are still pending; see its [licence status](basic-computer-games/LICENSE-STATUS.md)
+before public deployment.

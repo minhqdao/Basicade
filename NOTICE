@@ -18,8 +18,13 @@ The Oregon Trail example
 101 BASIC Computer Games collection
   Files in examples/101-basic-computer-games were imported from
   maurymarkowitz/101-BASIC-Computer-Games. No explicit licence is included
-  upstream. See examples/101-basic-computer-games/LICENSE-STATUS.md before
-  redistributing these files.
+ upstream. See examples/101-basic-computer-games/LICENSE-STATUS.md before
+ redistributing these files.
+
+BASIC Computer Games collection
+  Files in examples/basic-computer-games were added locally without an
+  accompanying source URL or licence record. See
+  examples/basic-computer-games/LICENSE-STATUS.md before redistributing them.
 
 RetroBASIC test programs
   Test fixtures in test/retrobasic originate from RetroBASIC and carry their
