@@ -1,30 +1,45 @@
-Basicade includes and builds on third-party software and program sources.
+Copyrightable contributions to Basicade are licensed under the MIT License in
+the repository root, except where a file or distributable artifact states
+otherwise. That license does not relicense vendored interpreters, their derived
+WASM packages, third-party test fixtures, or historical program listings.
+Those components retain the terms and notices below.
 
 Bywater BASIC
   Copyright holders include Ted A. Campbell, Jon B. Volkoff, Howard Wulf, and
   Ken Martin. The vendored source is in interpreters/bwbasic and is distributed
-  under GPL-2.0; its source notices are retained in the files.
+  under GPL-2.0; see interpreters/bwbasic/README.md and LICENSE.
 
 RetroBASIC
   Copyright (C) 2020 Maury Markowitz. The vendored source is in
-  interpreters/RetroBASIC and is distributed under GPL-2.0-or-later; its source
-  notices are retained in the files.
+  interpreters/RetroBASIC and is distributed under GPL-2.0-or-later; see its
+  README.md and LICENCE.
 
 The Oregon Trail example
-  The example in examples/creative-computing-magazine was sourced from
+  The original game was created in 1971 by Don Rawitsch, Bill Heinemann, and
+  Paul Dillenberger. A BASIC listing by Rawitsch was published in *Creative
+  Computing*, May–June 1978. The example in
+  examples/creative-computing-magazine was sourced from
   https://github.com/clintmoyer/oregon-trail and is provided there under the
   Unlicense. See its local README.md and LICENSE.
 
 101 BASIC Computer Games collection
   Files in examples/101-basic-computer-games were imported from
-  maurymarkowitz/101-BASIC-Computer-Games. No explicit licence is included
- upstream. See examples/101-basic-computer-games/LICENSE-STATUS.md before
- redistributing these files.
+  maurymarkowitz/101-BASIC-Computer-Games at the recorded commit. The source
+  book was edited and compiled by David H. Ahl; its Internet Archive record is
+  marked Public Domain Mark 1.0. Ahl later formally placed the publications he
+  wrote or edited in the public domain:
+  https://blog.adafruit.com/2022/06/16/david-ahl-places-all-his-classic-computing-publications-into-the-public-domain/
+  These files are maintained here for historical, educational, and archival
+  preservation; Basicade does not claim authorship of the original listings.
+  See examples/101-basic-computer-games/LICENSE-STATUS.md.
 
 BASIC Computer Games collection
-  Files in examples/basic-computer-games were added locally without an
-  accompanying source URL or licence record. See
-  examples/basic-computer-games/LICENSE-STATUS.md before redistributing them.
+  The 1978 collection was edited and compiled by David H. Ahl. His public-domain
+  declaration above covers the publications he wrote or edited. Files in
+  examples/basic-computer-games are maintained strictly for historical,
+  educational, and archival preservation. Basicade does not claim authorship or
+  relicense the original listings. See
+  examples/basic-computer-games/LICENSE-STATUS.md.
 
 RetroBASIC test programs
   Test fixtures in test/retrobasic originate from RetroBASIC and carry their

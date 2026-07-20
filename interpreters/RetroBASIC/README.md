@@ -1,8 +1,8 @@
 # RetroBASIC interpreter
 
-The RetroBASIC interpreter was taken from the
-[RetroBASIC repository](https://github.com/maurymarkowitz/RetroBASIC).
+Vendored from [maurymarkowitz/RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC)
+for the Basicade WebAssembly build.
 
 ## License
 
-[GPL-2.0](LICENSE)
+[GPL-2.0-or-later](LICENCE)
