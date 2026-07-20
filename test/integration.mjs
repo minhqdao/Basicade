@@ -28,7 +28,7 @@ const oregonPath = resolve(
   __dirname,
   "..",
   "examples",
-  "oregon-trail",
+  "creative-computing-magazine",
   "oregon.bas",
 );
 

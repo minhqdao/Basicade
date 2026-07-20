@@ -14,9 +14,9 @@ assert.equal(defaultSelection.game.id, DEFAULT_GAME_ID);
 assert.equal(defaultSelection.interpreter.id, "bwbasic");
 
 const requestedSelection = resolveSelection(
-  "?game=oregon-trail&interpreter=retrobasic",
+  "?game=creative-computing-magazine&interpreter=retrobasic",
 );
-assert.equal(requestedSelection.game.id, "oregon-trail");
+assert.equal(requestedSelection.game.id, "creative-computing-magazine");
 assert.equal(requestedSelection.interpreter.id, "retrobasic");
 
 const basic101Selection = resolveSelection(
@@ -49,10 +49,10 @@ for (const source of basic101CatalogSources) {
 }
 
 const url = selectionUrl(new URL("https://example.test/basicade/?ref=readme"), {
-  game: games["oregon-trail"],
+  game: games["creative-computing-magazine"],
   interpreter: requestedSelection.interpreter,
 });
 assert.equal(url.pathname, "/basicade/");
-assert.equal(url.search, "?ref=readme&game=oregon-trail&interpreter=retrobasic");
+assert.equal(url.search, "?ref=readme&game=creative-computing-magazine&interpreter=retrobasic");
 
 console.log("test: demo catalog URL selection");

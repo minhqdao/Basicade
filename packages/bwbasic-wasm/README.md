@@ -5,7 +5,7 @@
 
 Run [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) programs wherever JavaScript runs. `bwbasic-wasm` packages the interpreter as a single-file WebAssembly bundle, so there is no separate `.wasm` asset to host or fetch.
 
-It is a natural fit for preserving ANSI BASIC programs and running retro text games such as [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) in Node.js or the browser.
+It is a natural fit for preserving ANSI BASIC programs and running retro text games such as [The Oregon Trail](https://minhqdao.github.io/basicade/creative-computing-magazine/) in Node.js or the browser.
 
 ## Install
 
@@ -107,7 +107,7 @@ Bywater BASIC implements its own ANSI BASIC dialect. Program compatibility depen
 
 ## Demo
 
-The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) BASIC program in an interactive retro terminal.
+The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/basicade/creative-computing-magazine/) BASIC program in an interactive retro terminal.
 
 ## Development
 

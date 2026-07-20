@@ -5,7 +5,7 @@ JavaScript environments. It ports established BASIC interpreters to WebAssembly,
 publishes them as npm packages, and uses the same runtime in a browser game
 launcher.
 
-The project starts with The Oregon Trail and is being prepared for a carefully
+The project starts with Creative Computing Magazine's Oregon Trail and is being prepared for a carefully
 sourced catalogue of the games in David Ahl's *101 BASIC Games*.
 
 ## What is here
@@ -33,7 +33,7 @@ npm run dev
 The launcher opens at:
 
 ```text
-http://localhost:5173/?game=oregon-trail&interpreter=bwbasic
+http://localhost:5173/?game=creative-computing-magazine&interpreter=bwbasic
 ```
 
 Change `interpreter` to `retrobasic` to run the same program with RetroBASIC.

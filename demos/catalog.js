@@ -1,4 +1,4 @@
-export const DEFAULT_GAME_ID = "oregon-trail";
+export const DEFAULT_GAME_ID = "creative-computing-magazine";
 export const DEFAULT_INTERPRETER_ID = "bwbasic";
 
 export const interpreters = Object.freeze({
@@ -107,12 +107,12 @@ const basic101Games = basic101Files.map((file) => [
 ]);
 
 export const games = Object.freeze({
-  "oregon-trail": Object.freeze({
-    id: "oregon-trail",
+  "creative-computing-magazine": Object.freeze({
+    id: "creative-computing-magazine",
     title: "The Oregon Trail",
     collection: "Creative Computing Magazine",
     description: "The original BASIC edition of the trail survival classic.",
-    sourcePath: "examples/oregon-trail/oregon.bas",
+    sourcePath: "examples/creative-computing-magazine/oregon.bas",
     source: Object.freeze({
       url: "https://github.com/clintmoyer/oregon-trail",
       license: "Unlicense",

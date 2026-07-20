@@ -7,7 +7,7 @@ their provenance may differ from the interpreter code around them.
 ## Adding a program
 
 Use a stable, lowercase game ID for the directory and URL, for example
-`examples/oregon-trail/`. Include:
+`examples/creative-computing-magazine/`. Include:
 
 - the original or faithfully sourced BASIC file;
 - `README.md` with title, source URL, attribution, and any adaptation notes;
