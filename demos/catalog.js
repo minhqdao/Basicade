@@ -204,7 +204,6 @@ const basicComputerGamesFiles = Object.freeze([
   "test",
   "test1",
   "tictactoe1",
-  "tictactoe2",
   "tower",
   "train",
   "trap",
@@ -243,7 +242,6 @@ const basicComputerGamesTitles = Object.freeze({
   superstartrek: "Super Star Trek",
   superstartrekins: "Super Star Trek Instructions",
   tictactoe1: "Tic-Tac-Toe I",
-  tictactoe2: "Tic-Tac-Toe II",
 });
 
 function titleFromFile(file) {
