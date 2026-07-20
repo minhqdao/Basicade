@@ -43,7 +43,7 @@ const basic101CatalogSources = Object.values(games)
   .filter((game) => game.collection === "101 BASIC Computer Games")
   .map((game) => game.sourcePath.split("/").pop())
   .sort();
-assert.equal(basic101CatalogSources.length, 24);
+assert.equal(basic101CatalogSources.length, 39);
 for (const source of basic101CatalogSources) {
   assert.ok(existsSync(resolve("examples/101-basic-computer-games", source)));
 }

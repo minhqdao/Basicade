@@ -195,6 +195,8 @@ ERN       { return ER; }
 ERR\$     { return ERR; }
 
  /* various operators and punctuation */
+ /* Basicade: BASIC-PLUS uses backslash as a statement separator. */
+\\                              { return ':'; }
 [:,;()\[\]\^=+\-*/\<\>\&]     { return yytext[0]; }
 MOD       { return MOD; }
 DIV       { return DIV; }
@@ -346,7 +348,7 @@ NUM       { return NUM; }  // number of items type in a single INPUT, or VAL in 
 [,] { return ','; } // triggers the exprlist syntax
  
  /* colons or line-ends end the data statement and reset the state */
-[:] { BEGIN(INITIAL); return ':'; }
+[:\\] { BEGIN(INITIAL); return ':'; }
 [\n] { BEGIN(INITIAL); return '\n'; }
 }
 
