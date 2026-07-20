@@ -16,6 +16,10 @@ function copyLauncherAssets() {
           "dist/packages/retrobasic-wasm/wasm",
           { recursive: true },
         ),
+        cp(
+          "node_modules/coi-serviceworker/coi-serviceworker.js",
+          "dist/coi-serviceworker.js",
+        ),
       ]);
       await Promise.all(
         staticRoutes.map(async (route) => {

@@ -29,3 +29,9 @@ BASIC Computer Games collection
 RetroBASIC test programs
   Test fixtures in test/retrobasic originate from RetroBASIC and carry their
   own GPL-2.0 licence and attribution.
+
+COI service worker
+  The browser demo bundles coi-serviceworker v0.1.7 by Guido Zuidhof and
+  contributors under the MIT licence. It enables cross-origin isolation on
+  hosts, including GitHub Pages, where response headers cannot be configured.
+  Source: https://github.com/gzuidhof/coi-serviceworker

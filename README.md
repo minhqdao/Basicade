@@ -42,6 +42,23 @@ game and interpreter URL parameters for every other selection.
 
 Production builds target the GitHub Pages project path `/basicade/` by default.
 Set `BASICADE_BASE_PATH` when deploying the static bundle somewhere else.
+The deployed demo uses a service worker to enable the cross-origin isolation
+required for interactive input on GitHub Pages; browsers reload once on the
+first visit to activate it.
+
+## Deploying the demo to GitHub Pages
+
+1. Push this repository to GitHub and make sure the deployment branch is named
+   `main`.
+2. In the repository, open **Settings** → **Pages**.
+3. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+4. Push to `main`, or run the **CI** workflow manually from the **Actions** tab.
+5. After the `deploy-pages` job succeeds, open the URL shown in its
+   `github-pages` environment. For this repository it is
+   `https://minhqdao.github.io/basicade/oregon-trail/`.
+
+The first visit may reload once while the service worker enables interactive
+input. Subsequent visits use the normal terminal immediately.
 
 ## How the launcher grows
 
