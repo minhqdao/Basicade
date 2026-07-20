@@ -5,7 +5,9 @@
 
 Run [RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC) programs wherever JavaScript runs. `retrobasic-wasm` packages the interpreter as a single-file WebAssembly bundle, so there is no separate `.wasm` asset to host or fetch.
 
-Use it to preserve and run classic BASIC programs in Node.js or directly in the browser.
+It is a natural fit for preserving classic BASIC programs and running retro text
+games such as [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/)
+in Node.js or directly in the browser.
 
 ## Install
 
@@ -104,6 +106,12 @@ The package exports `runBasic`, `RunBasicOptions`, and `BasicOutputHandler`.
 ## Compatibility
 
 RetroBASIC implements its own BASIC dialect. Program compatibility depends on the statements and extensions a program uses; this package exposes the interpreter rather than translating BASIC to JavaScript.
+
+## Demo
+
+The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/)
+BASIC program in an interactive retro terminal. Select **RetroBASIC** in the
+interpreter menu to run it with this package.
 
 ## Development
 

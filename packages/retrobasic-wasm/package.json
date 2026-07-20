@@ -36,7 +36,8 @@
   "scripts": {
     "build": "rm -rf dist && tsc && tsup",
     "build:wasm": "bash ./scripts/build-wasm.sh",
-    "test": "npm run test:run-basic",
+    "test": "npm run test:run-basic && npm run test:echo",
+    "test:echo": "node test/echo.mjs",
     "test:run-basic": "node test/run-basic.mjs",
     "prepublishOnly": "npm run build:wasm && npm run build && npm run test"
   },

@@ -13,7 +13,10 @@ const gameSelect = document.getElementById("game-select");
 const interpreterSelect = document.getElementById("interpreter-select");
 const status = document.getElementById("status");
 
-const selection = resolveSelection(window.location.search, window.location.pathname);
+const selection = resolveSelection(
+  window.location.search,
+  window.location.pathname,
+);
 const canonicalUrl = selectionUrl(window.location, selection);
 if (canonicalUrl.href !== window.location.href) {
   window.history.replaceState(null, "", canonicalUrl);

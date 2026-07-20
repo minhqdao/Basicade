@@ -20,11 +20,26 @@ const exitCode = await runBasic({
 
 const fullOutput = output.join("\n");
 const fullErrors = errors.join("\n");
+const concurrentOutput = [];
+const concurrentExitCodes = await Promise.all(
+  ["First", "Second"].map((message) =>
+    runBasic({
+      source: `10 PRINT "${message}"\n20 END`,
+      onStdout: (line) => concurrentOutput.push(line),
+    }),
+  ),
+);
 const checks = [
   ["returns a successful exit code", exitCode === 0],
   ["reads multiple stdin lines in order", /Ada\s+Lovelace/i.test(fullOutput)],
   ["does not mutate the caller's input", input.join(",") === "Ada,Lovelace"],
   ["does not write to stderr", fullErrors.length === 0],
+  [
+    "keeps concurrent interpreter instances isolated",
+    concurrentExitCodes.every((code) => code === 0) &&
+      concurrentOutput.includes("First") &&
+      concurrentOutput.includes("Second"),
+  ],
 ];
 
 console.log("test: runBasic public API (bwbasic-wasm)\n");
