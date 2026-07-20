@@ -1,6 +1,6 @@
-# RetroBASIC test programs
+# RetroBASIC interpreter
 
-Test BASIC programs taken from the
+The RetroBASIC interpreter was taken from the
 [RetroBASIC repository](https://github.com/maurymarkowitz/RetroBASIC).
 
 ## License
