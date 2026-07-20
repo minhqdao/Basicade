@@ -110,8 +110,8 @@ const basic101Games = basic101Files.map((file) => [
 export const games = Object.freeze({
   "oregon-trail": Object.freeze({
     id: "oregon-trail",
-    title: "The Oregon Trail (1978)",
-    collection: "Basicade examples",
+    title: "The Oregon Trail",
+    collection: "Creative Computing Magazine",
     description: "The original BASIC edition of the trail survival classic.",
     sourcePath: "examples/oregon-trail/oregon.bas",
     source: Object.freeze({
