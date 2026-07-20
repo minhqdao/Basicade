@@ -14,7 +14,7 @@ const concurrency = 4;
 let nextJob = 0;
 
 function smokeTest({ game, interpreter }) {
-  return new Promise((resolveTest, rejectTest) => {
+  return new Promise((resolveTest) => {
     const child = spawn(process.execPath, [
       workerPath,
       interpreter,
@@ -33,7 +33,13 @@ function smokeTest({ game, interpreter }) {
     child.stderr.on("data", (chunk) => {
       output += chunk;
     });
-    child.on("error", rejectTest);
+    child.on("error", (error) =>
+      resolveTest({
+        game,
+        interpreter,
+        error: error.message,
+      }),
+    );
     child.on("close", (exitCode) => {
       clearTimeout(timeout);
       const started = output.includes("__BASICADE_STARTED__");
@@ -42,11 +48,11 @@ function smokeTest({ game, interpreter }) {
           output,
         );
       if (!started || hasInterpreterError) {
-        rejectTest(
-          new Error(
-            `${game.id} (${interpreter}) failed WASM startup smoke test${timedOut ? " (timed out)" : ""}${exitCode ? ` (exit ${exitCode})` : ""}:\n${output.slice(0, 500)}`,
-          ),
-        );
+        resolveTest({
+          game,
+          interpreter,
+          error: `failed WASM startup smoke test${timedOut ? " (timed out)" : ""}${exitCode ? ` (exit ${exitCode})` : ""}: ${output.slice(0, 500)}`,
+        });
         return;
       }
       resolveTest();
@@ -56,14 +62,25 @@ function smokeTest({ game, interpreter }) {
 
 async function runWorker() {
   while (nextJob < jobs.length) {
-    await smokeTest(jobs[nextJob++]);
+    const result = await smokeTest(jobs[nextJob++]);
+    if (result) failures.push(result);
   }
 }
 
+const failures = [];
 await Promise.all(Array.from({ length: concurrency }, runWorker));
 
-assert.equal(gamesToTest.length, 103);
+assert.equal(gamesToTest.length, 104);
 assert.equal(jobs.length, 198);
+assert.deepEqual(
+  failures,
+  [],
+  failures
+    .map(
+      ({ game, interpreter, error }) => `${game.id} (${interpreter}): ${error}`,
+    )
+    .join("\n\n"),
+);
 console.log(
   `test: started ${gamesToTest.length} BASIC Computer Games with ${jobs.length} WASM interpreter combinations`,
 );

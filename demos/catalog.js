@@ -120,7 +120,7 @@ const basicComputerGamesFiles = Object.freeze([
   "mugwump", "name", "nicomachus", "nim", "number", "onecheck", "orbit", "pizza",
   "poetry", "poker", "qubit", "queen", "reverse", "rocket", "rockscissors",
   "roulette", "russianroulette", "salvo", "sinewave", "slalom", "slots", "splat",
-  "stars", "stockmarket", "superstartrekins", "synonym", "target", "test", "test1",
+  "stars", "stockmarket", "superstartrek", "superstartrekins", "synonym", "target", "test", "test1",
   "tictactoe1", "tictactoe2", "tower", "train", "trap", "war", "weekday", "word",
 ]);
 
@@ -133,7 +133,10 @@ const basicComputerGamesBwbasicOnly = new Set([
   "lem",
   "letter",
   "orbit",
+  "word",
 ]);
+
+const basicComputerGamesRetrobasicOnly = new Set(["superstartrek"]);
 
 const basicComputerGamesTitles = Object.freeze({
   "23matches": "23 Matches",
@@ -148,6 +151,7 @@ const basicComputerGamesTitles = Object.freeze({
   russianroulette: "Russian Roulette",
   sinewave: "Sine Wave",
   stockmarket: "Stock Market",
+  superstartrek: "Super Star Trek",
   superstartrekins: "Super Star Trek Instructions",
   tictactoe1: "Tic-Tac-Toe I",
   tictactoe2: "Tic-Tac-Toe II",
@@ -172,7 +176,9 @@ const basicComputerGames = basicComputerGamesFiles.map((file) => [
     interpreters: Object.freeze(
       basicComputerGamesBwbasicOnly.has(file)
         ? ["bwbasic"]
-        : ["bwbasic", "retrobasic"],
+        : basicComputerGamesRetrobasicOnly.has(file)
+          ? ["retrobasic"]
+          : ["bwbasic", "retrobasic"],
     ),
     compatibility: "smoke-tested",
   }),

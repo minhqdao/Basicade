@@ -19,7 +19,10 @@ await runBasic({
       process.stdout.write("__BASICADE_STARTED__\n");
     }
   },
-  onStderr: (line) => output.push(line),
+  onStderr: (line) => {
+    output.push(line);
+    process.stderr.write(`${line}\n`);
+  },
 });
 
 assert.ok(started, "program produced no startup output");
