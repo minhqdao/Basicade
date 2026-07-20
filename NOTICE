@@ -15,6 +15,12 @@ The Oregon Trail example
   https://github.com/clintmoyer/oregon-trail and is provided there under the
   Unlicense. See its local README.md and LICENSE.
 
+101 BASIC Computer Games collection
+  Files in examples/101-basic-computer-games were imported from
+  maurymarkowitz/101-BASIC-Computer-Games. No explicit licence is included
+  upstream. See examples/101-basic-computer-games/LICENSE-STATUS.md before
+  redistributing these files.
+
 RetroBASIC test programs
   Test fixtures in test/retrobasic originate from RetroBASIC and carry their
   own GPL-2.0 licence and attribution.

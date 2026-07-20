@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readdirSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   DEFAULT_GAME_ID,
   games,
@@ -17,6 +19,13 @@ const requestedSelection = resolveSelection(
 assert.equal(requestedSelection.game.id, "oregon-trail");
 assert.equal(requestedSelection.interpreter.id, "retrobasic");
 
+const basic101Selection = resolveSelection(
+  "?game=101-aceydu&interpreter=retrobasic",
+);
+assert.equal(basic101Selection.game.id, "101-aceydu");
+assert.equal(basic101Selection.game.collection, "101 BASIC Computer Games");
+assert.equal(basic101Selection.interpreter.id, "retrobasic");
+
 const invalidSelection = resolveSelection("?game=missing&interpreter=missing");
 assert.equal(invalidSelection.game.id, DEFAULT_GAME_ID);
 assert.equal(invalidSelection.interpreter.id, "bwbasic");
@@ -29,6 +38,17 @@ for (const game of Object.values(games)) {
     assert.ok(interpreterId in interpreters);
   }
 }
+
+const basic101Sources = readdirSync(
+  resolve("examples/101-basic-computer-games"),
+)
+  .filter((file) => file.endsWith(".bas"))
+  .sort();
+const basic101CatalogSources = Object.values(games)
+  .filter((game) => game.collection === "101 BASIC Computer Games")
+  .map((game) => game.sourcePath.split("/").pop())
+  .sort();
+assert.deepEqual(basic101CatalogSources, basic101Sources);
 
 const url = selectionUrl(new URL("https://example.test/basicade/?ref=readme"), {
   game: games["oregon-trail"],

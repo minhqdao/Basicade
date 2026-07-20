@@ -17,3 +17,8 @@ Use a stable, lowercase game ID for the directory and URL, for example
 For the planned *101 BASIC Games* catalogue, verify redistribution rights for
 each source before adding it. The age or availability of a program is not, on
 its own, a licence to republish it.
+
+The imported `101-basic-computer-games` collection is available for local
+compatibility work and is registered as experimental RetroBASIC content. Its
+[licence status](101-basic-computer-games/LICENSE-STATUS.md) must be resolved
+before public deployment.

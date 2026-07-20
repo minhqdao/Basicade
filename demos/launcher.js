@@ -23,10 +23,22 @@ if (canonicalUrl.href !== window.location.href) {
 document.title = `${selection.game.title} — Basicade`;
 terminalHeader.textContent = `${selection.game.title} — ${selection.interpreter.name}`;
 
+const gameCollections = new Map();
 for (const game of Object.values(games)) {
-  gameSelect.add(
-    new Option(game.title, game.id, false, game.id === selection.game.id),
-  );
+  const collection = gameCollections.get(game.collection) ?? [];
+  collection.push(game);
+  gameCollections.set(game.collection, collection);
+}
+
+for (const [collection, collectionGames] of gameCollections) {
+  const group = document.createElement("optgroup");
+  group.label = collection;
+  for (const game of collectionGames) {
+    group.append(
+      new Option(game.title, game.id, false, game.id === selection.game.id),
+    );
+  }
+  gameSelect.append(group);
 }
 
 for (const interpreterId of selection.game.interpreters) {
