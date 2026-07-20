@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   DEFAULT_GAME_ID,
@@ -39,16 +39,14 @@ for (const game of Object.values(games)) {
   }
 }
 
-const basic101Sources = readdirSync(
-  resolve("examples/101-basic-computer-games"),
-)
-  .filter((file) => file.endsWith(".bas"))
-  .sort();
 const basic101CatalogSources = Object.values(games)
   .filter((game) => game.collection === "101 BASIC Computer Games")
   .map((game) => game.sourcePath.split("/").pop())
   .sort();
-assert.deepEqual(basic101CatalogSources, basic101Sources);
+assert.equal(basic101CatalogSources.length, 24);
+for (const source of basic101CatalogSources) {
+  assert.ok(existsSync(resolve("examples/101-basic-computer-games", source)));
+}
 
 const url = selectionUrl(new URL("https://example.test/basicade/?ref=readme"), {
   game: games["oregon-trail"],

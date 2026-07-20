@@ -19,6 +19,7 @@
     "lint": "eslint .",
     "test": "npm run test:demo && npm run test:integration && npm run test:retrobasic && npm run test:clk && npm run test:packages",
     "test:demo": "node test/demo-catalog.mjs",
+    "test:basic101:native": "make -C interpreters/RetroBASIC && node test/basic101-native-smoke.mjs",
     "test:integration": "node test/integration.mjs bwbasic && node test/integration.mjs retrobasic",
     "test:retrobasic": "node test/retrobasic.mjs bwbasic && node test/retrobasic.mjs retrobasic",
     "test:clk": "npm run test:clk -w packages/bwbasic-wasm",
