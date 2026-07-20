@@ -3,15 +3,17 @@
 [![npm](https://img.shields.io/npm/v/retrobasic-wasm.svg)](https://www.npmjs.com/package/retrobasic-wasm)
 [![license](https://img.shields.io/npm/l/retrobasic-wasm.svg)](https://github.com/minhqdao/basicade/blob/main/packages/retrobasic-wasm/LICENSE)
 
-[RetroBASIC](https://github.com/retrobasic/retrobasic) interpreter compiled to WebAssembly.
+Run [RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC) programs wherever JavaScript runs. `retrobasic-wasm` packages the interpreter as a single-file WebAssembly bundle, so there is no separate `.wasm` asset to host or fetch.
 
-Run classic BASIC programs in Node.js or the browser. The WASM binary is ~283 KB (single-file, no external `.wasm` fetch required).
+Use it to preserve and run classic BASIC programs in Node.js or directly in the browser.
 
 ## Install
 
 ```bash
 npm install retrobasic-wasm
 ```
+
+Requires Node.js 18 or later. This is an ESM-only package; use `import`, not `require()`.
 
 ## Usage
 
@@ -49,7 +51,7 @@ await runBasic({
 
 ### Interactive input
 
-Programs that use `INPUT` can receive user input via the `stdin` option:
+Programs that use `INPUT` can receive user input via the `stdin` option. Each entry is one input line; a trailing newline is added when needed.
 
 ```ts
 import { runBasic } from "retrobasic-wasm";
@@ -76,9 +78,32 @@ Runs a BASIC program via WebAssembly.
 | `source`   | `string`                 | The BASIC program source code                          |
 | `onStdout` | `(line: string) => void` | Called for each line of standard output                |
 | `onStderr` | `(line: string) => void` | Called for each line of standard error                 |
-| `stdin`    | `string[]`               | Input lines fed to `INPUT` statements, one per element |
+| `stdin`    | `readonly string[]`      | Input lines fed to `INPUT` statements, one per element |
 
-Returns the interpreter exit code — `0` typically indicates success; non-zero indicates an error or `STOP`.
+`stdin` also accepts a readonly array, so a frozen array or TypeScript tuple is valid. `runBasic` creates a fresh interpreter for every call, making concurrent calls isolated.
+
+Returns the interpreter exit code — `0` typically indicates success; non-zero indicates an interpreter error or `STOP`. Errors while loading or initializing the WebAssembly module reject the promise.
+
+`onStdout` and `onStderr` receive one newline-free line at a time. Render a newline yourself when writing those values to a terminal or DOM element.
+
+### Types
+
+```ts
+type BasicOutputHandler = (line: string) => void;
+
+interface RunBasicOptions {
+  source: string;
+  stdin?: readonly string[];
+  onStdout?: BasicOutputHandler;
+  onStderr?: BasicOutputHandler;
+}
+```
+
+The package exports `runBasic`, `RunBasicOptions`, and `BasicOutputHandler`.
+
+## Compatibility
+
+RetroBASIC implements its own BASIC dialect. Program compatibility depends on the statements and extensions a program uses; this package exposes the interpreter rather than translating BASIC to JavaScript.
 
 ## Development
 
@@ -103,4 +128,4 @@ npm run test
 
 ## License
 
-[GPL-2.0](LICENSE)
+This package is licensed under [GPL-2.0-only](LICENSE). It includes a modified WebAssembly build of RetroBASIC; copyright and complete-source information are in [NOTICE](NOTICE). The corresponding source and build scripts are available in the [Basicade repository](https://github.com/minhqdao/basicade/tree/main/packages/retrobasic-wasm).

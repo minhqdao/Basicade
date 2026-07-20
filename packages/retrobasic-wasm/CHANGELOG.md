@@ -10,7 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - Initial release
 - `runBasic()` API with `source`, `onStdout`, `onStderr`, and `stdin` options
-- ESM and CommonJS dual-package support
+- ESM package support for Node.js and browsers
 - TypeScript declarations included
 - Single-file WASM bundle (no external `.wasm` fetch)
 - Browser and Node.js compatibility
+- GPL source and attribution notice

@@ -1,16 +1,19 @@
+/** Receives one line written by the interpreter. */
+export type BasicOutputHandler = (line: string) => void;
+
 export interface RunBasicOptions {
   /** The BASIC program source code as a string */
   source: string;
   /** Called for each line of standard output */
-  onStdout?: (line: string) => void;
+  onStdout?: BasicOutputHandler;
   /** Called for each line of standard error */
-  onStderr?: (line: string) => void;
+  onStderr?: BasicOutputHandler;
   /**
    * Input lines to provide to the BASIC program.
    * Programs that use `INPUT` will consume these line-by-line.
    * If omitted or exhausted, the interpreter receives EOF.
    */
-  stdin?: string[];
+  stdin?: readonly string[];
 }
 
 interface EmscriptenModule {
@@ -60,9 +63,11 @@ export async function runBasic(options: RunBasicOptions): Promise<number> {
     let currentLine = "";
 
     emscriptenOptions.stdin = () => {
-      if (charIndex === 0) {
+      if (charIndex >= currentLine.length) {
         if (lineIndex >= lines.length) return null;
-        currentLine = lines[lineIndex++] + "\n";
+        const line = lines[lineIndex++];
+        currentLine = line.endsWith("\n") ? line : `${line}\n`;
+        charIndex = 0;
       }
       return currentLine.charCodeAt(charIndex++);
     };

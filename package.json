@@ -16,10 +16,11 @@
     "build:wasm:bwbasic": "npm run build:wasm -w packages/bwbasic-wasm",
     "build:wasm:retrobasic": "npm run build:wasm -w packages/retrobasic-wasm",
     "lint": "eslint .",
-    "test": "npm run test:integration && npm run test:retrobasic && npm run test:clk",
+    "test": "npm run test:integration && npm run test:retrobasic && npm run test:clk && npm run test:packages",
     "test:integration": "node test/integration.mjs bwbasic && node test/integration.mjs retrobasic",
     "test:retrobasic": "node test/retrobasic.mjs bwbasic && node test/retrobasic.mjs retrobasic",
     "test:clk": "npm run test:clk -w packages/bwbasic-wasm",
+    "test:packages": "npm pack --dry-run --workspace packages/bwbasic-wasm && npm pack --dry-run --workspace packages/retrobasic-wasm",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "all": "npm run format && npm run lint && npm run test"

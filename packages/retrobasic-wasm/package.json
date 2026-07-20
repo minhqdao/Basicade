@@ -1,7 +1,7 @@
 {
   "name": "retrobasic-wasm",
   "version": "0.1.0",
-  "description": "An isomorphic WebAssembly (WASM) port of the RetroBASIC interpreter. Execute legacy BASIC code seamlessly in both Node.js and browser environments.",
+  "description": "Run RetroBASIC programs in Node.js and browsers with a single-file WebAssembly interpreter.",
   "type": "module",
   "license": "GPL-2.0-only",
   "repository": {
@@ -14,12 +14,13 @@
     "url": "https://github.com/minhqdao/basicade/issues"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "sideEffects": false,
   "files": [
     "dist",
     "LICENSE",
+    "NOTICE",
     "README.md",
     "CHANGELOG.md"
   ],
@@ -35,8 +36,8 @@
   "scripts": {
     "build": "rm -rf dist && tsc && tsup",
     "build:wasm": "bash ./scripts/build-wasm.sh",
-    "test": "node test/echo.mjs",
-    "test:echo": "node test/echo.mjs",
+    "test": "npm run test:run-basic",
+    "test:run-basic": "node test/run-basic.mjs",
     "prepublishOnly": "npm run build:wasm && npm run build && npm run test"
   },
   "keywords": [

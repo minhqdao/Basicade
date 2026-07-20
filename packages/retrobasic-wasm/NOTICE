@@ -1,0 +1,9 @@
+retrobasic-wasm includes a WebAssembly build of RetroBASIC.
+
+RetroBASIC copyright (C) 2020 Maury Markowitz. This package contains a
+modified build of the interpreter and is distributed under GPL-2.0-only; see
+LICENSE.
+
+Complete corresponding source, build scripts, and modification history:
+https://github.com/minhqdao/basicade/tree/main/interpreters/RetroBASIC
+https://github.com/minhqdao/basicade/tree/main/packages/retrobasic-wasm
