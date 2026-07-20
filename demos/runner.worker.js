@@ -75,5 +75,6 @@ self.onmessage = async ({ data }) => {
       type: "ERROR",
       message: error instanceof Error ? error.message : String(error),
     });
+    self.close();
   }
 };

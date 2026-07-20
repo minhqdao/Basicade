@@ -93,6 +93,52 @@ function setStatus(message) {
   status.hidden = !message;
 }
 
+function releaseWorker() {
+  document.removeEventListener("keydown", handleKeydown);
+  if (worker) {
+    worker.terminate();
+    worker = undefined;
+  }
+}
+
+function handleKeydown(event) {
+  if (!waitingForInput) return;
+
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const value = `${currentInput}\n`;
+    terminalText += value;
+    currentInput = "";
+    waitingForInput = false;
+    render();
+
+    for (let index = 0; index < value.length; index++) {
+      Atomics.store(sharedKeys, 2 + index, value.charCodeAt(index));
+    }
+    Atomics.store(sharedKeys, 0, value.length);
+    Atomics.store(sharedBuffer, 0, 1);
+    Atomics.notify(sharedBuffer, 0, 1);
+  } else if (event.key === "Backspace") {
+    event.preventDefault();
+    currentInput = currentInput.slice(0, -1);
+    render();
+  } else if (
+    event.key.length === 1 &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey
+  ) {
+    event.preventDefault();
+    if (currentInput.length < maxInputLength) {
+      currentInput += event.key.toUpperCase();
+    }
+    render();
+  }
+}
+
+let sharedBuffer;
+let sharedKeys;
+
 function applicationUrl(path) {
   return new URL(
     path,
@@ -117,8 +163,8 @@ async function start() {
   const source = await response.text();
   const buffer = new SharedArrayBuffer(4);
   const keys = new SharedArrayBuffer(256);
-  const sharedBuffer = new Int32Array(buffer);
-  const sharedKeys = new Uint8Array(keys);
+  sharedBuffer = new Int32Array(buffer);
+  sharedKeys = new Uint8Array(keys);
   Atomics.store(sharedBuffer, 0, 0);
   Atomics.store(sharedKeys, 0, 0);
 
@@ -145,58 +191,33 @@ async function start() {
       setStatus(data.message);
       waitingForInput = false;
       render();
+      releaseWorker();
     } else if (data.type === "EXIT") {
       appendOutput("\n*** SYSTEM OFFLINE ***\n");
       waitingForInput = false;
       render();
-      worker.terminate();
+      releaseWorker();
     }
   };
 
-  worker.onerror = (event) =>
+  worker.onerror = (event) => {
     setStatus(event.message || "The interpreter worker failed.");
+    waitingForInput = false;
+    render();
+    releaseWorker();
+  };
   worker.postMessage({
     type: "INIT",
     wasmUrl: applicationUrl(selection.interpreter.wasmPath).href,
   });
 
-  document.addEventListener("keydown", (event) => {
-    if (!waitingForInput) return;
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      const value = `${currentInput}\n`;
-      terminalText += value;
-      currentInput = "";
-      waitingForInput = false;
-      render();
-
-      for (let index = 0; index < value.length; index++) {
-        Atomics.store(sharedKeys, 2 + index, value.charCodeAt(index));
-      }
-      Atomics.store(sharedKeys, 0, value.length);
-      Atomics.store(sharedBuffer, 0, 1);
-      Atomics.notify(sharedBuffer, 0, 1);
-    } else if (event.key === "Backspace") {
-      event.preventDefault();
-      currentInput = currentInput.slice(0, -1);
-      render();
-    } else if (
-      event.key.length === 1 &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey
-    ) {
-      event.preventDefault();
-      if (currentInput.length < maxInputLength) {
-        currentInput += event.key.toUpperCase();
-      }
-      render();
-    }
-  });
+  document.addEventListener("keydown", handleKeydown);
 }
 
+window.addEventListener("pagehide", releaseWorker, { once: true });
+
 start().catch((error) => {
+  releaseWorker();
   setStatus(error.message);
   appendOutput(`\n*** ${error.message} ***\n`);
 });

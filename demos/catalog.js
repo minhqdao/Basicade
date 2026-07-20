@@ -51,7 +51,6 @@ const basic101Files = Object.freeze([
   "reverse",
   "rusrou",
   "stars",
-  "tictac",
   "trap",
   "wekday",
 ]);

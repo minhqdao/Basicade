@@ -29,11 +29,14 @@ for (const game of gamesToTest) {
     child.on("close", (exitCode) => {
       clearTimeout(timeout);
       const started = output.includes("__BASICADE_STARTED__");
+      const inputProgressed =
+        game.id !== "101-1check" ||
+        output.includes("__BASICADE_INPUT_PROGRESS__");
       const hasInterpreterError =
         /Bad input character|Syntax error|Parse error|Unknown command|Error at line/.test(
           output,
         );
-      if (!started || hasInterpreterError) {
+      if (!started || !inputProgressed || hasInterpreterError) {
         rejectTest(
           new Error(
             `${game.id} failed WASM startup smoke test${timedOut ? " (timed out)" : ""}${exitCode ? ` (exit ${exitCode})` : ""}:\n${output.slice(0, 500)}`,
@@ -46,5 +49,5 @@ for (const game of gamesToTest) {
   });
 }
 
-assert.equal(gamesToTest.length, 39);
+assert.equal(gamesToTest.length, 38);
 console.log(`test: started ${gamesToTest.length} 101 BASIC games with RetroBASIC WASM`);
