@@ -30,6 +30,23 @@ const invalidSelection = resolveSelection("?game=missing&interpreter=missing");
 assert.equal(invalidSelection.game.id, DEFAULT_GAME_ID);
 assert.equal(invalidSelection.interpreter.id, "bwbasic");
 
+const fallbackInterpreterSelection = resolveSelection(
+  "?game=bcg-bagels&interpreter=retrobasic",
+);
+assert.equal(fallbackInterpreterSelection.game.id, "bcg-bagels");
+assert.equal(fallbackInterpreterSelection.interpreter.id, "bwbasic");
+
+for (const game of Object.values(games)) {
+  const selection = resolveSelection(
+    `?game=${encodeURIComponent(game.id)}&interpreter=retrobasic`,
+  );
+  assert.equal(selection.game.id, game.id, `${game.id} remains selectable`);
+  assert.ok(
+    game.interpreters.includes(selection.interpreter.id),
+    `${game.id} resolves to a compatible interpreter`,
+  );
+}
+
 for (const game of Object.values(games)) {
   assert.match(game.sourcePath, /^examples\/[a-z0-9-]+\/.+\.bas$/);
   assert.ok(game.source.url.startsWith("https://"));
