@@ -19,11 +19,12 @@
   "sideEffects": false,
   "files": [
     "dist",
-    "wasm",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -32,9 +33,10 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc && tsup",
     "build:wasm": "bash ./scripts/build-wasm.sh",
-    "test": "echo \"Integration test runs from root: npm run test:integration\"",
+    "test": "node test/echo.mjs",
+    "test:echo": "node test/echo.mjs",
     "prepublishOnly": "npm run build:wasm && npm run build && npm run test"
   },
   "keywords": [

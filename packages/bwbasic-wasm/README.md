@@ -1,8 +1,11 @@
 # bwbasic-wasm
 
+[![npm](https://img.shields.io/npm/v/bwbasic-wasm.svg)](https://www.npmjs.com/package/bwbasic-wasm)
+[![license](https://img.shields.io/npm/l/bwbasic-wasm.svg)](https://github.com/minhqdao/basicade/blob/main/packages/bwbasic-wasm/LICENSE)
+
 The [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) interpreter compiled to WebAssembly.
 
-Run classic BASIC programs — like [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) — in Node.js or the browser.
+Run classic BASIC programs — like [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) — in Node.js or the browser. The WASM binary is ~446 KB (single-file, no external `.wasm` fetch required).
 
 ## Install
 
@@ -26,7 +29,7 @@ const exitCode = await runBasic({
 });
 ```
 
-### Browser (Vite)
+### Browser
 
 ```ts
 import { runBasic } from "bwbasic-wasm";
@@ -44,22 +47,42 @@ await runBasic({
 });
 ```
 
-### Options
+### Interactive input
 
-| Option     | Type                     | Description                             |
-| ---------- | ------------------------ | --------------------------------------- |
-| `source`   | `string`                 | The BASIC program source code           |
-| `onStdout` | `(line: string) => void` | Called for each line of standard output |
-| `onStderr` | `(line: string) => void` | Called for each line of standard error  |
+Programs that use `INPUT` can receive user input via the `stdin` option:
 
-### Return value
+```ts
+import { runBasic } from "bwbasic-wasm";
 
-`runBasic()` returns a `Promise<number>` — the BASIC interpreter's exit code.
-`0` typically indicates success; non-zero values indicate an error or `STOP` statement.
+const exitCode = await runBasic({
+  source: `
+    10 INPUT "What is your name? "; N$
+    20 PRINT "Hello, "; N$; "!"
+    30 END
+  `,
+  stdin: ["Alice"],
+  onStdout: (line) => console.log(line),
+});
+```
+
+## API
+
+### `runBasic(options: RunBasicOptions): Promise<number>`
+
+Runs a BASIC program via WebAssembly.
+
+| Option     | Type                     | Description                                            |
+| ---------- | ------------------------ | ------------------------------------------------------ |
+| `source`   | `string`                 | The BASIC program source code                          |
+| `onStdout` | `(line: string) => void` | Called for each line of standard output                |
+| `onStderr` | `(line: string) => void` | Called for each line of standard error                 |
+| `stdin`    | `string[]`               | Input lines fed to `INPUT` statements, one per element |
+
+Returns the interpreter exit code — `0` typically indicates success; non-zero indicates an error or `STOP`.
 
 ## Demo
 
-The repository includes a browser demo running the original [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) BASIC program in an interactive retro terminal.
+The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) BASIC program in an interactive retro terminal.
 
 ## Development
 
@@ -72,14 +95,14 @@ npm install
 # Build the WASM binary
 npm run build:wasm:bwbasic
 
+# Build the TypeScript package
+npm run build:bwbasic
+
 # Start the Vite dev server (demo)
 npm run dev
 
-# Format, lint, and test in one command
-npm run all
-
-# Run tests for this package only
-npm run test -w packages/bwbasic-wasm
+# Run tests
+npm run test
 ```
 
 ## License

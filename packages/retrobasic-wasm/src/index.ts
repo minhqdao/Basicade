@@ -1,21 +1,49 @@
-import createModule from "../wasm/retrobasic.js";
-import type { ModuleOptions } from "../wasm/retrobasic.js";
-
 export interface RunBasicOptions {
-  /** The legacy BASIC code content as a string */
+  /** The BASIC program source code as a string */
   source: string;
-  /** Callback to receive a standard output text line from the interpreter */
+  /** Called for each line of standard output */
   onStdout?: (line: string) => void;
-  /** Callback to receive error messages from the interpreter */
+  /** Called for each line of standard error */
   onStderr?: (line: string) => void;
+  /**
+   * Input lines to provide to the BASIC program.
+   * Programs that use `INPUT` will consume these line-by-line.
+   * If omitted or exhausted, the interpreter receives EOF.
+   */
+  stdin?: string[];
 }
 
+interface EmscriptenModule {
+  FS: {
+    writeFile(
+      path: string,
+      data: string | Uint8Array,
+      options?: Record<string, unknown>,
+    ): void;
+  };
+  callMain(args?: string[]): number;
+}
+
+interface EmscriptenOptions {
+  noInitialRun?: boolean;
+  print?: (text: string) => void;
+  printErr?: (text: string) => void;
+  stdin?: () => number | null;
+}
+
+declare function createModule(
+  options?: EmscriptenOptions,
+): Promise<EmscriptenModule>;
+
 /**
- * Runs raw BASIC text in the browser or environment using WebAssembly.
- * @returns The runtime exit code (0 usually means success).
+ * Runs a BASIC program in Node.js or the browser using WebAssembly.
+ *
+ * @returns The interpreter exit code (`0` typically indicates success).
  */
 export async function runBasic(options: RunBasicOptions): Promise<number> {
-  const emscriptenOptions: ModuleOptions = {
+  const { default: createModule } = await import("../wasm/retrobasic.js");
+
+  const emscriptenOptions: EmscriptenOptions = {
     noInitialRun: true,
   };
 
@@ -25,18 +53,27 @@ export async function runBasic(options: RunBasicOptions): Promise<number> {
   if (options.onStderr) {
     emscriptenOptions.printErr = options.onStderr;
   }
+  if (options.stdin) {
+    const lines = [...options.stdin];
+    let lineIndex = 0;
+    let charIndex = 0;
+    let currentLine = "";
 
-  // Initialize the compiled WebAssembly bundle
+    emscriptenOptions.stdin = () => {
+      if (charIndex === 0) {
+        if (lineIndex >= lines.length) return null;
+        currentLine = lines[lineIndex++] + "\n";
+      }
+      return currentLine.charCodeAt(charIndex++);
+    };
+  }
+
   const module = await createModule(emscriptenOptions);
-
-  // Write the basic script to the in-memory virtual filesystem
   module.FS.writeFile("app.bas", options.source);
 
   try {
-    // Run RetroBASIC with the targeted script file
     return module.callMain(["app.bas"]);
   } catch (error) {
-    // Emscripten may throw an exit status code object or general error; handle gracefully
     if (error && typeof error === "object" && "status" in error) {
       return (error as { status: number }).status;
     }

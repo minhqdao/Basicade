@@ -28,6 +28,9 @@ npm run dev
 
 # Start the demo with a specific interpreter
 # http://localhost:5173/demos/oregon-trail/?interpreter=retrobasic
+
+# Format, lint, and test in one command
+npm run all
 ```
 
 ## Demo

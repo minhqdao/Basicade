@@ -19,11 +19,12 @@
   "sideEffects": false,
   "files": [
     "dist",
-    "wasm",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -32,7 +33,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc && tsup",
     "build:wasm": "bash ./scripts/build-wasm.sh",
     "test": "npm run test:clk",
     "test:clk": "node test/clk.mjs",
