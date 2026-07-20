@@ -25,6 +25,7 @@ export default [
       "packages/*/wasm/",
       "packages/*/node_modules/",
       "build/",
+      "dist/",
       "interpreters/",
       "examples/",
       "packages/*/test/",

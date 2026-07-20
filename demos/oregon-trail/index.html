@@ -2,177 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="description"
-      content="Play the original 1978 BASIC edition of The Oregon Trail in your browser, powered by a WebAssembly port of the Bywater BASIC interpreter."
-    />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
-    <meta
-      property="og:title"
-      content="The Oregon Trail (1978) — Original BASIC Edition"
-    />
-    <meta
-      property="og:description"
-      content="Play the original 1978 BASIC edition of The Oregon Trail in your browser using WebAssembly."
-    />
-    <meta property="og:type" content="website" />
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <link
-      rel="canonical"
-      href="https://minhqdao.github.io/basicade/oregon-trail/"
-    />
-    <title>The Oregon Trail (1978) — Original BASIC Edition</title>
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        background: #0b0c0b;
-      }
-
-      body {
-        color: #c8f8c8;
-        font-family: "Courier New", Courier, monospace;
-        font-size: 18px;
-        margin: 0;
-        padding-top: 70px;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        height: 100vh;
-      }
-
-      /* Screen */
-      #terminal-container {
-        width: 800px;
-        height: 600px;
-        background: #111512;
-        border-radius: 12px;
-        box-shadow:
-          inset 0 0 30px rgba(255, 255, 255, 0.03),
-          0 0 70px rgba(0, 0, 0, 0.65),
-          0 0 0 1px rgba(255, 255, 255, 0.05);
-        position: relative;
-        overflow: hidden;
-      }
-
-      /* Scanlines + subtle RGB fringe */
-      #terminal-container::before {
-        content: " ";
-        display: block;
-        position: absolute;
-        inset: 0;
-        background: repeating-linear-gradient(
-          to bottom,
-          transparent 0px,
-          transparent 2px,
-          rgba(255, 255, 255, 0.025) 3px
-        );
-        z-index: 2;
-        pointer-events: none;
-      }
-
-      #terminal-header {
-        position: absolute;
-        inset: 0 0 auto 0;
-
-        height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        background: #111512;
-
-        color: rgba(255, 255, 255, 0.35);
-        font-size: 13px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-
-        z-index: 3;
-        pointer-events: none;
-      }
-
-      #screen {
-        width: 100%;
-        height: 100%;
-        padding: 54px 40px 40px;
-        overflow-y: auto;
-
-        color: #c8f8c8;
-
-        font-family: "Courier New", Courier, monospace;
-        font-size: 18px;
-        font-weight: normal;
-        line-height: 1.2;
-
-        text-shadow: 0 0 2px rgba(200, 248, 200, 0.35);
-
-        animation: phosphor 8s ease-in-out infinite;
-        scrollbar-width: none;
-      }
-
-      #screen::-webkit-scrollbar {
-        display: none;
-      }
-
-      #terminal {
-        margin: 0;
-        padding: 0;
-
-        font: inherit;
-        color: inherit;
-        text-shadow: inherit;
-
-        white-space: pre-wrap;
-        overflow-wrap: break-word;
-      }
-
-      ::selection {
-        background: rgba(200, 248, 200, 0.28);
-        color: #eaffea;
-      }
-
-      ::-moz-selection {
-        background: rgba(200, 248, 200, 0.28);
-        color: #eaffea;
-      }
-
-      #cursor {
-        animation: cursor-blink 1s steps(1) infinite;
-      }
-
-      @keyframes cursor-blink {
-        50% {
-          opacity: 0;
-        }
-      }
-
-      @keyframes phosphor {
-        0%,
-        100% {
-          filter: brightness(1);
-        }
-
-        50% {
-          filter: brightness(0.992);
-        }
-      }
-    </style>
+    <title>Opening The Oregon Trail…</title>
   </head>
   <body>
-    <h1 hidden>The Oregon Trail (1978) — Original BASIC Edition</h1>
-    <div id="terminal-container">
-      <div id="terminal-header"></div>
-      <div id="screen">
-        <pre
-          id="terminal"
-        ><span id="output"></span><span id="input"></span><span id="cursor"></span></pre>
-      </div>
-    </div>
-
-    <script src="./main.js" type="module"></script>
+    <p>
+      <a id="launcher-link" href="../../?game=oregon-trail"
+        >Open The Oregon Trail</a
+      >
+    </p>
+    <script>
+      const launcherUrl = new URL("../../", window.location.href);
+      launcherUrl.search = window.location.search;
+      launcherUrl.searchParams.set("game", "oregon-trail");
+      document.getElementById("launcher-link").href = launcherUrl;
+      window.location.replace(launcherUrl);
+    </script>
   </body>
 </html>
