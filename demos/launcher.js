@@ -89,28 +89,26 @@ function appendOutput(text) {
 }
 
 function render() {
-  output.textContent = terminalText;
-  input.textContent = waitingForInput ? currentInput : "";
+  if (output.textContent !== terminalText) {
+    output.textContent = terminalText;
+  }
 
+  input.textContent = waitingForInput ? currentInput : "";
   cursor.textContent = waitingForInput ? "_" : "";
 
-  const shouldShowCursor =
-    waitingForInput && document.activeElement === terminalInput;
+  const isFocused = waitingForInput && document.activeElement === terminalInput;
 
-  if (shouldShowCursor) {
+  if (isFocused) {
     if (!isCursorActive) {
-      // Transitioning from inactive to active: restart animation
       isCursorActive = true;
       cursor.style.visibility = "visible";
       cursor.classList.remove("blinking");
-      void cursor.offsetWidth; // Force reflow to restart CSS animation
+      void cursor.offsetWidth;
       cursor.classList.add("blinking");
     } else {
-      // Already active, just ensure it's visible
       cursor.style.visibility = "visible";
     }
   } else {
-    // Inactive or not waiting for input
     isCursorActive = false;
     cursor.style.visibility = "hidden";
   }
@@ -161,11 +159,9 @@ screen.addEventListener("mousedown", (event) => {
 terminalInput.addEventListener("focus", render);
 terminalInput.addEventListener("blur", render);
 
-// 1. Handle live typing, backspacing, and mobile "Return/Go" keys
 terminalInput.addEventListener("input", (event) => {
   if (!waitingForInput) return;
 
-  // Mobile keyboards often insert a newline (\n) or trigger insertLineBreak instead of an 'Enter' keydown event
   if (
     event.inputType === "insertLineBreak" ||
     terminalInput.value.includes("\n")
@@ -175,14 +171,26 @@ terminalInput.addEventListener("input", (event) => {
     return;
   }
 
-  // Enforce max length on the input field
   if (terminalInput.value.length > maxInputLength) {
     terminalInput.value = terminalInput.value.slice(0, maxInputLength);
   }
 
-  // Convert to upper case for display only. DO NOT set terminalInput.value = currentInput here!
+  // Save scroll state before modifying the DOM
+  const wasPinnedToBottom =
+    screen.scrollHeight - screen.scrollTop - screen.clientHeight < 2;
+  const savedScrollTop = screen.scrollTop;
+
   currentInput = terminalInput.value.toUpperCase();
   render();
+
+  // Restore scroll state after modifying the DOM
+  if (wasPinnedToBottom) {
+    // If the user was at the bottom, keep them pinned to the bottom
+    screen.scrollTop = screen.scrollHeight;
+  } else {
+    // If the user scrolled up, force the screen to stay exactly where they left it
+    screen.scrollTop = savedScrollTop;
+  }
 });
 
 // 2. Handle desktop 'Enter' key press
