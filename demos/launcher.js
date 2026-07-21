@@ -13,6 +13,7 @@ const screen = document.getElementById("screen");
 const gameSelect = document.getElementById("game-select");
 const interpreterSelect = document.getElementById("interpreter-select");
 const status = document.getElementById("status");
+const restartButton = document.getElementById("restart-game");
 
 const selection = resolveSelection(
   window.location.search,
@@ -76,6 +77,7 @@ let terminalText = "";
 let currentInput = "";
 let waitingForInput = false;
 let worker;
+let runId = 0;
 const maxInputLength = 254;
 
 function appendOutput(text) {
@@ -101,6 +103,8 @@ function releaseWorker() {
     worker.terminate();
     worker = undefined;
   }
+  sharedBuffer = undefined;
+  sharedKeys = undefined;
 }
 
 function handleKeydown(event) {
@@ -173,7 +177,9 @@ async function ensureCrossOriginIsolation() {
 }
 
 async function start() {
+  const currentRunId = ++runId;
   const isIsolated = await ensureCrossOriginIsolation();
+  if (currentRunId !== runId) return;
   if (isIsolated === undefined) return;
   if (!isIsolated) {
     throw new Error(
@@ -182,6 +188,7 @@ async function start() {
   }
 
   const response = await fetch(applicationUrl(selection.game.sourcePath));
+  if (currentRunId !== runId) return;
   if (!response.ok) {
     throw new Error(
       `Could not load ${selection.game.sourcePath} (${response.status}).`,
@@ -189,6 +196,7 @@ async function start() {
   }
 
   const source = await response.text();
+  if (currentRunId !== runId) return;
   const buffer = new SharedArrayBuffer(4);
   const keys = new SharedArrayBuffer(256);
   sharedBuffer = new Int32Array(buffer);
@@ -196,13 +204,18 @@ async function start() {
   Atomics.store(sharedBuffer, 0, 0);
   Atomics.store(sharedKeys, 0, 0);
 
-  worker = new Worker(new URL("./runner.worker.js", import.meta.url), {
-    type: "module",
-  });
+  const activeWorker = new Worker(
+    new URL("./runner.worker.js", import.meta.url),
+    {
+      type: "module",
+    },
+  );
+  worker = activeWorker;
 
-  worker.onmessage = ({ data }) => {
+  activeWorker.onmessage = ({ data }) => {
+    if (worker !== activeWorker) return;
     if (data.type === "READY") {
-      worker.postMessage({
+      activeWorker.postMessage({
         type: "START",
         source,
         filename: selection.game.sourcePath.split("/").pop(),
@@ -228,13 +241,14 @@ async function start() {
     }
   };
 
-  worker.onerror = (event) => {
+  activeWorker.onerror = (event) => {
+    if (worker !== activeWorker) return;
     setStatus(event.message || "The interpreter worker failed.");
     waitingForInput = false;
     render();
     releaseWorker();
   };
-  worker.postMessage({
+  activeWorker.postMessage({
     type: "INIT",
     wasmUrl: applicationUrl(selection.interpreter.wasmPath).href,
   });
@@ -244,7 +258,30 @@ async function start() {
 
 window.addEventListener("pagehide", releaseWorker, { once: true });
 
-start().catch((error) => {
+function reportStartError(error) {
   releaseWorker();
   setStatus(error.message);
-});
+}
+
+function restartGame() {
+  runId += 1;
+  releaseWorker();
+  terminalText = "";
+  currentInput = "";
+  waitingForInput = false;
+  setStatus("");
+  render();
+  screen.scrollTop = 0;
+  startGame();
+}
+
+restartButton.addEventListener("click", restartGame);
+
+function startGame() {
+  const expectedRunId = runId + 1;
+  start().catch((error) => {
+    if (expectedRunId === runId) reportStartError(error);
+  });
+}
+
+startGame();
