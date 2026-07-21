@@ -6,7 +6,7 @@ Basicade preserves retro computing history by bringing original 1970s and 1980s 
 
 ## Features
 
-- 🎮 **Playable Arcade:** Experience classic BASIC software like [*The Oregon Trail*](https://minhqdao.github.io/Basicade/oregon-trail/) directly in your browser.
+- 🎮 **Playable Arcade:** Play [*The Oregon Trail*](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=bwbasic), [*Hammurabi*](https://minhqdao.github.io/Basicade/?game=bcg-hammurabi&interpreter=bwbasic), [*Lunar Lander*](https://minhqdao.github.io/Basicade/?game=bcg-lunar&interpreter=bwbasic), and [*Super Star Trek*](https://minhqdao.github.io/Basicade/?game=bcg-superstartrek&interpreter=retrobasic) directly in your browser.
 - 📦 **NPM Packages:** Import `@basicade/bwbasic-wasm` or `@basicade/retrobasic-wasm` to run legacy BASIC code inside your own JS/TS applications.
 - 📜 **100% Original Code:** Runs raw `.bas` source code without changing line numbers, commands, or dialect syntax.
 - ⚡ **WebAssembly Powered:** High-performance runtime isolation powered by Emscripten and SharedArrayBuffer worker threads.

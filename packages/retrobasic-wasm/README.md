@@ -4,7 +4,7 @@
 [![license: GPL-2.0-only](https://img.shields.io/badge/license-GPL--2.0--only-blue.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/retrobasic-wasm/LICENSE)
 [![play demo](https://img.shields.io/badge/play-demo-4caf50?style=flat&logo=githubpages&logoColor=white)](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic)
 
-Run classic BASIC programs wherever JavaScript runs. `retrobasic-wasm` packages the [RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC) interpreter as a zero-dependency, single-file WebAssembly bundle. Perfect for preserving vintage BASIC software and running retro text games like [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic) directly in Node.js or modern browsers.
+Run classic BASIC programs wherever JavaScript runs. `retrobasic-wasm` packages the [RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC) interpreter as a zero-dependency, single-file WebAssembly bundle. Perfect for preserving vintage BASIC software and running retro text games like [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic), [Hammurabi](https://minhqdao.github.io/Basicade/?game=bcg-hammurabi&interpreter=retrobasic), [Lunar Lander](https://minhqdao.github.io/Basicade/?game=bcg-lunar&interpreter=retrobasic), and [Super Star Trek](https://minhqdao.github.io/Basicade/?game=bcg-superstartrek&interpreter=retrobasic) directly in Node.js or modern browsers.
 
 ## Install
 
@@ -106,9 +106,7 @@ RetroBASIC implements its own BASIC dialect. Program compatibility depends on th
 
 ## Demo
 
-The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic)
-BASIC program in an interactive retro terminal. Select **RetroBASIC** in the
-interpreter menu to run it with this package.
+The repository includes an interactive browser demo running [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic), [Hammurabi](https://minhqdao.github.io/Basicade/?game=bcg-hammurabi&interpreter=retrobasic), [Lunar Lander](https://minhqdao.github.io/Basicade/?game=bcg-lunar&interpreter=retrobasic), and [Super Star Trek](https://minhqdao.github.io/Basicade/?game=bcg-superstartrek&interpreter=retrobasic).
 
 ## Development
 
