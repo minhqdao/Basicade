@@ -139,6 +139,7 @@ function handleKeydown(event) {
 
 let sharedBuffer;
 let sharedKeys;
+const isolationReloadKey = "basicade-isolation-reload";
 
 function applicationUrl(path) {
   return new URL(
@@ -147,8 +148,33 @@ function applicationUrl(path) {
   );
 }
 
+async function ensureCrossOriginIsolation() {
+  if (window.crossOriginIsolated) {
+    sessionStorage.removeItem(isolationReloadKey);
+    return true;
+  }
+
+  if (!navigator.serviceWorker) return false;
+
+  try {
+    await navigator.serviceWorker.ready;
+  } catch {
+    return false;
+  }
+
+  if (!sessionStorage.getItem(isolationReloadKey)) {
+    sessionStorage.setItem(isolationReloadKey, "1");
+    window.location.reload();
+    return undefined;
+  }
+
+  return false;
+}
+
 async function start() {
-  if (!window.crossOriginIsolated) {
+  const isIsolated = await ensureCrossOriginIsolation();
+  if (isIsolated === undefined) return;
+  if (!isIsolated) {
     throw new Error(
       "Interactive input needs cross-origin isolation (COOP and COEP headers).",
     );
@@ -220,5 +246,4 @@ window.addEventListener("pagehide", releaseWorker, { once: true });
 start().catch((error) => {
   releaseWorker();
   setStatus(error.message);
-  appendOutput(`\n*** ${error.message} ***\n`);
 });
