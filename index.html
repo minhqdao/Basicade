@@ -104,6 +104,11 @@
         button:hover, button:focus-visible { color: #c8f8c8; text-shadow: 0 0 5px rgba(200,248,200,.5); }
       }
       @media (hover: none) {
+        select:active {
+          border-color: rgba(200, 248, 200, .7);
+          box-shadow: 0 0 5px rgba(200,248,200,.2);
+          transition-duration: 0s;
+        }
         button:active {
           border-color: rgba(200, 248, 200, .7);
           color: #c8f8c8;
