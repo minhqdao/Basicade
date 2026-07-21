@@ -77,6 +77,7 @@ interpreterSelect.addEventListener("change", () => {
 let terminalText = "";
 let currentInput = "";
 let waitingForInput = false;
+let isCursorActive = false;
 let worker;
 let runId = 0;
 const maxInputLength = 254;
@@ -90,7 +91,29 @@ function appendOutput(text) {
 function render() {
   output.textContent = terminalText;
   input.textContent = waitingForInput ? currentInput : "";
+
   cursor.textContent = waitingForInput ? "_" : "";
+
+  const shouldShowCursor =
+    waitingForInput && document.activeElement === terminalInput;
+
+  if (shouldShowCursor) {
+    if (!isCursorActive) {
+      // Transitioning from inactive to active: restart animation
+      isCursorActive = true;
+      cursor.style.visibility = "visible";
+      cursor.classList.remove("blinking");
+      void cursor.offsetWidth; // Force reflow to restart CSS animation
+      cursor.classList.add("blinking");
+    } else {
+      // Already active, just ensure it's visible
+      cursor.style.visibility = "visible";
+    }
+  } else {
+    // Inactive or not waiting for input
+    isCursorActive = false;
+    cursor.style.visibility = "hidden";
+  }
 }
 
 function setStatus(message) {
@@ -127,6 +150,16 @@ function submitInput() {
 function focusTerminalInput() {
   if (waitingForInput) terminalInput.focus({ preventScroll: true });
 }
+
+// Prevent mousedown from blurring the input if we're clicking inside the terminal
+screen.addEventListener("mousedown", (event) => {
+  if (document.activeElement === terminalInput) {
+    event.preventDefault();
+  }
+});
+
+terminalInput.addEventListener("focus", render);
+terminalInput.addEventListener("blur", render);
 
 // 1. Handle live typing, backspacing, and mobile "Return/Go" keys
 terminalInput.addEventListener("input", (event) => {
