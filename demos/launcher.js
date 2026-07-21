@@ -99,7 +99,6 @@ function setStatus(message) {
 }
 
 function releaseWorker() {
-  document.removeEventListener("keydown", handleKeydown);
   terminalInput.blur();
   if (worker) {
     worker.terminate();
@@ -107,13 +106,6 @@ function releaseWorker() {
   }
   sharedBuffer = undefined;
   sharedKeys = undefined;
-}
-
-function handleKeydown() {
-  if (!waitingForInput) return;
-  if (document.activeElement !== terminalInput) {
-    focusTerminalInput();
-  }
 }
 
 function submitInput() {
@@ -136,15 +128,31 @@ function focusTerminalInput() {
   if (waitingForInput) terminalInput.focus({ preventScroll: true });
 }
 
-terminalInput.addEventListener("input", () => {
+// 1. Handle live typing, backspacing, and mobile "Return/Go" keys
+terminalInput.addEventListener("input", (event) => {
   if (!waitingForInput) return;
+
+  // Mobile keyboards often insert a newline (\n) or trigger insertLineBreak instead of an 'Enter' keydown event
+  if (
+    event.inputType === "insertLineBreak" ||
+    terminalInput.value.includes("\n")
+  ) {
+    terminalInput.value = terminalInput.value.replace(/\n/g, "");
+    submitInput();
+    return;
+  }
+
+  // Enforce max length on the input field
   if (terminalInput.value.length > maxInputLength) {
     terminalInput.value = terminalInput.value.slice(0, maxInputLength);
   }
+
+  // Convert to upper case for display only. DO NOT set terminalInput.value = currentInput here!
   currentInput = terminalInput.value.toUpperCase();
   render();
 });
 
+// 2. Handle desktop 'Enter' key press
 terminalInput.addEventListener("keydown", (event) => {
   if (waitingForInput && event.key === "Enter") {
     event.preventDefault();
@@ -241,7 +249,7 @@ async function start() {
       terminalInput.value = "";
       waitingForInput = true;
       render();
-      focusTerminalInput();
+      focusTerminalInput(); // Auto-focus input field and pull up mobile keyboard
     } else if (data.type === "ERROR") {
       setStatus(data.message);
       waitingForInput = false;
@@ -266,8 +274,6 @@ async function start() {
     type: "INIT",
     wasmUrl: applicationUrl(selection.interpreter.wasmPath).href,
   });
-
-  document.addEventListener("keydown", handleKeydown);
 }
 
 window.addEventListener("pagehide", releaseWorker, { once: true });
