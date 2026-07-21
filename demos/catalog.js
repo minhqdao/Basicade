@@ -287,8 +287,8 @@ export const games = Object.freeze({
     }),
     interpreters: Object.freeze(["bwbasic", "retrobasic"]),
   }),
-  ...Object.fromEntries(basic101Games),
   ...Object.fromEntries(basicComputerGames),
+  ...Object.fromEntries(basic101Games),
 });
 
 function routeGameId(pathname) {
