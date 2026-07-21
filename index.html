@@ -74,15 +74,31 @@
       #terminal { color: inherit; font: inherit; margin: 0; overflow-wrap: break-word; white-space: pre-wrap; }
       .terminal-actions { display: flex; justify-content: center; margin-top: 12px; }
       button {
+        -webkit-appearance: none;
+        -webkit-tap-highlight-color: transparent;
+        appearance: none;
         background: transparent;
-        border: 0;
+        border: 1px solid transparent;
+        border-radius: 999px;
         color: rgba(200, 248, 200, .65);
         cursor: pointer;
         font: inherit;
         font-size: 13px;
+        outline: 0;
         padding: 6px 10px;
+        transition: background-color .18s ease-out, border-color .18s ease-out, color .18s ease-out, text-shadow .18s ease-out;
       }
-      button:hover, button:focus-visible { color: #c8f8c8; text-shadow: 0 0 5px rgba(200,248,200,.5); }
+      @media (hover: hover) {
+        button:hover, button:focus-visible { color: #c8f8c8; text-shadow: 0 0 5px rgba(200,248,200,.5); }
+      }
+      @media (hover: none) {
+        button:active {
+          background: rgba(200, 248, 200, .12);
+          border-color: rgba(200, 248, 200, .7);
+          color: #c8f8c8;
+          transition-duration: 0s;
+        }
+      }
       #cursor { animation: cursor-blink 1s steps(1) infinite; }
       @keyframes cursor-blink { 50% { opacity: 0; } }
       @media (max-width: 560px) {
