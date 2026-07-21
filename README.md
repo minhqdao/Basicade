@@ -61,8 +61,8 @@ The [demo](https://minhqdao.github.io/Basicade/) is automatically deployed to Gi
 
 Basicade was designed and built with assistance from several Large Language Models:
 
-- **Architecture & Planning:** Early setup, design planning, and strategy were assisted by ChatGPT and Gemini.
-- **Execution & Integration:** Core implementation—including WebAssembly compilation/packaging, catalog management, game wiring, testing, and deployment workflows—was developed in collaboration with Codex/ChatGPT and OpenCode models.
+- **Architecture & Planning:** Early setup, design planning, and strategy were assisted by ChatGPT.
+- **Execution & Integration:** Core implementation—including WebAssembly compilation/packaging, catalog management, game wiring, testing, and deployment workflows—was developed in collaboration with Codex and ChatGPT 5.6.
 
 ## License and Sources
 
