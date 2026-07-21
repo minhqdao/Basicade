@@ -1,12 +1,12 @@
 # retrobasic-wasm
 
 [![npm](https://img.shields.io/npm/v/retrobasic-wasm.svg)](https://www.npmjs.com/package/retrobasic-wasm)
-[![license](https://img.shields.io/npm/l/retrobasic-wasm.svg)](https://github.com/minhqdao/basicade/blob/main/packages/retrobasic-wasm/LICENSE)
+[![license](https://img.shields.io/npm/l/retrobasic-wasm.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/retrobasic-wasm/LICENSE)
 
 Run [RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC) programs wherever JavaScript runs. `retrobasic-wasm` packages the interpreter as a single-file WebAssembly bundle, so there is no separate `.wasm` asset to host or fetch.
 
 It is a natural fit for preserving classic BASIC programs and running retro text
-games such as [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/)
+games such as [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/)
 in Node.js or directly in the browser.
 
 ## Install
@@ -109,7 +109,7 @@ RetroBASIC implements its own BASIC dialect. Program compatibility depends on th
 
 ## Demo
 
-The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/)
+The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/)
 BASIC program in an interactive retro terminal. Select **RetroBASIC** in the
 interpreter menu to run it with this package.
 
@@ -136,4 +136,4 @@ npm run test
 
 ## License
 
-This package is licensed under [GPL-2.0-only](LICENSE). It includes a modified WebAssembly build of RetroBASIC; copyright and complete-source information are in [NOTICE](NOTICE). The corresponding source and build scripts are available in the [Basicade repository](https://github.com/minhqdao/basicade/tree/main/packages/retrobasic-wasm).
+This package is licensed under [GPL-2.0-only](LICENSE). It includes a modified WebAssembly build of RetroBASIC; copyright and complete-source information are in [NOTICE](NOTICE). The corresponding source and build scripts are available in the [Basicade repository](https://github.com/minhqdao/Basicade/tree/main/packages/retrobasic-wasm).

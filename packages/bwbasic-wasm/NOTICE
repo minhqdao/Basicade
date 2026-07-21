@@ -5,5 +5,5 @@ Howard Wulf, and Ken Martin. This package contains a modified build of the
 interpreter and is distributed under GPL-2.0-only; see LICENSE.
 
 Complete corresponding source, build scripts, and modification history:
-https://github.com/minhqdao/basicade/tree/main/interpreters/bwbasic
-https://github.com/minhqdao/basicade/tree/main/packages/bwbasic-wasm
+https://github.com/minhqdao/Basicade/tree/main/interpreters/bwbasic
+https://github.com/minhqdao/Basicade/tree/main/packages/bwbasic-wasm

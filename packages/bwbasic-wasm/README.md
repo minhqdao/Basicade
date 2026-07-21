@@ -1,11 +1,11 @@
 # bwbasic-wasm
 
 [![npm](https://img.shields.io/npm/v/bwbasic-wasm.svg)](https://www.npmjs.com/package/bwbasic-wasm)
-[![license](https://img.shields.io/npm/l/bwbasic-wasm.svg)](https://github.com/minhqdao/basicade/blob/main/packages/bwbasic-wasm/LICENSE)
+[![license](https://img.shields.io/npm/l/bwbasic-wasm.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/bwbasic-wasm/LICENSE)
 
 Run [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) programs wherever JavaScript runs. `bwbasic-wasm` packages the interpreter as a single-file WebAssembly bundle, so there is no separate `.wasm` asset to host or fetch.
 
-It is a natural fit for preserving ANSI BASIC programs and running retro text games such as [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) in Node.js or the browser.
+It is a natural fit for preserving ANSI BASIC programs and running retro text games such as [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/) in Node.js or the browser.
 
 ## Install
 
@@ -107,7 +107,7 @@ Bywater BASIC implements its own ANSI BASIC dialect. Program compatibility depen
 
 ## Demo
 
-The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/basicade/oregon-trail/) BASIC program in an interactive retro terminal.
+The repository includes a browser demo running [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/) BASIC program in an interactive retro terminal.
 
 ## Development
 
@@ -132,4 +132,4 @@ npm run test
 
 ## License
 
-This package is licensed under [GPL-2.0-only](LICENSE). It includes a modified WebAssembly build of Bywater BASIC; copyright and complete-source information are in [NOTICE](NOTICE). The corresponding source and build scripts are available in the [Basicade repository](https://github.com/minhqdao/basicade/tree/main/packages/bwbasic-wasm).
+This package is licensed under [GPL-2.0-only](LICENSE). It includes a modified WebAssembly build of Bywater BASIC; copyright and complete-source information are in [NOTICE](NOTICE). The corresponding source and build scripts are available in the [Basicade repository](https://github.com/minhqdao/Basicade/tree/main/packages/bwbasic-wasm).

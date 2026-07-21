@@ -34,7 +34,7 @@ function copyLauncherAssets() {
 export default defineConfig(({ command }) => ({
   base:
     command === "build"
-      ? process.env.BASICADE_BASE_PATH ?? "/basicade/"
+      ? process.env.BASICADE_BASE_PATH ?? "/Basicade/"
       : "/",
   server: {
     headers: {

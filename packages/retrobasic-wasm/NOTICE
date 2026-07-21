@@ -5,5 +5,5 @@ modified build of the interpreter and is distributed under GPL-2.0-only; see
 LICENSE.
 
 Complete corresponding source, build scripts, and modification history:
-https://github.com/minhqdao/basicade/tree/main/interpreters/RetroBASIC
-https://github.com/minhqdao/basicade/tree/main/packages/retrobasic-wasm
+https://github.com/minhqdao/Basicade/tree/main/interpreters/RetroBASIC
+https://github.com/minhqdao/Basicade/tree/main/packages/retrobasic-wasm

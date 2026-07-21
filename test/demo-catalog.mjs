@@ -26,7 +26,7 @@ assert.equal(basic101Selection.game.id, "101-aceydu");
 assert.equal(basic101Selection.game.collection, "101 BASIC Computer Games");
 assert.equal(basic101Selection.interpreter.id, "retrobasic");
 
-const oregonTrailSelection = resolveSelection("", "/basicade/oregon-trail/");
+const oregonTrailSelection = resolveSelection("", "/Basicade/oregon-trail/");
 assert.equal(oregonTrailSelection.game.id, "oregon-trail");
 assert.equal(oregonTrailSelection.interpreter.id, "bwbasic");
 
@@ -78,21 +78,21 @@ for (const source of basicComputerGamesCatalogSources) {
   assert.ok(existsSync(resolve("examples/basic-computer-games", source)));
 }
 
-const url = selectionUrl(new URL("https://example.test/basicade/?ref=readme"), {
+const url = selectionUrl(new URL("https://example.test/Basicade/?ref=readme"), {
   game: games["101-aceydu"],
   interpreter: interpreters.retrobasic,
 });
-assert.equal(url.pathname, "/basicade/");
+assert.equal(url.pathname, "/Basicade/");
 assert.equal(url.search, "?ref=readme&game=101-aceydu&interpreter=retrobasic");
 
 const oregonTrailUrl = selectionUrl(
-  new URL("https://example.test/basicade/?ref=readme"),
+  new URL("https://example.test/Basicade/?ref=readme"),
   {
     game: games["oregon-trail"],
     interpreter: interpreters.bwbasic,
   },
 );
-assert.equal(oregonTrailUrl.pathname, "/basicade/oregon-trail/");
+assert.equal(oregonTrailUrl.pathname, "/Basicade/oregon-trail/");
 assert.equal(oregonTrailUrl.search, "?ref=readme");
 
 console.log("test: demo catalog URL selection");

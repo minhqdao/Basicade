@@ -1,12 +1,12 @@
 # 🕹️ Basicade
 
-[![Play Live Demo](https://img.shields.io/badge/Play_Live_Demo-Basicade_Launcher-brightgreen?style=for-the-badge&logo=githubpages)](https://minhqdao.github.io/basicade/)
+[![Play Live Demo](https://img.shields.io/badge/Play_Live_Demo-Basicade_Launcher-brightgreen?style=for-the-badge&logo=githubpages)](https://minhqdao.github.io/Basicade/)
 
 Basicade preserves retro computing history by bringing original 1970s and 1980s BASIC software to the modern web. By porting classic interpreters (**Bywater BASIC**, **RetroBASIC**) to WebAssembly, it runs raw `.bas` source code directly in JavaScript environments—no emulators or syntax rewrites required.
 
 ## Features
 
-- 🎮 **Playable Arcade:** Experience classic BASIC software like [*The Oregon Trail*](https://minhqdao.github.io/basicade/oregon-trail/) directly in your browser.
+- 🎮 **Playable Arcade:** Experience classic BASIC software like [*The Oregon Trail*](https://minhqdao.github.io/Basicade/oregon-trail/) directly in your browser.
 - 📦 **NPM Packages:** Import `@basicade/bwbasic-wasm` or `@basicade/retrobasic-wasm` to run legacy BASIC code inside your own JS/TS applications.
 - 📜 **100% Original Code:** Runs raw `.bas` source code without changing line numbers, commands, or dialect syntax.
 - ⚡ **WebAssembly Powered:** High-performance runtime isolation powered by Emscripten and SharedArrayBuffer worker threads.
@@ -55,7 +55,7 @@ catalogue also supports `?game=<id>&interpreter=<id>` for every selection.
 
 ## Deploying the demo to GitHub Pages
 
-The [demo](https://minhqdao.github.io/basicade/) is automatically deployed to GitHub Pages using GitHub Actions upon push to `main` if CI and build jobs succeed.
+The [demo](https://minhqdao.github.io/Basicade/) is automatically deployed to GitHub Pages using GitHub Actions upon push to `main` if CI and build jobs succeed.
 
 ## AI Disclaimer
 
