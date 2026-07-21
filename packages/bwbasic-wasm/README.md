@@ -2,6 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/bwbasic-wasm.svg)](https://www.npmjs.com/package/bwbasic-wasm)
 [![license](https://img.shields.io/npm/l/bwbasic-wasm.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/bwbasic-wasm/LICENSE)
+[![play demo](https://img.shields.io/badge/play-demo-4caf50?style=flat&logo=githubpages&logoColor=white)](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=bwbasic)
 
 Run [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) programs wherever JavaScript runs. `bwbasic-wasm` packages the interpreter as a single-file WebAssembly bundle, so there is no separate `.wasm` asset to host or fetch.
 

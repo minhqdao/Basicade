@@ -2,6 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/retrobasic-wasm.svg)](https://www.npmjs.com/package/retrobasic-wasm)
 [![license](https://img.shields.io/npm/l/retrobasic-wasm.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/retrobasic-wasm/LICENSE)
+[![play demo](https://img.shields.io/badge/play-demo-4caf50?style=flat&logo=githubpages&logoColor=white)](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic)
 
 Run [RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC) programs wherever JavaScript runs. `retrobasic-wasm` packages the interpreter as a single-file WebAssembly bundle, so there is no separate `.wasm` asset to host or fetch.
 
