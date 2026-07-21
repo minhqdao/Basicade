@@ -109,27 +109,10 @@ function releaseWorker() {
   sharedKeys = undefined;
 }
 
-function handleKeydown(event) {
-  if (!waitingForInput || event.target === terminalInput) return;
-
-  if (event.key === "Enter") {
-    event.preventDefault();
-    submitInput();
-  } else if (event.key === "Backspace") {
-    event.preventDefault();
-    currentInput = currentInput.slice(0, -1);
-    render();
-  } else if (
-    event.key.length === 1 &&
-    !event.ctrlKey &&
-    !event.metaKey &&
-    !event.altKey
-  ) {
-    event.preventDefault();
-    if (currentInput.length < maxInputLength) {
-      currentInput += event.key.toUpperCase();
-    }
-    render();
+function handleKeydown() {
+  if (!waitingForInput) return;
+  if (document.activeElement !== terminalInput) {
+    focusTerminalInput();
   }
 }
 
@@ -155,8 +138,10 @@ function focusTerminalInput() {
 
 terminalInput.addEventListener("input", () => {
   if (!waitingForInput) return;
-  currentInput = terminalInput.value.toUpperCase().slice(0, maxInputLength);
-  terminalInput.value = currentInput;
+  if (terminalInput.value.length > maxInputLength) {
+    terminalInput.value = terminalInput.value.slice(0, maxInputLength);
+  }
+  currentInput = terminalInput.value.toUpperCase();
   render();
 });
 
@@ -167,7 +152,7 @@ terminalInput.addEventListener("keydown", (event) => {
   }
 });
 
-screen.addEventListener("pointerdown", focusTerminalInput);
+screen.addEventListener("click", focusTerminalInput);
 
 let sharedBuffer;
 let sharedKeys;
@@ -256,6 +241,7 @@ async function start() {
       terminalInput.value = "";
       waitingForInput = true;
       render();
+      focusTerminalInput();
     } else if (data.type === "ERROR") {
       setStatus(data.message);
       waitingForInput = false;
