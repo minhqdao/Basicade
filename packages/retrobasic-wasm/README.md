@@ -4,7 +4,7 @@
 [![license: GPL-2.0-only](https://img.shields.io/badge/license-GPL--2.0--only-blue.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/retrobasic-wasm/LICENSE)
 [![play demo](https://img.shields.io/badge/play-demo-4caf50?style=flat&logo=githubpages&logoColor=white)](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic)
 
-Run classic BASIC programs wherever JavaScript runs. `bwbasic-wasm` packages the [RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC) interpreter as a zero-dependency, single-file WebAssembly bundle. Perfect for preserving vintage BASIC software and running retro text games like [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic) directly in Node.js or modern browsers.
+Run classic BASIC programs wherever JavaScript runs. `retrobasic-wasm` packages the [RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC) interpreter as a zero-dependency, single-file WebAssembly bundle. Perfect for preserving vintage BASIC software and running retro text games like [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=retrobasic) directly in Node.js or modern browsers.
 
 ## Install
 
