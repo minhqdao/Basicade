@@ -74,15 +74,21 @@ interpreterSelect.addEventListener("change", () => {
   );
 });
 
-let terminalText = "";
+let terminalText = "LOADING...\n";
 let currentInput = "";
 let waitingForInput = false;
+let hasReceivedFirstOutput = false;
 let isCursorActive = false;
 let worker;
 let runId = 0;
 const maxInputLength = 254;
 
 function appendOutput(text) {
+  if (!hasReceivedFirstOutput) {
+    terminalText = "";
+    hasReceivedFirstOutput = true;
+  }
+
   terminalText += sanitizeTerminalOutput(text);
   render();
   screen.scrollTop = screen.scrollHeight;
@@ -314,12 +320,16 @@ window.addEventListener("pagehide", releaseWorker, { once: true });
 function reportStartError(error) {
   releaseWorker();
   setStatus(error.message);
+  terminalText = "";
+  hasReceivedFirstOutput = false;
+  render();
 }
 
 function restartGame() {
   runId += 1;
   releaseWorker();
-  terminalText = "";
+  terminalText = "LOADING...\n";
+  hasReceivedFirstOutput = false;
   currentInput = "";
   waitingForInput = false;
   setStatus("");
