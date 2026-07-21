@@ -1,12 +1,10 @@
 # bwbasic-wasm
 
 [![npm](https://img.shields.io/npm/v/bwbasic-wasm.svg)](https://www.npmjs.com/package/bwbasic-wasm)
-[![license](https://img.shields.io/npm/l/bwbasic-wasm.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/bwbasic-wasm/LICENSE)
+[![license: GPL-2.0-only](https://img.shields.io/badge/license-GPL--2.0--only-blue.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/bwbasic-wasm/LICENSE)
 [![play demo](https://img.shields.io/badge/play-demo-4caf50?style=flat&logo=githubpages&logoColor=white)](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=bwbasic)
 
-Run [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) programs wherever JavaScript runs. `bwbasic-wasm` packages the interpreter as a single-file WebAssembly bundle, so there is no separate `.wasm` asset to host or fetch.
-
-It is a natural fit for preserving ANSI BASIC programs and running retro text games such as [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/) in Node.js or the browser.
+Run classic BASIC programs wherever JavaScript runs. `bwbasic-wasm` packages the [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) interpreter as a zero-dependency, single-file WebAssembly bundle. Perfect for preserving classic ANSI BASIC software and running retro text games like [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/) directly in Node.js or modern browsers.
 
 ## Install
 
