@@ -48,6 +48,7 @@
         color: #c8f8c8;
         font: inherit;
         padding: 8px 10px;
+        transition: border-color .18s ease-out, box-shadow .18s ease-out;
       }
       #status { color: #ffc47d; font-size: 13px; grid-column: 1 / -1; margin: 0; }
       #terminal-container {
@@ -88,7 +89,6 @@
         border: 1px solid transparent;
         border-radius: 999px;
         color: rgba(200, 248, 200, .65);
-        cursor: pointer;
         font: inherit;
         font-size: 13px;
         outline: 0;
@@ -96,6 +96,10 @@
         transition: background-color .18s ease-out, border-color .18s ease-out, color .18s ease-out, text-shadow .18s ease-out;
       }
       @media (hover: hover) {
+        select:hover, select:focus-visible {
+          border-color: rgba(200, 248, 200, .7);
+          box-shadow: 0 0 5px rgba(200,248,200,.2);
+        }
         button:hover, button:focus-visible { color: #c8f8c8; text-shadow: 0 0 5px rgba(200,248,200,.5); }
       }
       @media (hover: none) {
