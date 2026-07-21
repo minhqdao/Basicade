@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   DEFAULT_GAME_ID,
@@ -94,5 +94,11 @@ const oregonTrailUrl = selectionUrl(
 );
 assert.equal(oregonTrailUrl.pathname, "/Basicade/oregon-trail/");
 assert.equal(oregonTrailUrl.search, "?ref=readme");
+
+const launcherMarkup = readFileSync("index.html", "utf8");
+const launcherScript = readFileSync("demos/launcher.js", "utf8");
+assert.match(launcherMarkup, /id="terminal-input"/);
+assert.match(launcherScript, /terminalInput\.addEventListener\("input"/);
+assert.match(launcherScript, /screen\.addEventListener\("pointerdown", focusTerminalInput\)/);
 
 console.log("test: demo catalog URL selection");

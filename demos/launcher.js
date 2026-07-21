@@ -14,6 +14,7 @@ const gameSelect = document.getElementById("game-select");
 const interpreterSelect = document.getElementById("interpreter-select");
 const status = document.getElementById("status");
 const restartButton = document.getElementById("restart-game");
+const terminalInput = document.getElementById("terminal-input");
 
 const selection = resolveSelection(
   window.location.search,
@@ -99,6 +100,7 @@ function setStatus(message) {
 
 function releaseWorker() {
   document.removeEventListener("keydown", handleKeydown);
+  terminalInput.blur();
   if (worker) {
     worker.terminate();
     worker = undefined;
@@ -108,22 +110,11 @@ function releaseWorker() {
 }
 
 function handleKeydown(event) {
-  if (!waitingForInput) return;
+  if (!waitingForInput || event.target === terminalInput) return;
 
   if (event.key === "Enter") {
     event.preventDefault();
-    const value = `${currentInput}\n`;
-    terminalText += value;
-    currentInput = "";
-    waitingForInput = false;
-    render();
-
-    for (let index = 0; index < value.length; index++) {
-      Atomics.store(sharedKeys, 2 + index, value.charCodeAt(index));
-    }
-    Atomics.store(sharedKeys, 0, value.length);
-    Atomics.store(sharedBuffer, 0, 1);
-    Atomics.notify(sharedBuffer, 0, 1);
+    submitInput();
   } else if (event.key === "Backspace") {
     event.preventDefault();
     currentInput = currentInput.slice(0, -1);
@@ -141,6 +132,42 @@ function handleKeydown(event) {
     render();
   }
 }
+
+function submitInput() {
+  const value = `${currentInput}\n`;
+  terminalText += value;
+  currentInput = "";
+  terminalInput.value = "";
+  waitingForInput = false;
+  render();
+
+  for (let index = 0; index < value.length; index++) {
+    Atomics.store(sharedKeys, 2 + index, value.charCodeAt(index));
+  }
+  Atomics.store(sharedKeys, 0, value.length);
+  Atomics.store(sharedBuffer, 0, 1);
+  Atomics.notify(sharedBuffer, 0, 1);
+}
+
+function focusTerminalInput() {
+  if (waitingForInput) terminalInput.focus({ preventScroll: true });
+}
+
+terminalInput.addEventListener("input", () => {
+  if (!waitingForInput) return;
+  currentInput = terminalInput.value.toUpperCase().slice(0, maxInputLength);
+  terminalInput.value = currentInput;
+  render();
+});
+
+terminalInput.addEventListener("keydown", (event) => {
+  if (waitingForInput && event.key === "Enter") {
+    event.preventDefault();
+    submitInput();
+  }
+});
+
+screen.addEventListener("pointerdown", focusTerminalInput);
 
 let sharedBuffer;
 let sharedKeys;
@@ -226,6 +253,7 @@ async function start() {
       appendOutput(data.text);
     } else if (data.type === "REQUEST_INPUT") {
       currentInput = "";
+      terminalInput.value = "";
       waitingForInput = true;
       render();
     } else if (data.type === "ERROR") {

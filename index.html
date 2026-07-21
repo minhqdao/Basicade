@@ -83,6 +83,15 @@
       }
       #screen::-webkit-scrollbar { display: none; }
       #terminal { color: inherit; font: inherit; margin: 0; overflow-wrap: break-word; white-space: pre-wrap; }
+      #terminal-input {
+        height: 1px;
+        left: 0;
+        opacity: 0;
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        width: 1px;
+      }
       .terminal-actions { display: flex; justify-content: center; margin-top: 12px; }
       button {
         -webkit-appearance: none;
@@ -146,6 +155,16 @@
         <div id="screen">
           <pre id="terminal"><span id="output"></span><span id="input"></span><span id="cursor"></span></pre>
         </div>
+        <input
+          id="terminal-input"
+          aria-label="Game input"
+          autocapitalize="characters"
+          autocomplete="off"
+          enterkeyhint="enter"
+          inputmode="text"
+          spellcheck="false"
+          type="text"
+        />
       </div>
       <div class="terminal-actions">
         <button id="restart-game" type="button">Restart game</button>
