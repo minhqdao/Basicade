@@ -4,6 +4,7 @@ import {
   resolveSelection,
   selectionUrl,
 } from "./catalog.js";
+import { sanitizeTerminalOutput } from "./terminal-output.js";
 
 const output = document.getElementById("output");
 const input = document.getElementById("input");
@@ -78,7 +79,7 @@ let worker;
 const maxInputLength = 254;
 
 function appendOutput(text) {
-  terminalText += text;
+  terminalText += sanitizeTerminalOutput(text);
   render();
   screen.scrollTop = screen.scrollHeight;
 }
