@@ -1709,6 +1709,22 @@ bwb_RUN (LineType * L)
   {
     time_t t;
     struct tm *lt;
+    struct timespec ts;
+    unsigned int random_seed;
+
+    /* Seed once for each RUN so unseeded programs do not repeat C's default
+       pseudo-random sequence. Explicit BASIC RANDOMIZE statements still
+       replace this seed when a program needs reproducible output. */
+    if (clock_gettime (CLOCK_REALTIME, &ts) == 0)
+    {
+      random_seed = (unsigned int) ts.tv_sec ^ (unsigned int) ts.tv_nsec;
+    }
+    else
+    {
+      time (&t);
+      random_seed = (unsigned int) t;
+    }
+    srand (random_seed);
 
     time (&t);
     lt = localtime (&t);
