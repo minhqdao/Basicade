@@ -219,22 +219,61 @@
         body {
           padding: 16px 10px;
         }
+        main {
+          display: flex;
+          flex-direction: column;
+          min-height: calc(100vh - 32px);
+          min-height: calc(100dvh - 32px);
+        }
         .launcher {
+          flex: none;
           grid-template-columns: 1fr;
         }
         #status {
           grid-column: auto;
         }
         #terminal-container {
-          height: calc(100vh - 200px);
+          flex: 1 1 auto;
+          height: auto;
+          min-height: 240px;
         }
         #screen {
           font-size: 14px;
           padding: 18px;
         }
         #terminal-input {
-          bottom: 0;
-          top: auto;
+          display: block;
+          opacity: 0;
+          position: static;
+          width: 1px;
+          z-index: auto;
+        }
+      }
+      @media (max-height: 500px) and (pointer: coarse) {
+        body {
+          padding: 10px;
+        }
+        main {
+          display: flex;
+          flex-direction: column;
+          min-height: calc(100vh - 20px);
+          min-height: calc(100dvh - 20px);
+        }
+        .launcher {
+          flex: none;
+          grid-template-columns: 1fr 1fr;
+        }
+        #terminal-container {
+          flex: 1 1 auto;
+          height: auto;
+          min-height: 180px;
+        }
+        #terminal-input {
+          display: block;
+          opacity: 0;
+          position: static;
+          width: 1px;
+          z-index: auto;
         }
       }
     </style>
@@ -261,16 +300,16 @@
           <pre
             id="terminal"
           ><span id="output">LOADING...</span><span id="input"></span><span id="cursor"></span></pre>
+          <input
+            id="terminal-input"
+            type="text"
+            enterkeyhint="enter"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="characters"
+            spellcheck="false"
+          />
         </div>
-        <input
-          id="terminal-input"
-          type="text"
-          enterkeyhint="enter"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="characters"
-          spellcheck="false"
-        />
       </div>
       <div class="terminal-actions">
         <button id="restart-game" type="button">Restart game</button>

@@ -100,13 +100,18 @@ const launcherScript = readFileSync("demos/launcher.js", "utf8");
 assert.match(launcherMarkup, /id="terminal-input"/);
 assert.match(
   launcherMarkup,
-  /@media \(max-width: 560px\)[\s\S]*#terminal-input\s*{[^}]*bottom: 0;/,
-  "the mobile input is anchored beside the active terminal line",
+  /<pre[\s\S]*id="terminal"[\s\S]*<input\s+id="terminal-input"/,
+  "the native input follows the rendered terminal content",
 );
 assert.match(
   launcherMarkup,
-  /#terminal-input\s*{[^}]*top: 0;/s,
-  "desktop keeps its established input anchor",
+  /@media \(max-width: 560px\)[\s\S]*#terminal-input\s*{[^}]*position: static;/,
+  "mobile places the focused input at the active terminal line",
+);
+assert.match(
+  launcherMarkup,
+  /@media \(max-width: 560px\)[\s\S]*#terminal-container\s*{[^}]*flex: 1 1 auto;[^}]*min-height: 240px;/,
+  "the portrait terminal fills available space while retaining a minimum",
 );
 assert.match(launcherScript, /terminalInput\.addEventListener\("input"/);
 assert.match(
