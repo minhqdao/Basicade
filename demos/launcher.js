@@ -5,6 +5,7 @@ import {
   selectionUrl,
 } from "./catalog.js";
 import { sanitizeTerminalOutput } from "./terminal-output.js";
+import { hasTextSelection, updateTextContent } from "./terminal-selection.js";
 
 const output = document.getElementById("output");
 const input = document.getElementById("input");
@@ -95,10 +96,10 @@ function appendOutput(text) {
 }
 
 function render() {
-  output.textContent = terminalText;
-  input.textContent = waitingForInput ? currentInput : "";
+  updateTextContent(output, terminalText);
+  updateTextContent(input, waitingForInput ? currentInput : "");
 
-  cursor.textContent = waitingForInput ? "_" : "";
+  updateTextContent(cursor, waitingForInput ? "_" : "");
 
   const shouldShowCursor =
     waitingForInput && document.activeElement === terminalInput;
@@ -157,12 +158,11 @@ function focusTerminalInput() {
   if (waitingForInput) terminalInput.focus({ preventScroll: true });
 }
 
-// Prevent mousedown from blurring the input if we're clicking inside the terminal
-screen.addEventListener("mousedown", (event) => {
-  if (document.activeElement === terminalInput) {
-    event.preventDefault();
-  }
-});
+function handleTerminalClick() {
+  // A click is also fired after dragging to select text. Refocusing the hidden
+  // input here would collapse the range the user just created.
+  if (!hasTextSelection(window.getSelection())) focusTerminalInput();
+}
 
 terminalInput.addEventListener("focus", render);
 terminalInput.addEventListener("blur", render);
@@ -199,7 +199,7 @@ terminalInput.addEventListener("keydown", (event) => {
   }
 });
 
-screen.addEventListener("click", focusTerminalInput);
+screen.addEventListener("click", handleTerminalClick);
 
 let sharedBuffer;
 let sharedKeys;

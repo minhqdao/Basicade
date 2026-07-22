@@ -99,6 +99,9 @@ const launcherMarkup = readFileSync("index.html", "utf8");
 const launcherScript = readFileSync("demos/launcher.js", "utf8");
 assert.match(launcherMarkup, /id="terminal-input"/);
 assert.match(launcherScript, /terminalInput\.addEventListener\("input"/);
-assert.match(launcherScript, /screen\.addEventListener\("click", focusTerminalInput\)/);
+assert.match(
+  launcherScript,
+  /screen\.addEventListener\("click", handleTerminalClick\)/,
+);
 
 console.log("test: demo catalog URL selection");

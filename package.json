@@ -18,7 +18,7 @@
     "build:demo": "vite build",
     "lint": "eslint .",
     "test": "npm run test:demo && npm run test:games && npm run test:integration && npm run test:bwbasic && npm run test:retrobasic && npm run test:packages",
-    "test:demo": "node test/demo-catalog.mjs",
+    "test:demo": "node test/demo-catalog.mjs && node test/terminal-selection.mjs",
     "test:games": "node test/basic101-wasm-smoke.mjs && node test/basic-computer-games-wasm-smoke.mjs && node test/23matches-coin-flip.mjs && node test/aceyducey-randomness.mjs && node test/hangman-interaction.mjs && node test/hammurabi-terminal.mjs",
     "test:games:native": "make -C interpreters/RetroBASIC && node test/basic101-native-smoke.mjs",
     "test:integration": "node test/integration.mjs bwbasic && node test/integration.mjs retrobasic",
