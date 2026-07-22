@@ -117,18 +117,15 @@ The repository includes an interactive browser demo running [The Oregon Trail](h
 npm install
 
 # Build the WASM binary
-npm run build:wasm:bwbasic
-
-# Build the TypeScript package
-npm run build:bwbasic
+npm run build:wasm
 
 # Start the Vite dev server (demo)
 npm run dev
 
-# Run tests
-npm run test
+# Run format, lint, and test
+npm run all
 ```
 
 ## License
 
-This package is licensed under [GPL-2.0-only](LICENSE). It includes a modified WebAssembly build of Bywater BASIC; copyright and complete-source information are in [NOTICE](NOTICE). The corresponding source and build scripts are available in the [Basicade repository](https://github.com/minhqdao/Basicade/tree/main/packages/bwbasic-wasm).
+This package is licensed under [GPL-2.0-only](LICENSE). It includes a modified WebAssembly build of [Bywater BASIC](https://sourceforge.net/projects/bwbasic/); copyright and complete-source information are in [NOTICE](NOTICE). The corresponding source and build scripts are available in the [Basicade repository](https://github.com/minhqdao/Basicade/tree/main/packages/bwbasic-wasm).
