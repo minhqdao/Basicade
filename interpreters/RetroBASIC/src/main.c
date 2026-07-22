@@ -40,6 +40,16 @@ static void sigint_handler(int sig)
   terminate_retrobasic(EXIT_SUCCESS);
 }
 
+static unsigned int automatic_random_seed(void)
+{
+  struct timespec ts;
+
+  if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
+    return (unsigned int)ts.tv_sec ^ (unsigned int)ts.tv_nsec ^ ((unsigned int)getpid() << 8);
+
+  return (unsigned int)time(NULL) ^ ((unsigned int)getpid() << 8);
+}
+
 /* usage short form, just a list of the switches */
 static void print_usage(char *argv[])
 {
@@ -235,7 +245,7 @@ int main(int argc, char *argv[])
   if (random_seed > -1)
     srand(random_seed);
   else
-    srand((unsigned int)time(NULL) | (getpid() << 8));
+    srand(automatic_random_seed());
   
   // now call rand to prime the pump, see:
   // https://stackoverflow.com/questions/76367489/srand-rand-slowly-changing-starting-value/76367884#76367884

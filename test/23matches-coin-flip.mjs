@@ -6,38 +6,50 @@ const source = readFileSync(
   "utf8",
 );
 
-assert.match(source, /^162 RANDOMIZE$/m, "game seeds its random generator");
+assert.doesNotMatch(
+  source,
+  /^\d+ RANDOMIZE(?:\s|$)/m,
+  "23 Matches relies on the interpreters' default run seeds",
+);
 
 for (const interpreter of ["bwbasic", "retrobasic"]) {
-  const outcomes = new Set();
+  const randomValues = new Set();
+  const { runBasic } = await import(
+    `../packages/${interpreter}-wasm/dist/index.js`
+  );
 
-  for (const seed of Array.from({ length: 20 }, (_, index) => index + 1)) {
-    const seededSource = source.replace(
-      "162 RANDOMIZE",
-      `162 RANDOMIZE ${seed}`,
-    );
-    const { runBasic } = await import(
-      `../packages/${interpreter}-wasm/dist/index.js`
-    );
+  for (let attempt = 0; attempt < 8; attempt += 1) {
     const output = [];
 
     await runBasic({
-      source: seededSource,
-      stdin: Array(20).fill("1"),
+      source: "10 PRINT RND(1)\n20 END",
+      stdin: [],
       onStdout: (line) => output.push(line),
       onStderr: () => {},
     });
 
-    const outcome = output.join("\n").match(/(HEADS!|TAILS!)/)?.[1];
-    assert.ok(outcome, `${interpreter} reports the coin toss`);
-    outcomes.add(outcome);
+    const randomValue = output.join("\n").trim();
+    assert.notEqual(randomValue, "", `${interpreter} prints an RND value`);
+    randomValues.add(randomValue);
   }
 
-  assert.deepEqual(
-    outcomes,
-    new Set(["HEADS!", "TAILS!"]),
-    `${interpreter} can produce both coin toss outcomes`,
+  assert.ok(
+    randomValues.size > 1,
+    `${interpreter} automatically seeds fresh runs`,
+  );
+
+  const output = [];
+  await runBasic({
+    source,
+    stdin: Array(20).fill("1"),
+    onStdout: (line) => output.push(line),
+    onStderr: () => {},
+  });
+  assert.match(
+    output.join("\n"),
+    /(HEADS!|TAILS!)/,
+    `${interpreter} starts 23 Matches without a program-level seed`,
   );
 }
 
-console.log("test: 23 Matches coin toss varies under both WASM interpreters");
+console.log("test: both WASM interpreters auto-seed 23 Matches");
