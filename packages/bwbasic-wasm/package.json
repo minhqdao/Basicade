@@ -1,6 +1,6 @@
 {
   "name": "bwbasic-wasm",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Run classic BASIC programs in Node.js and the browser, powered by a WebAssembly build of the Bywater BASIC interpreter.",
   "type": "module",
   "license": "GPL-2.0-only",
