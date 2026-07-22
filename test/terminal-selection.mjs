@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 
+import {
+  isTouchPointer,
+  moveInputCaretToEnd,
+} from "../demos/terminal-input.js";
 import { scrollTerminalToBottom } from "../demos/terminal-scroll.js";
 import {
   hasTextSelection,
@@ -52,5 +56,21 @@ assert.equal(
   480,
   "new terminal input and output remain visible at the bottom",
 );
+
+let caret;
+const nativeInput = {
+  value: "ABC",
+  setSelectionRange(start, end) {
+    caret = [start, end];
+  },
+};
+moveInputCaretToEnd(nativeInput);
+assert.deepEqual(
+  caret,
+  [3, 3],
+  "mobile characters append in order and backspace operates at the end",
+);
+assert.equal(isTouchPointer({ pointerType: "touch" }), true);
+assert.equal(isTouchPointer({ pointerType: "mouse" }), false);
 
 console.log("test: terminal selection and active-line scrolling remain stable");

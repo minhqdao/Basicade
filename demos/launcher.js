@@ -5,6 +5,7 @@ import {
   selectionUrl,
 } from "./catalog.js";
 import { sanitizeTerminalOutput } from "./terminal-output.js";
+import { isTouchPointer, moveInputCaretToEnd } from "./terminal-input.js";
 import { scrollTerminalToBottom } from "./terminal-scroll.js";
 import { hasTextSelection, updateTextContent } from "./terminal-selection.js";
 
@@ -12,6 +13,7 @@ const output = document.getElementById("output");
 const input = document.getElementById("input");
 const cursor = document.getElementById("cursor");
 const screen = document.getElementById("screen");
+const terminalContainer = document.getElementById("terminal-container");
 const gameSelect = document.getElementById("game-select");
 const interpreterSelect = document.getElementById("interpreter-select");
 const status = document.getElementById("status");
@@ -157,7 +159,9 @@ function submitInput() {
 }
 
 function focusTerminalInput() {
-  if (waitingForInput) terminalInput.focus({ preventScroll: true });
+  if (!waitingForInput) return;
+  terminalInput.focus({ preventScroll: true });
+  moveInputCaretToEnd(terminalInput);
 }
 
 function keepActiveInputVisible() {
@@ -170,6 +174,10 @@ function handleTerminalClick() {
   // A click is also fired after dragging to select text. Refocusing the hidden
   // input here would collapse the range the user just created.
   if (!hasTextSelection(window.getSelection())) focusTerminalInput();
+}
+
+function handleTerminalPointerDown(event) {
+  if (isTouchPointer(event)) focusTerminalInput();
 }
 
 terminalInput.addEventListener("focus", () => {
@@ -202,8 +210,9 @@ terminalInput.addEventListener("input", (event) => {
     terminalInput.value = terminalInput.value.slice(0, maxInputLength);
   }
 
-  // Convert to upper case for display only. DO NOT set terminalInput.value = currentInput here!
+  // Convert to upper case for display only; never rewrite the native value here.
   currentInput = terminalInput.value.toUpperCase();
+  moveInputCaretToEnd(terminalInput);
   render();
   scrollTerminalToBottom(screen);
 });
@@ -216,7 +225,8 @@ terminalInput.addEventListener("keydown", (event) => {
   }
 });
 
-screen.addEventListener("click", handleTerminalClick);
+terminalContainer.addEventListener("pointerdown", handleTerminalPointerDown);
+terminalContainer.addEventListener("click", handleTerminalClick);
 
 let sharedBuffer;
 let sharedKeys;

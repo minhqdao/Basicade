@@ -110,13 +110,27 @@ assert.match(
 );
 assert.match(
   launcherMarkup,
+  /@media \(max-width: 560px\)[\s\S]*#terminal-input\s*{[^}]*width: 100%;/,
+  "mobile preserves enough native input width for reliable caret tracking",
+);
+assert.match(
+  launcherMarkup,
   /@media \(max-width: 560px\)[\s\S]*#terminal-container\s*{[^}]*flex: 1 1 auto;[^}]*min-height: 240px;/,
   "the portrait terminal fills available space while retaining a minimum",
 );
 assert.match(launcherScript, /terminalInput\.addEventListener\("input"/);
+assert.doesNotMatch(
+  launcherScript,
+  /terminalInput\.value\s*=\s*currentInput/,
+  "display uppercasing never rewrites the native mobile input",
+);
 assert.match(
   launcherScript,
-  /screen\.addEventListener\("click", handleTerminalClick\)/,
+  /terminalContainer\.addEventListener\("pointerdown", handleTerminalPointerDown\)/,
+);
+assert.match(
+  launcherScript,
+  /terminalContainer\.addEventListener\("click", handleTerminalClick\)/,
 );
 
 console.log("test: demo catalog URL selection");
