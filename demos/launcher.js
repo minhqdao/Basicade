@@ -5,6 +5,7 @@ import {
   selectionUrl,
 } from "./catalog.js";
 import { sanitizeTerminalOutput } from "./terminal-output.js";
+import { scrollTerminalToBottom } from "./terminal-scroll.js";
 import { hasTextSelection, updateTextContent } from "./terminal-selection.js";
 
 const output = document.getElementById("output");
@@ -92,7 +93,7 @@ function appendOutput(text) {
 
   terminalText += sanitizeTerminalOutput(text);
   render();
-  screen.scrollTop = screen.scrollHeight;
+  scrollTerminalToBottom(screen);
 }
 
 function render() {
@@ -145,6 +146,7 @@ function submitInput() {
   terminalInput.value = "";
   waitingForInput = false;
   render();
+  scrollTerminalToBottom(screen);
 
   for (let index = 0; index < value.length; index++) {
     Atomics.store(sharedKeys, 2 + index, value.charCodeAt(index));
@@ -158,14 +160,28 @@ function focusTerminalInput() {
   if (waitingForInput) terminalInput.focus({ preventScroll: true });
 }
 
+function keepActiveInputVisible() {
+  if (waitingForInput && document.activeElement === terminalInput) {
+    scrollTerminalToBottom(screen);
+  }
+}
+
 function handleTerminalClick() {
   // A click is also fired after dragging to select text. Refocusing the hidden
   // input here would collapse the range the user just created.
   if (!hasTextSelection(window.getSelection())) focusTerminalInput();
 }
 
-terminalInput.addEventListener("focus", render);
+terminalInput.addEventListener("focus", () => {
+  render();
+  keepActiveInputVisible();
+});
 terminalInput.addEventListener("blur", render);
+
+// Mobile keyboards resize the visual viewport after focus. Re-pin after that
+// resize so Safari and other mobile browsers keep the active line in view.
+const keyboardViewport = window.visualViewport ?? window;
+keyboardViewport.addEventListener("resize", keepActiveInputVisible);
 
 // 1. Handle live typing, backspacing, and mobile "Return/Go" keys
 terminalInput.addEventListener("input", (event) => {
@@ -189,6 +205,7 @@ terminalInput.addEventListener("input", (event) => {
   // Convert to upper case for display only. DO NOT set terminalInput.value = currentInput here!
   currentInput = terminalInput.value.toUpperCase();
   render();
+  scrollTerminalToBottom(screen);
 });
 
 // 2. Handle desktop 'Enter' key press

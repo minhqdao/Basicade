@@ -146,8 +146,8 @@
       }
       #terminal-input {
         position: absolute;
-        top: 0;
         left: 0;
+        top: 0;
         width: 100%; /* Give it real width so the OS can track the caret */
         height: 1px; /* Keep it 1px tall so it doesn't affect layout */
         font-size: 16px; /* Crucial: prevents iOS from auto-zooming when focused */
@@ -231,6 +231,10 @@
         #screen {
           font-size: 14px;
           padding: 18px;
+        }
+        #terminal-input {
+          bottom: 0;
+          top: auto;
         }
       }
     </style>

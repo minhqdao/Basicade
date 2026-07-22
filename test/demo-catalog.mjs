@@ -98,6 +98,16 @@ assert.equal(oregonTrailUrl.search, "?ref=readme");
 const launcherMarkup = readFileSync("index.html", "utf8");
 const launcherScript = readFileSync("demos/launcher.js", "utf8");
 assert.match(launcherMarkup, /id="terminal-input"/);
+assert.match(
+  launcherMarkup,
+  /@media \(max-width: 560px\)[\s\S]*#terminal-input\s*{[^}]*bottom: 0;/,
+  "the mobile input is anchored beside the active terminal line",
+);
+assert.match(
+  launcherMarkup,
+  /#terminal-input\s*{[^}]*top: 0;/s,
+  "desktop keeps its established input anchor",
+);
 assert.match(launcherScript, /terminalInput\.addEventListener\("input"/);
 assert.match(
   launcherScript,

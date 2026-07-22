@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 
+import { scrollTerminalToBottom } from "../demos/terminal-scroll.js";
 import {
   hasTextSelection,
   updateTextContent,
@@ -36,4 +37,20 @@ updateTextContent(element, "NEW OUTPUT");
 assert.equal(writes, 1, "new terminal output is still rendered");
 assert.equal(element.textContent, "NEW OUTPUT");
 
-console.log("test: terminal text selection survives focus and render updates");
+const shortScreen = { clientHeight: 600, scrollHeight: 48, scrollTop: 0 };
+scrollTerminalToBottom(shortScreen);
+assert.equal(
+  shortScreen.scrollTop,
+  0,
+  "short terminal content does not move when typing starts",
+);
+
+const screen = { clientHeight: 240, scrollHeight: 480, scrollTop: 0 };
+scrollTerminalToBottom(screen);
+assert.equal(
+  screen.scrollTop,
+  480,
+  "new terminal input and output remain visible at the bottom",
+);
+
+console.log("test: terminal selection and active-line scrolling remain stable");
