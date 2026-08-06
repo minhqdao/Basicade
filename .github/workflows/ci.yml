@@ -59,6 +59,14 @@ jobs:
       - name: Build browser launcher
         run: npm run build:demo
 
+      - name: Install browser-test engines
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Test browser interaction
+        if: runner.os == 'Linux'
+        run: npx playwright test
+
       - name: Run tests
         run: npm run test
         shell: bash

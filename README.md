@@ -42,7 +42,15 @@ npm run dev
 
 # Format, lint, and test
 npm run all
+
+# Run browser interaction characterization tests
+npx playwright install chromium webkit
+npm run test:browser
 ```
+
+Browser tests cover desktop and mobile-emulated Chromium and WebKit. Changes to
+the launcher, worker, or terminal layout should also follow the short real-device
+[iOS Safari checklist](test/browser/MANUAL-IOS-SAFARI.md).
 
 The launcher opens at:
 
