@@ -34,12 +34,15 @@ The Oregon Trail example
   See examples/101-basic-computer-games/LICENSE-STATUS.md.
 
 BASIC Computer Games collection
-  The 1978 collection was edited and compiled by David H. Ahl. His public-domain
-  declaration above covers the publications he wrote or edited. Files in
-  examples/basic-computer-games are maintained strictly for historical,
-  educational, and archival preservation. Basicade does not claim authorship or
-  relicense the original listings. See
-  examples/basic-computer-games/LICENSE-STATUS.md.
+  The files are associated with the 1978 BASIC Computer Games: Microcomputer
+  Edition, edited and compiled by David H. Ahl. Ahl's 2022 public-domain notice
+  covers material he wrote or edited, and a 2017 account records his direct
+  confirmation that these games had been placed in the public domain. The
+  original file import did not preserve an upstream URL, revision, or
+  file-by-file chain of custody. Basicade does not claim authorship, apply its
+  MIT licence to the listings, or claim the Internet Archive reference scan as
+  their verified byte source. See examples/basic-computer-games/README.md,
+  LICENSE-STATUS.md, and SOURCE-MANIFEST.sha256.
 
 RetroBASIC test programs
   Test fixtures in test/retrobasic originate from RetroBASIC and carry their

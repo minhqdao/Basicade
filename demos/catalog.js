@@ -260,7 +260,8 @@ const basicComputerGames = basicComputerGamesFiles.map((file) => [
     sourcePath: `examples/basic-computer-games/${file}.bas`,
     source: Object.freeze({
       url: "https://archive.org/details/Basic_Computer_Games_Microcomputer_Edition_1978_Creative_Computing",
-      license: "Source provenance and licence record pending",
+      license:
+        "Public-domain basis documented; file-level import provenance incomplete",
     }),
     interpreters: Object.freeze(
       basicComputerGamesBwbasicOnly.has(file)
