@@ -14,7 +14,7 @@ const manifestText = await readFile(
 );
 const manifestEntries = manifestText
   .trim()
-  .split("\n")
+  .split(/\r?\n/)
   .map((line) => {
     const match = line.match(/^([a-f0-9]{64})  ([^/]+\.bas)$/);
     assert.ok(match, `invalid source-manifest entry: ${line}`);
