@@ -81,6 +81,15 @@
         letter-spacing: 0.08em;
         text-transform: uppercase;
       }
+      .visually-hidden {
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        height: 1px;
+        overflow: hidden;
+        position: absolute;
+        white-space: nowrap;
+        width: 1px;
+      }
       select {
         background: #111512;
         border: 1px solid rgba(200, 248, 200, 0.35);
@@ -281,7 +290,7 @@
   </head>
   <body>
     <main>
-      <h1 hidden>Basicade — Classic BASIC Games</h1>
+      <h1 class="visually-hidden">Basicade — Classic BASIC Games</h1>
       <section class="launcher" aria-label="Game launcher">
         <label>
           Game
@@ -294,10 +303,21 @@
             aria-label="Select an interpreter"
           ></select>
         </label>
-        <p id="status" hidden role="status"></p>
+        <p id="status" hidden role="status" aria-atomic="true"></p>
       </section>
       <div id="terminal-container">
-        <div id="screen">
+        <h2 id="terminal-title" class="visually-hidden">Game terminal</h2>
+        <p id="terminal-instructions" class="visually-hidden">
+          Game output appears in this terminal. When the game asks a question,
+          type your answer in the game command input and press Enter.
+        </p>
+        <div
+          id="screen"
+          role="region"
+          aria-labelledby="terminal-title"
+          aria-describedby="terminal-instructions"
+          aria-live="off"
+        >
           <pre
             id="terminal"
           ><span id="output">LOADING...</span><span id="input"></span><span id="cursor"></span></pre>
@@ -309,6 +329,8 @@
             autocorrect="off"
             autocapitalize="characters"
             spellcheck="false"
+            aria-label="Game command input"
+            aria-describedby="terminal-instructions"
           />
         </div>
       </div>
