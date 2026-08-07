@@ -35,7 +35,8 @@
     <script>
       window.coi = { coepCredentialless: () => false };
     </script>
-    <script src="%BASE_URL%coi-serviceworker.js"></script>
+    <!-- Copied as a classic script to register the COI service worker. -->
+    <script vite-ignore src="%BASE_URL%coi-serviceworker.js"></script>
     <title>Basicade — Classic BASIC Games</title>
     <style>
       * {
