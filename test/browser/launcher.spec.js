@@ -162,6 +162,58 @@ test("tapping an active mobile terminal does not refocus or reposition it", asyn
   ).toEqual(beforeTap);
 });
 
+test("clicking an active desktop terminal does not restart its cursor", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "desktop mouse behavior");
+  await openLauncher(page);
+
+  await page.locator(terminalInput).evaluate((input) => {
+    window.activeTerminalCalls = {
+      blur: 0,
+      focus: 0,
+      selection: 0,
+      cursorMutations: 0,
+    };
+    const nativeFocus = input.focus.bind(input);
+    const nativeSetSelectionRange = input.setSelectionRange.bind(input);
+    input.focus = (...arguments_) => {
+      window.activeTerminalCalls.focus++;
+      return nativeFocus(...arguments_);
+    };
+    input.setSelectionRange = (...arguments_) => {
+      window.activeTerminalCalls.selection++;
+      return nativeSetSelectionRange(...arguments_);
+    };
+    input.addEventListener("blur", () => window.activeTerminalCalls.blur++);
+
+    const cursor = document.getElementById("cursor");
+    new MutationObserver(() => window.activeTerminalCalls.cursorMutations++).observe(
+      cursor,
+      { attributeFilter: ["class"] },
+    );
+  });
+
+  expect(
+    await page.locator("#output").evaluate((output) =>
+      output.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true, cancelable: true }),
+      ),
+    ),
+  ).toBe(true);
+
+  await page.locator("#terminal-container").click({ position: { x: 20, y: 20 } });
+
+  await expect(page.locator(terminalInput)).toBeFocused();
+  expect(await page.evaluate(() => window.activeTerminalCalls)).toEqual({
+    blur: 0,
+    focus: 0,
+    selection: 0,
+    cursorMutations: 0,
+  });
+});
+
 test("mobile portrait and landscape preserve the active input layout", async ({
   page,
   isMobile,

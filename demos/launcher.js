@@ -190,14 +190,21 @@ function handleTerminalPointerDown(event) {
 }
 
 function handleTerminalMouseDown(event) {
-  if (!touchMouseEventPending) return;
+  const followsTouch = touchMouseEventPending;
   touchMouseEventPending = false;
+  const targetsTerminalBackground =
+    event.target === screen || event.target === terminalContainer;
 
-  // Mobile browsers synthesize mouse events after a touch. Prevent their
-  // default focus change so an active terminal input is not blurred and then
-  // immediately refocused by the subsequent click. Touch scrolling has
-  // already been handled before this compatibility event is dispatched.
-  if (document.activeElement === terminalInput) event.preventDefault();
+  // Mobile browsers synthesize mouse events after a touch, while desktop
+  // browsers move focus when the blank terminal background is clicked. Avoid
+  // both redundant blur/refocus cycles. Mouse selection still works because
+  // mousedown events that target terminal text keep their default behavior.
+  if (
+    document.activeElement === terminalInput &&
+    (followsTouch || targetsTerminalBackground)
+  ) {
+    event.preventDefault();
+  }
 }
 
 // Mobile Safari can resize and pan its visual viewport at different points in
