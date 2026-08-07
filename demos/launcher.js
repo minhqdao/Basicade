@@ -7,9 +7,9 @@ import {
 import { sanitizeTerminalOutput } from "./terminal-output.js";
 import { isTouchPointer, moveInputCaretToEnd } from "./terminal-input.js";
 import {
-  revealTerminalActiveLine,
   scrollTerminalToBottom,
   terminalActiveLineOverlap,
+  terminalHeightAboveViewport,
 } from "./terminal-scroll.js";
 import { hasTextSelection, updateTextContent } from "./terminal-selection.js";
 import { runnerCommand, runnerEvent } from "./runner-protocol.js";
@@ -185,64 +185,104 @@ function handleTerminalPointerDown(event) {
   if (isTouchPointer(event)) focusTerminalInput();
 }
 
-terminalInput.addEventListener("focus", () => {
-  render();
-  keepActiveInputVisible();
-});
-terminalInput.addEventListener("blur", render);
-
-// Mobile keyboards shrink the visual viewport after focus. Wait for that
-// resize to settle, then move only an active line that the keyboard obscures.
+// Mobile Safari can resize and pan its visual viewport at different points in
+// the keyboard animation. Constrain the terminal itself instead of scrolling
+// the page, which avoids exposing Safari's blank root scroll area.
 const keyboardViewport = window.visualViewport ?? window;
 const usesMobilePointer = window.matchMedia("(pointer: coarse)");
-let previousViewportHeight = keyboardViewport.height ?? window.innerHeight;
 let previousViewportWidth = keyboardViewport.width ?? window.innerWidth;
 let keyboardResizeFrame;
+let constrainedViewportHeight;
+let keyboardCheckTimers = [];
+
+function usesTouchInput() {
+  return usesMobilePointer.matches || navigator.maxTouchPoints > 0;
+}
+
+function clearKeyboardConstraint() {
+  terminalContainer.classList.remove("keyboard-constrained");
+  terminalContainer.style.removeProperty("--keyboard-terminal-height");
+  constrainedViewportHeight = undefined;
+}
+
+function cancelKeyboardChecks() {
+  if (keyboardResizeFrame) cancelAnimationFrame(keyboardResizeFrame);
+  keyboardResizeFrame = undefined;
+  for (const timer of keyboardCheckTimers) clearTimeout(timer);
+  keyboardCheckTimers = [];
+}
+
+function constrainTerminalAboveKeyboard() {
+  keyboardResizeFrame = undefined;
+  if (!waitingForInput || document.activeElement !== terminalInput) return;
+
+  const visibleBottom = keyboardViewport.offsetTop + keyboardViewport.height;
+  const overlap = terminalActiveLineOverlap(terminalInput, visibleBottom);
+  if (!constrainedViewportHeight && overlap <= 0) return;
+
+  const terminalHeight = terminalHeightAboveViewport(
+    terminalContainer,
+    visibleBottom,
+  );
+  terminalContainer.style.setProperty(
+    "--keyboard-terminal-height",
+    `${terminalHeight}px`,
+  );
+  terminalContainer.classList.add("keyboard-constrained");
+  constrainedViewportHeight ??= keyboardViewport.height;
+
+  keyboardResizeFrame = requestAnimationFrame(() => {
+    keyboardResizeFrame = undefined;
+    scrollTerminalToBottom(screen);
+  });
+}
+
+function queueKeyboardConstraintCheck() {
+  if (!usesTouchInput() || keyboardViewport === window) return;
+  if (keyboardResizeFrame) cancelAnimationFrame(keyboardResizeFrame);
+  keyboardResizeFrame = requestAnimationFrame(() => {
+    keyboardResizeFrame = requestAnimationFrame(constrainTerminalAboveKeyboard);
+  });
+}
 
 function handleKeyboardViewportResize() {
-  const usesTouchInput =
-    usesMobilePointer.matches || navigator.maxTouchPoints > 0;
-  if (!usesTouchInput || keyboardViewport === window) {
+  if (!usesTouchInput() || keyboardViewport === window) {
     keepActiveInputVisible();
     return;
   }
 
   const height = keyboardViewport.height;
   const width = keyboardViewport.width;
-  const heightShrank = height < previousViewportHeight;
-  const widthStayedStable = Math.abs(width - previousViewportWidth) < 24;
-  previousViewportHeight = height;
+  const widthChanged = Math.abs(width - previousViewportWidth) >= 24;
   previousViewportWidth = width;
 
-  if (keyboardResizeFrame) cancelAnimationFrame(keyboardResizeFrame);
-  if (!heightShrank || !widthStayedStable) return;
-
-  keyboardResizeFrame = requestAnimationFrame(() => {
-    keyboardResizeFrame = requestAnimationFrame(() => {
-      keyboardResizeFrame = undefined;
-      if (!waitingForInput || document.activeElement !== terminalInput) return;
-      const visibleBottom =
-        keyboardViewport.offsetTop + keyboardViewport.height;
-      if (!revealTerminalActiveLine(screen, terminalInput, visibleBottom)) {
-        return;
-      }
-
-      // The terminal pane may already be at its maximum scroll position. Move
-      // the page by any remaining overlap so the whole terminal rises above
-      // an overlaying keyboard rather than leaving its prompt underneath it.
-      keyboardResizeFrame = requestAnimationFrame(() => {
-        keyboardResizeFrame = undefined;
-        const remainingOverlap = terminalActiveLineOverlap(
-          terminalInput,
-          keyboardViewport.offsetTop + keyboardViewport.height,
-        );
-        if (remainingOverlap > 0) window.scrollBy(0, remainingOverlap);
-      });
-    });
-  });
+  if (widthChanged) {
+    clearKeyboardConstraint();
+    return;
+  }
+  if (constrainedViewportHeight && height > constrainedViewportHeight + 80) {
+    clearKeyboardConstraint();
+    return;
+  }
+  queueKeyboardConstraintCheck();
 }
 
 keyboardViewport.addEventListener("resize", handleKeyboardViewportResize);
+keyboardViewport.addEventListener("scroll", queueKeyboardConstraintCheck);
+
+terminalInput.addEventListener("focus", () => {
+  render();
+  keepActiveInputVisible();
+  previousViewportWidth = keyboardViewport.width ?? window.innerWidth;
+  keyboardCheckTimers = [50, 300, 700].map((delay) =>
+    setTimeout(queueKeyboardConstraintCheck, delay),
+  );
+});
+terminalInput.addEventListener("blur", () => {
+  cancelKeyboardChecks();
+  clearKeyboardConstraint();
+  render();
+});
 
 // 1. Handle live typing, backspacing, and mobile "Return/Go" keys
 terminalInput.addEventListener("input", (event) => {

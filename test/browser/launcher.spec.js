@@ -148,6 +148,59 @@ test("mobile portrait and landscape preserve the active input layout", async ({
   await expect(page.locator(terminalInput)).toBeFocused();
 });
 
+test("a mobile keyboard constrains the terminal without scrolling the page", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, "mobile visual viewport behavior");
+  await page.addInitScript(() => {
+    const viewport = new EventTarget();
+    Object.assign(viewport, {
+      height: 844,
+      width: 390,
+      offsetTop: 0,
+    });
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: viewport,
+    });
+    window.setTestVisualViewportHeight = (height) => {
+      viewport.height = height;
+      viewport.dispatchEvent(new Event("resize"));
+    };
+  });
+  await openLauncher(page);
+
+  const initialPageScroll = await page.evaluate(() => window.scrollY);
+  const keyboardTop = await page.evaluate(() => {
+    const promptBottom = document
+      .getElementById("terminal-input")
+      .getBoundingClientRect().bottom;
+    const height = promptBottom - 30;
+    window.setTestVisualViewportHeight(height);
+    return height;
+  });
+  await expect(page.locator("#terminal-container")).toHaveClass(
+    /keyboard-constrained/,
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.getElementById("terminal-input").getBoundingClientRect()
+            .bottom,
+      ),
+    )
+    .toBeLessThanOrEqual(keyboardTop);
+  expect(await page.evaluate(() => window.scrollY)).toBe(initialPageScroll);
+
+  await page.evaluate(() => window.setTestVisualViewportHeight(844));
+  await expect(page.locator("#terminal-container")).not.toHaveClass(
+    /keyboard-constrained/,
+  );
+  expect(await page.evaluate(() => window.scrollY)).toBe(initialPageScroll);
+});
+
 test("terminal controls and output expose stable accessible names", async ({
   page,
 }) => {

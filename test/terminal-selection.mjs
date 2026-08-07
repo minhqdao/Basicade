@@ -5,9 +5,9 @@ import {
   moveInputCaretToEnd,
 } from "../demos/terminal-input.js";
 import {
-  revealTerminalActiveLine,
   scrollTerminalToBottom,
   terminalActiveLineOverlap,
+  terminalHeightAboveViewport,
 } from "../demos/terminal-scroll.js";
 import {
   hasTextSelection,
@@ -61,35 +61,30 @@ assert.equal(
   "new terminal input and output remain visible at the bottom",
 );
 
-const keyboardScreen = { scrollTop: 120 };
 const visibleActiveLine = {
   getBoundingClientRect: () => ({ bottom: 440 }),
 };
 assert.equal(
-  revealTerminalActiveLine(keyboardScreen, visibleActiveLine, 480),
-  false,
+  terminalActiveLineOverlap(visibleActiveLine, 480),
+  0,
   "opening the keyboard does not move an already visible prompt",
 );
-assert.equal(keyboardScreen.scrollTop, 120);
 
 const obscuredActiveLine = {
   getBoundingClientRect: () => ({ bottom: 520 }),
 };
 assert.equal(
-  revealTerminalActiveLine(keyboardScreen, obscuredActiveLine, 480),
-  true,
-  "an obscured prompt is moved just above the keyboard",
-);
-assert.equal(keyboardScreen.scrollTop, 168);
-assert.equal(
   terminalActiveLineOverlap(obscuredActiveLine, 480),
   48,
-  "any overlap left after internal scrolling can move the page itself",
+  "an obscured prompt triggers a keyboard-safe terminal height",
 );
+const mobileTerminal = {
+  getBoundingClientRect: () => ({ top: 120 }),
+};
 assert.equal(
-  terminalActiveLineOverlap(visibleActiveLine, 480),
-  0,
-  "an already visible prompt never requests page scrolling",
+  terminalHeightAboveViewport(mobileTerminal, 480),
+  352,
+  "the terminal ends just above the keyboard without scrolling the page",
 );
 
 let caret;

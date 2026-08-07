@@ -5,23 +5,6 @@ export function scrollTerminalToBottom(screen) {
   }
 }
 
-/**
- * Moves only enough terminal content to place its active line above an
- * obstructed visual viewport. Returns whether scrolling was necessary.
- */
-export function revealTerminalActiveLine(
-  screen,
-  activeLine,
-  visibleBottom,
-  padding = 8,
-) {
-  const hiddenDistance =
-    activeLine.getBoundingClientRect().bottom + padding - visibleBottom;
-  if (hiddenDistance <= 0) return false;
-  screen.scrollTop += hiddenDistance;
-  return true;
-}
-
 /** Returns how far an active line extends below the visible viewport. */
 export function terminalActiveLineOverlap(
   activeLine,
@@ -31,5 +14,17 @@ export function terminalActiveLineOverlap(
   return Math.max(
     0,
     activeLine.getBoundingClientRect().bottom + padding - visibleBottom,
+  );
+}
+
+/** Returns the terminal height that fits immediately above an obstruction. */
+export function terminalHeightAboveViewport(
+  terminal,
+  visibleBottom,
+  padding = 8,
+) {
+  return Math.max(
+    1,
+    Math.floor(visibleBottom - terminal.getBoundingClientRect().top - padding),
   );
 }
