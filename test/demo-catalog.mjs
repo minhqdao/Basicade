@@ -38,9 +38,9 @@ assert.equal(invalidSelection.game.id, DEFAULT_GAME_ID);
 assert.equal(invalidSelection.interpreter.id, "bwbasic");
 
 const fallbackInterpreterSelection = resolveSelection(
-  "?game=bcg-bagels&interpreter=retrobasic",
+  "?game=bcg-banner&interpreter=retrobasic",
 );
-assert.equal(fallbackInterpreterSelection.game.id, "bcg-bagels");
+assert.equal(fallbackInterpreterSelection.game.id, "bcg-banner");
 assert.equal(fallbackInterpreterSelection.interpreter.id, "bwbasic");
 
 for (const game of Object.values(games)) {
