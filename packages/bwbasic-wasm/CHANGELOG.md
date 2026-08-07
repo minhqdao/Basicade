@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Share the `runBasic()` implementation with the RetroBASIC package.
+- Omit generated source maps from the npm package to avoid shipping maps larger than the bundled interpreter.
+
 ## [0.1.2] - 2026-07-22
 
 ### Changed

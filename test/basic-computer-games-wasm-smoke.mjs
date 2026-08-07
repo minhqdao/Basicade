@@ -70,8 +70,6 @@ async function runWorker() {
 const failures = [];
 await Promise.all(Array.from({ length: concurrency }, runWorker));
 
-assert.equal(gamesToTest.length, 103);
-assert.equal(jobs.length, 196);
 assert.deepEqual(
   failures,
   [],

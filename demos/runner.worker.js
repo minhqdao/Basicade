@@ -1,11 +1,20 @@
+// @ts-check
+
+import { runnerCommand, runnerEvent } from "./runner-protocol.js";
+
 let createModule;
 
-self.onmessage = async ({ data }) => {
+function send(message) {
+  self.postMessage(runnerEvent(message));
+}
+
+self.onmessage = async (event) => {
   try {
+    const data = runnerCommand(event.data);
     if (data.type === "INIT") {
       const mod = await import(/* @vite-ignore */ data.wasmUrl);
       createModule = mod.default;
-      self.postMessage({ type: "READY" });
+      send({ type: "READY" });
       return;
     }
 
@@ -19,7 +28,7 @@ self.onmessage = async ({ data }) => {
 
     function flushStdout() {
       if (!stdoutBuffer) return;
-      self.postMessage({ type: "STDOUT", text: stdoutBuffer });
+      send({ type: "STDOUT", text: stdoutBuffer });
       stdoutBuffer = "";
     }
 
@@ -39,7 +48,7 @@ self.onmessage = async ({ data }) => {
             }
 
             if (keyIndex >= inputLength) {
-              self.postMessage({ type: "REQUEST_INPUT" });
+              send({ type: "REQUEST_INPUT" });
               Atomics.wait(sharedBuffer, 0, 0);
               Atomics.store(sharedBuffer, 0, 0);
               keyIndex = 0;
@@ -54,7 +63,7 @@ self.onmessage = async ({ data }) => {
           (charCode) => {
             const character = String.fromCharCode(charCode);
             if (character === "\n") {
-              self.postMessage({ type: "STDOUT", text: `${stdoutBuffer}\n` });
+              send({ type: "STDOUT", text: `${stdoutBuffer}\n` });
               stdoutBuffer = "";
             } else {
               stdoutBuffer += character;
@@ -68,10 +77,10 @@ self.onmessage = async ({ data }) => {
     module.FS.writeFile(`/${data.filename}`, data.source);
     module.callMain([`/${data.filename}`]);
     flushStdout();
-    self.postMessage({ type: "EXIT" });
+    send({ type: "EXIT" });
     self.close();
   } catch (error) {
-    self.postMessage({
+    send({
       type: "ERROR",
       message: error instanceof Error ? error.message : String(error),
     });

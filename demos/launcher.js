@@ -8,6 +8,7 @@ import { sanitizeTerminalOutput } from "./terminal-output.js";
 import { isTouchPointer, moveInputCaretToEnd } from "./terminal-input.js";
 import { scrollTerminalToBottom } from "./terminal-scroll.js";
 import { hasTextSelection, updateTextContent } from "./terminal-selection.js";
+import { runnerCommand, runnerEvent } from "./runner-protocol.js";
 
 const output = document.getElementById("output");
 const input = document.getElementById("input");
@@ -298,16 +299,19 @@ async function start() {
   );
   worker = activeWorker;
 
-  activeWorker.onmessage = ({ data }) => {
+  activeWorker.onmessage = (event) => {
     if (worker !== activeWorker) return;
+    const data = runnerEvent(event.data);
     if (data.type === "READY") {
-      activeWorker.postMessage({
-        type: "START",
-        source,
-        filename: selection.game.sourcePath.split("/").pop(),
-        buffer,
-        keys,
-      });
+      activeWorker.postMessage(
+        runnerCommand({
+          type: "START",
+          source,
+          filename: selection.game.sourcePath.split("/").pop(),
+          buffer,
+          keys,
+        }),
+      );
     } else if (data.type === "STDOUT") {
       appendOutput(data.text);
     } else if (data.type === "REQUEST_INPUT") {
@@ -336,10 +340,12 @@ async function start() {
     render();
     releaseWorker();
   };
-  activeWorker.postMessage({
-    type: "INIT",
-    wasmUrl: applicationUrl(selection.interpreter.wasmPath).href,
-  });
+  activeWorker.postMessage(
+    runnerCommand({
+      type: "INIT",
+      wasmUrl: applicationUrl(selection.interpreter.wasmPath).href,
+    }),
+  );
 }
 
 window.addEventListener("pagehide", releaseWorker, { once: true });

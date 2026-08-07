@@ -6,5 +6,5 @@ export default defineConfig({
   dts: false,
   outDir: "dist",
   clean: false,
-  sourcemap: true,
+  sourcemap: false,
 });
