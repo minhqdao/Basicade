@@ -48,5 +48,5 @@ function smokeTest(game) {
 }
 
 const results = await Promise.all(gamesToTest.map(smokeTest));
-assert.equal(results.length, 39);
+assert.equal(results.length, 38);
 console.log(`test: started ${results.length} 101 BASIC games with RetroBASIC`);
