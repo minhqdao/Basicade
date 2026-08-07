@@ -147,3 +147,46 @@ test("mobile portrait and landscape preserve the active input layout", async ({
   );
   await expect(page.locator(terminalInput)).toBeFocused();
 });
+
+test("terminal controls and output expose stable accessible names", async ({
+  page,
+}) => {
+  await openLauncher(page);
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Basicade — Classic BASIC Games",
+  );
+  await expect(page.getByRole("region", { name: "Game terminal" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Game command input" })).toBeFocused();
+  await expect(page.getByRole("status")).toBeHidden();
+  await expect(page.locator("#screen")).toHaveAttribute("aria-live", "off");
+});
+
+test("keyboard-only navigation changes controls, restarts, and returns to input", async ({
+  browserName,
+  isMobile,
+  page,
+}) => {
+  test.skip(isMobile, "physical-keyboard navigation is covered by desktop engines");
+  await openLauncher(page);
+
+  await page.locator(terminalInput).press("Shift+Tab");
+  await expect(page.locator("#interpreter-select")).toBeFocused();
+  await page.locator("#interpreter-select").press("r");
+  await page.locator("#interpreter-select").press("Tab");
+  await expect(page).toHaveURL(/interpreter=retrobasic/);
+  await expect(page.locator(terminalInput)).toBeFocused({ timeout: 15_000 });
+
+  await page.locator(terminalInput).press("Shift+Tab");
+  await page.locator("#interpreter-select").press("Shift+Tab");
+  await expect(page.locator("#game-select")).toBeFocused();
+  await page.locator("#game-select").press("2");
+  await page.locator("#game-select").press("Tab");
+  await expect(page).toHaveURL(/game=bcg-23matches/);
+
+  await openLauncher(page);
+  await page.locator(terminalInput).press(browserName === "webkit" ? "Alt+Tab" : "Tab");
+  await expect(page.getByRole("button", { name: "Restart game" })).toBeFocused();
+  await page.getByRole("button", { name: "Restart game" }).press("Enter");
+  await expect(page.locator(terminalInput)).toBeFocused({ timeout: 15_000 });
+});
