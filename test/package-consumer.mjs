@@ -4,7 +4,8 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+const npmCli = process.env.npm_execpath;
+assert.ok(npmCli, "npm_execpath is available when this test runs through npm");
 const repository = resolve(import.meta.dirname, "..");
 const temporaryRoot = await mkdtemp(join(tmpdir(), "basicade-package-test-"));
 const npmCache = join(temporaryRoot, "npm-cache");
@@ -19,12 +20,16 @@ function run(command, args, options = {}) {
   });
 }
 
+function runNpm(args, options) {
+  return run(process.execPath, [npmCli, ...args], options);
+}
+
 try {
   for (const packageName of packages) {
     const packDirectory = join(temporaryRoot, "tarballs");
     await mkdir(packDirectory, { recursive: true });
     const packResult = JSON.parse(
-      run(npm, [
+      runNpm([
         "pack",
         "--json",
         "--pack-destination",
@@ -45,8 +50,7 @@ try {
     );
 
     const tarball = join(packDirectory, packResult[0].filename);
-    run(
-      npm,
+    runNpm(
       [
         "install",
         "--ignore-scripts",
