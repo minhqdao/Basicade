@@ -41,6 +41,11 @@ try {
       ]),
     );
     assert.equal(packResult.length, 1, `${packageName} produced one tarball`);
+    assert.equal(
+      packResult[0].files.some((file) => file.path.endsWith(".map")),
+      false,
+      `${packageName} omits generated source maps`,
+    );
 
     const consumer = join(temporaryRoot, `consumer-${packageName}`);
     await mkdir(consumer);

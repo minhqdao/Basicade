@@ -1,4 +1,3 @@
-import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { games } from "../demos/catalog.js";
@@ -49,5 +48,4 @@ for (const game of gamesToTest) {
   });
 }
 
-assert.equal(gamesToTest.length, 38);
 console.log(`test: started ${gamesToTest.length} 101 BASIC games with RetroBASIC WASM`);

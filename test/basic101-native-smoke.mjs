@@ -1,4 +1,3 @@
-import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { games } from "../demos/catalog.js";
@@ -48,5 +47,4 @@ function smokeTest(game) {
 }
 
 const results = await Promise.all(gamesToTest.map(smokeTest));
-assert.equal(results.length, 38);
 console.log(`test: started ${results.length} 101 BASIC games with RetroBASIC`);

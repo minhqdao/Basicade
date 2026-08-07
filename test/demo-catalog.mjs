@@ -8,6 +8,9 @@ import {
   resolveSelection,
   selectionUrl,
 } from "../demos/catalog.js";
+import { catalogManifest } from "../demos/catalog-manifest.js";
+import { compileCatalog } from "../demos/catalog-schema.js";
+import { runnerCommand, runnerEvent } from "../demos/runner-protocol.js";
 
 const defaultSelection = resolveSelection();
 assert.equal(defaultSelection.game.id, DEFAULT_GAME_ID);
@@ -60,23 +63,49 @@ for (const game of Object.values(games)) {
   }
 }
 
-const basic101CatalogSources = Object.values(games)
-  .filter((game) => game.collection === "101 BASIC Computer Games")
-  .map((game) => game.sourcePath.split("/").pop())
-  .sort();
-assert.equal(basic101CatalogSources.length, 38);
-for (const source of basic101CatalogSources) {
-  assert.ok(existsSync(resolve("examples/101-basic-computer-games", source)));
+for (const collection of catalogManifest.generatedCollections) {
+  const expectedSources = collection.files
+    .map((file) => `${collection.sourceDirectory}/${file}.bas`)
+    .sort();
+  const actualSources = Object.values(games)
+    .filter((game) => game.collection === collection.collection)
+    .map((game) => game.sourcePath)
+    .sort();
+  assert.deepEqual(
+    actualSources,
+    expectedSources,
+    `${collection.collection} exactly matches its declared source set`,
+  );
+  for (const source of expectedSources) assert.ok(existsSync(resolve(source)));
 }
 
-const basicComputerGamesCatalogSources = Object.values(games)
-  .filter((game) => game.collection === "BASIC Computer Games")
-  .map((game) => game.sourcePath.split("/").pop())
-  .sort();
-assert.equal(basicComputerGamesCatalogSources.length, 103);
-for (const source of basicComputerGamesCatalogSources) {
-  assert.ok(existsSync(resolve("examples/basic-computer-games", source)));
-}
+const duplicateGameManifest = structuredClone(catalogManifest);
+duplicateGameManifest.games.push(structuredClone(duplicateGameManifest.games[0]));
+assert.throws(() => compileCatalog(duplicateGameManifest), /game IDs must be unique/);
+
+const unknownInterpreterManifest = structuredClone(catalogManifest);
+unknownInterpreterManifest.games[0].interpreters = ["missing"];
+assert.throws(() => compileCatalog(unknownInterpreterManifest), /unknown interpreter/);
+
+const strayOverrideManifest = structuredClone(catalogManifest);
+strayOverrideManifest.generatedCollections[0].titles.missing = "Missing";
+assert.throws(() => compileCatalog(strayOverrideManifest), /unlisted file/);
+
+const protocolBuffer = new SharedArrayBuffer(4);
+assert.equal(runnerCommand({ type: "INIT", wasmUrl: "/runner.js" }).type, "INIT");
+assert.equal(
+  runnerCommand({
+    type: "START",
+    source: "10 END",
+    filename: "test.bas",
+    buffer: protocolBuffer,
+    keys: protocolBuffer,
+  }).type,
+  "START",
+);
+assert.equal(runnerEvent({ type: "STDOUT", text: "READY" }).type, "STDOUT");
+assert.throws(() => runnerCommand({ type: "START" }), /source|shared memory/);
+assert.throws(() => runnerEvent({ type: "UNKNOWN" }), /Unknown runner event/);
 
 const url = selectionUrl(new URL("https://example.test/Basicade/?ref=readme"), {
   game: games["101-aceydu"],
