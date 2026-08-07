@@ -28,9 +28,10 @@
     "test:integration": "node test/integration.mjs bwbasic && node test/integration.mjs retrobasic",
     "test:bwbasic": "npm run test -w packages/bwbasic-wasm",
     "test:retrobasic": "npm run test -w packages/retrobasic-wasm && node test/retrobasic.mjs bwbasic && node test/retrobasic.mjs retrobasic",
-    "test:packages": "npm pack --dry-run --workspace packages/bwbasic-wasm && npm pack --dry-run --workspace packages/retrobasic-wasm",
+    "test:packages": "node test/package-consumer.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "verify": "npm run format:check && npm run lint && npm run test",
     "all": "npm run format && npm run lint && npm run test"
   },
   "devDependencies": {
