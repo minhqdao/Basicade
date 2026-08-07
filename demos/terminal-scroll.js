@@ -21,3 +21,15 @@ export function revealTerminalActiveLine(
   screen.scrollTop += hiddenDistance;
   return true;
 }
+
+/** Returns how far an active line extends below the visible viewport. */
+export function terminalActiveLineOverlap(
+  activeLine,
+  visibleBottom,
+  padding = 8,
+) {
+  return Math.max(
+    0,
+    activeLine.getBoundingClientRect().bottom + padding - visibleBottom,
+  );
+}

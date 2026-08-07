@@ -9,6 +9,7 @@ import { isTouchPointer, moveInputCaretToEnd } from "./terminal-input.js";
 import {
   revealTerminalActiveLine,
   scrollTerminalToBottom,
+  terminalActiveLineOverlap,
 } from "./terminal-scroll.js";
 import { hasTextSelection, updateTextContent } from "./terminal-selection.js";
 import { runnerCommand, runnerEvent } from "./runner-protocol.js";
@@ -199,7 +200,9 @@ let previousViewportWidth = keyboardViewport.width ?? window.innerWidth;
 let keyboardResizeFrame;
 
 function handleKeyboardViewportResize() {
-  if (!usesMobilePointer.matches || keyboardViewport === window) {
+  const usesTouchInput =
+    usesMobilePointer.matches || navigator.maxTouchPoints > 0;
+  if (!usesTouchInput || keyboardViewport === window) {
     keepActiveInputVisible();
     return;
   }
@@ -218,11 +221,23 @@ function handleKeyboardViewportResize() {
     keyboardResizeFrame = requestAnimationFrame(() => {
       keyboardResizeFrame = undefined;
       if (!waitingForInput || document.activeElement !== terminalInput) return;
-      revealTerminalActiveLine(
-        screen,
-        terminalInput,
-        keyboardViewport.offsetTop + keyboardViewport.height,
-      );
+      const visibleBottom =
+        keyboardViewport.offsetTop + keyboardViewport.height;
+      if (!revealTerminalActiveLine(screen, terminalInput, visibleBottom)) {
+        return;
+      }
+
+      // The terminal pane may already be at its maximum scroll position. Move
+      // the page by any remaining overlap so the whole terminal rises above
+      // an overlaying keyboard rather than leaving its prompt underneath it.
+      keyboardResizeFrame = requestAnimationFrame(() => {
+        keyboardResizeFrame = undefined;
+        const remainingOverlap = terminalActiveLineOverlap(
+          terminalInput,
+          keyboardViewport.offsetTop + keyboardViewport.height,
+        );
+        if (remainingOverlap > 0) window.scrollBy(0, remainingOverlap);
+      });
     });
   });
 }

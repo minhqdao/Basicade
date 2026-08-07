@@ -7,6 +7,7 @@ import {
 import {
   revealTerminalActiveLine,
   scrollTerminalToBottom,
+  terminalActiveLineOverlap,
 } from "../demos/terminal-scroll.js";
 import {
   hasTextSelection,
@@ -80,6 +81,16 @@ assert.equal(
   "an obscured prompt is moved just above the keyboard",
 );
 assert.equal(keyboardScreen.scrollTop, 168);
+assert.equal(
+  terminalActiveLineOverlap(obscuredActiveLine, 480),
+  48,
+  "any overlap left after internal scrolling can move the page itself",
+);
+assert.equal(
+  terminalActiveLineOverlap(visibleActiveLine, 480),
+  0,
+  "an already visible prompt never requests page scrolling",
+);
 
 let caret;
 const nativeInput = {
