@@ -117,6 +117,51 @@ test("the pointer-specific focus path keeps terminal input active", async ({
   await expect(page.locator(terminalInput)).toBeFocused();
 });
 
+test("tapping an active mobile terminal does not refocus or reposition it", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, "mobile touch behavior");
+  await openLauncher(page);
+
+  const beforeTap = await page.locator(terminalInput).evaluate((input) => {
+    window.terminalInputCalls = { focus: 0, selection: 0 };
+    const nativeFocus = input.focus.bind(input);
+    const nativeSetSelectionRange = input.setSelectionRange.bind(input);
+    input.focus = (...arguments_) => {
+      window.terminalInputCalls.focus++;
+      return nativeFocus(...arguments_);
+    };
+    input.setSelectionRange = (...arguments_) => {
+      window.terminalInputCalls.selection++;
+      return nativeSetSelectionRange(...arguments_);
+    };
+
+    const terminal = document.getElementById("terminal-container");
+    const screen = document.getElementById("screen");
+    return {
+      height: terminal.getBoundingClientRect().height,
+      scrollTop: screen.scrollTop,
+    };
+  });
+
+  await page.locator("#terminal-container").tap({ position: { x: 20, y: 20 } });
+
+  await expect(page.locator(terminalInput)).toBeFocused();
+  expect(await page.evaluate(() => window.terminalInputCalls)).toEqual({
+    focus: 0,
+    selection: 0,
+  });
+  expect(
+    await page.evaluate(() => ({
+      height: document
+        .getElementById("terminal-container")
+        .getBoundingClientRect().height,
+      scrollTop: document.getElementById("screen").scrollTop,
+    })),
+  ).toEqual(beforeTap);
+});
+
 test("mobile portrait and landscape preserve the active input layout", async ({
   page,
   isMobile,

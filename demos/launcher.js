@@ -165,7 +165,7 @@ function submitInput() {
 }
 
 function focusTerminalInput() {
-  if (!waitingForInput) return;
+  if (!waitingForInput || document.activeElement === terminalInput) return;
   terminalInput.focus({ preventScroll: true });
   moveInputCaretToEnd(terminalInput);
 }
@@ -182,8 +182,22 @@ function handleTerminalClick() {
   if (!hasTextSelection(window.getSelection())) focusTerminalInput();
 }
 
+let touchMouseEventPending = false;
+
 function handleTerminalPointerDown(event) {
-  if (isTouchPointer(event)) focusTerminalInput();
+  touchMouseEventPending = isTouchPointer(event);
+  if (touchMouseEventPending) focusTerminalInput();
+}
+
+function handleTerminalMouseDown(event) {
+  if (!touchMouseEventPending) return;
+  touchMouseEventPending = false;
+
+  // Mobile browsers synthesize mouse events after a touch. Prevent their
+  // default focus change so an active terminal input is not blurred and then
+  // immediately refocused by the subsequent click. Touch scrolling has
+  // already been handled before this compatibility event is dispatched.
+  if (document.activeElement === terminalInput) event.preventDefault();
 }
 
 // Mobile Safari can resize and pan its visual viewport at different points in
@@ -335,6 +349,7 @@ terminalInput.addEventListener("keydown", (event) => {
 });
 
 terminalContainer.addEventListener("pointerdown", handleTerminalPointerDown);
+terminalContainer.addEventListener("mousedown", handleTerminalMouseDown);
 terminalContainer.addEventListener("click", handleTerminalClick);
 
 let sharedBuffer;
