@@ -5,6 +5,7 @@ import {
   moveInputCaretToEnd,
 } from "../demos/terminal-input.js";
 import {
+  isTerminalScrolledToBottom,
   scrollTerminalToBottom,
   terminalActiveLineOverlap,
   terminalHeightAboveViewport,
@@ -59,6 +60,13 @@ assert.equal(
   screen.scrollTop,
   480,
   "new terminal input and output remain visible at the bottom",
+);
+assert.equal(isTerminalScrolledToBottom(screen), true);
+screen.scrollTop = 200;
+assert.equal(
+  isTerminalScrolledToBottom(screen),
+  false,
+  "manual terminal scrolling is distinguishable from a pinned prompt",
 );
 
 const visibleActiveLine = {

@@ -7,6 +7,7 @@ import {
 import { sanitizeTerminalOutput } from "./terminal-output.js";
 import { isTouchPointer, moveInputCaretToEnd } from "./terminal-input.js";
 import {
+  isTerminalScrolledToBottom,
   scrollTerminalToBottom,
   terminalActiveLineOverlap,
   terminalHeightAboveViewport,
@@ -192,7 +193,8 @@ const keyboardViewport = window.visualViewport ?? window;
 const usesMobilePointer = window.matchMedia("(pointer: coarse)");
 let previousViewportWidth = keyboardViewport.width ?? window.innerWidth;
 let keyboardResizeFrame;
-let constrainedViewportHeight;
+let constrainedTerminalHeight;
+let keyboardClosedViewportHeight;
 let keyboardCheckTimers = [];
 
 function usesTouchInput() {
@@ -202,7 +204,7 @@ function usesTouchInput() {
 function clearKeyboardConstraint() {
   terminalContainer.classList.remove("keyboard-constrained");
   terminalContainer.style.removeProperty("--keyboard-terminal-height");
-  constrainedViewportHeight = undefined;
+  constrainedTerminalHeight = undefined;
 }
 
 function cancelKeyboardChecks() {
@@ -218,23 +220,31 @@ function constrainTerminalAboveKeyboard() {
 
   const visibleBottom = keyboardViewport.offsetTop + keyboardViewport.height;
   const overlap = terminalActiveLineOverlap(terminalInput, visibleBottom);
-  if (!constrainedViewportHeight && overlap <= 0) return;
+  if (!constrainedTerminalHeight && overlap <= 0) return;
 
-  const terminalHeight = terminalHeightAboveViewport(
+  const availableTerminalHeight = terminalHeightAboveViewport(
     terminalContainer,
     visibleBottom,
   );
+  const terminalHeight = constrainedTerminalHeight
+    ? Math.min(constrainedTerminalHeight, availableTerminalHeight)
+    : availableTerminalHeight;
+  if (terminalHeight === constrainedTerminalHeight) return;
+
+  const shouldKeepPromptPinned = isTerminalScrolledToBottom(screen);
   terminalContainer.style.setProperty(
     "--keyboard-terminal-height",
     `${terminalHeight}px`,
   );
   terminalContainer.classList.add("keyboard-constrained");
-  constrainedViewportHeight ??= keyboardViewport.height;
+  constrainedTerminalHeight = terminalHeight;
 
-  keyboardResizeFrame = requestAnimationFrame(() => {
-    keyboardResizeFrame = undefined;
-    scrollTerminalToBottom(screen);
-  });
+  if (shouldKeepPromptPinned) {
+    keyboardResizeFrame = requestAnimationFrame(() => {
+      keyboardResizeFrame = undefined;
+      scrollTerminalToBottom(screen);
+    });
+  }
 }
 
 function queueKeyboardConstraintCheck() {
@@ -260,7 +270,11 @@ function handleKeyboardViewportResize() {
     clearKeyboardConstraint();
     return;
   }
-  if (constrainedViewportHeight && height > constrainedViewportHeight + 80) {
+  if (
+    constrainedTerminalHeight &&
+    keyboardClosedViewportHeight &&
+    height >= keyboardClosedViewportHeight - 80
+  ) {
     clearKeyboardConstraint();
     return;
   }
@@ -273,6 +287,7 @@ keyboardViewport.addEventListener("scroll", queueKeyboardConstraintCheck);
 terminalInput.addEventListener("focus", () => {
   render();
   keepActiveInputVisible();
+  keyboardClosedViewportHeight = keyboardViewport.height ?? window.innerHeight;
   previousViewportWidth = keyboardViewport.width ?? window.innerWidth;
   keyboardCheckTimers = [50, 300, 700].map((delay) =>
     setTimeout(queueKeyboardConstraintCheck, delay),
@@ -281,6 +296,7 @@ terminalInput.addEventListener("focus", () => {
 terminalInput.addEventListener("blur", () => {
   cancelKeyboardChecks();
   clearKeyboardConstraint();
+  keyboardClosedViewportHeight = undefined;
   render();
 });
 

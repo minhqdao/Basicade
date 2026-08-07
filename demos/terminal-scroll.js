@@ -5,6 +5,13 @@ export function scrollTerminalToBottom(screen) {
   }
 }
 
+/** Returns whether the terminal is already at its latest content. */
+export function isTerminalScrolledToBottom(screen, tolerance = 2) {
+  return (
+    screen.scrollHeight - screen.clientHeight - screen.scrollTop <= tolerance
+  );
+}
+
 /** Returns how far an active line extends below the visible viewport. */
 export function terminalActiveLineOverlap(
   activeLine,

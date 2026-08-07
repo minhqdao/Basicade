@@ -194,6 +194,34 @@ test("a mobile keyboard constrains the terminal without scrolling the page", asy
     .toBeLessThanOrEqual(keyboardTop);
   expect(await page.evaluate(() => window.scrollY)).toBe(initialPageScroll);
 
+  const manuallyScrolled = await page.evaluate(() => {
+    const output = document.getElementById("output");
+    const screen = document.getElementById("screen");
+    const terminal = document.getElementById("terminal-container");
+    output.textContent += `\n${"EARLIER TERMINAL OUTPUT\n".repeat(40)}`;
+    screen.scrollTop = screen.scrollHeight - screen.clientHeight - 40;
+    return {
+      height: terminal.getBoundingClientRect().height,
+      scrollTop: screen.scrollTop,
+    };
+  });
+  await page.evaluate(
+    (height) => window.setTestVisualViewportHeight(height),
+    keyboardTop + 20,
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.getElementById("terminal-container").getBoundingClientRect()
+            .height,
+      ),
+    )
+    .toBe(manuallyScrolled.height);
+  expect(
+    await page.evaluate(() => document.getElementById("screen").scrollTop),
+  ).toBe(manuallyScrolled.scrollTop);
+
   await page.evaluate(() => window.setTestVisualViewportHeight(844));
   await expect(page.locator("#terminal-container")).not.toHaveClass(
     /keyboard-constrained/,
