@@ -6,7 +6,10 @@ import {
 } from "./catalog.js";
 import { sanitizeTerminalOutput } from "./terminal-output.js";
 import { isTouchPointer, moveInputCaretToEnd } from "./terminal-input.js";
-import { scrollTerminalToBottom } from "./terminal-scroll.js";
+import {
+  revealTerminalActiveLine,
+  scrollTerminalToBottom,
+} from "./terminal-scroll.js";
 import { hasTextSelection, updateTextContent } from "./terminal-selection.js";
 import { runnerCommand, runnerEvent } from "./runner-protocol.js";
 
@@ -187,10 +190,44 @@ terminalInput.addEventListener("focus", () => {
 });
 terminalInput.addEventListener("blur", render);
 
-// Mobile keyboards resize the visual viewport after focus. Re-pin after that
-// resize so Safari and other mobile browsers keep the active line in view.
+// Mobile keyboards shrink the visual viewport after focus. Wait for that
+// resize to settle, then move only an active line that the keyboard obscures.
 const keyboardViewport = window.visualViewport ?? window;
-keyboardViewport.addEventListener("resize", keepActiveInputVisible);
+const usesMobilePointer = window.matchMedia("(pointer: coarse)");
+let previousViewportHeight = keyboardViewport.height ?? window.innerHeight;
+let previousViewportWidth = keyboardViewport.width ?? window.innerWidth;
+let keyboardResizeFrame;
+
+function handleKeyboardViewportResize() {
+  if (!usesMobilePointer.matches || keyboardViewport === window) {
+    keepActiveInputVisible();
+    return;
+  }
+
+  const height = keyboardViewport.height;
+  const width = keyboardViewport.width;
+  const heightShrank = height < previousViewportHeight;
+  const widthStayedStable = Math.abs(width - previousViewportWidth) < 24;
+  previousViewportHeight = height;
+  previousViewportWidth = width;
+
+  if (keyboardResizeFrame) cancelAnimationFrame(keyboardResizeFrame);
+  if (!heightShrank || !widthStayedStable) return;
+
+  keyboardResizeFrame = requestAnimationFrame(() => {
+    keyboardResizeFrame = requestAnimationFrame(() => {
+      keyboardResizeFrame = undefined;
+      if (!waitingForInput || document.activeElement !== terminalInput) return;
+      revealTerminalActiveLine(
+        screen,
+        terminalInput,
+        keyboardViewport.offsetTop + keyboardViewport.height,
+      );
+    });
+  });
+}
+
+keyboardViewport.addEventListener("resize", handleKeyboardViewportResize);
 
 // 1. Handle live typing, backspacing, and mobile "Return/Go" keys
 terminalInput.addEventListener("input", (event) => {

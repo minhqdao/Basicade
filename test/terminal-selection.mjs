@@ -4,7 +4,10 @@ import {
   isTouchPointer,
   moveInputCaretToEnd,
 } from "../demos/terminal-input.js";
-import { scrollTerminalToBottom } from "../demos/terminal-scroll.js";
+import {
+  revealTerminalActiveLine,
+  scrollTerminalToBottom,
+} from "../demos/terminal-scroll.js";
 import {
   hasTextSelection,
   updateTextContent,
@@ -56,6 +59,27 @@ assert.equal(
   480,
   "new terminal input and output remain visible at the bottom",
 );
+
+const keyboardScreen = { scrollTop: 120 };
+const visibleActiveLine = {
+  getBoundingClientRect: () => ({ bottom: 440 }),
+};
+assert.equal(
+  revealTerminalActiveLine(keyboardScreen, visibleActiveLine, 480),
+  false,
+  "opening the keyboard does not move an already visible prompt",
+);
+assert.equal(keyboardScreen.scrollTop, 120);
+
+const obscuredActiveLine = {
+  getBoundingClientRect: () => ({ bottom: 520 }),
+};
+assert.equal(
+  revealTerminalActiveLine(keyboardScreen, obscuredActiveLine, 480),
+  true,
+  "an obscured prompt is moved just above the keyboard",
+);
+assert.equal(keyboardScreen.scrollTop, 168);
 
 let caret;
 const nativeInput = {
