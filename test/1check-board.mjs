@@ -30,6 +30,21 @@ for (const interpreter of ["bwbasic", "retrobasic"]) {
     Array.from({ length: 64 }, (_, index) => index + 1),
     `${interpreter} printed every numerical-board position`,
   );
+  const rows = board
+    .trimEnd()
+    .split(/\n/)
+    .filter((line) => /\d/.test(line));
+  assert.equal(rows.length, 8, `${interpreter} printed eight board rows`);
+  for (const row of rows) {
+    const finalDigitColumns = [...row.matchAll(/\d+/g)].map(
+      (match) => match.index + match[0].length - 1,
+    );
+    assert.deepEqual(
+      finalDigitColumns,
+      [1, 4, 7, 10, 13, 16, 19, 22],
+      `${interpreter} right-aligned every board column`,
+    );
+  }
   assert.doesNotMatch(
     `${output}\n${stderr.join("\n")}`,
     /DEBUG:|Error at line|Syntax error|Parse error/,
