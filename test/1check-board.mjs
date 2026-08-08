@@ -41,7 +41,7 @@ for (const interpreter of ["bwbasic", "retrobasic"]) {
     );
     assert.deepEqual(
       finalDigitColumns,
-      [1, 4, 7, 10, 13, 16, 19, 22],
+      [1, 5, 9, 13, 17, 21, 25, 29],
       `${interpreter} right-aligned every board column`,
     );
   }
