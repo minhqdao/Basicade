@@ -44,6 +44,17 @@ function title(file, titles, style) {
     : file[0].toUpperCase() + file.slice(1);
 }
 
+function routeSlug(value, path) {
+  const slug = string(value, path)
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (!slug) fail(path, "expected a route-safe name");
+  return slug;
+}
+
 function freezeGame(value, path, interpreterIds) {
   const game = record(value, path);
   const interpreters = stringArray(game.interpreters, `${path}.interpreters`);
@@ -58,7 +69,7 @@ function freezeGame(value, path, interpreterIds) {
     title: string(game.title, `${path}.title`),
     collection: string(game.collection, `${path}.collection`),
     description: string(game.description, `${path}.description`),
-    route: optionalString(game.route, `${path}.route`),
+    route: string(game.route, `${path}.route`),
     sourcePath: string(game.sourcePath, `${path}.sourcePath`),
     source: source(game.source, `${path}.source`),
     interpreters: Object.freeze(interpreters),
@@ -128,9 +139,14 @@ export function compileCatalog(value) {
             collection.interpreterOverrides,
             `${path}.interpreterOverrides`,
           );
+    const routeNames =
+      collection.routeNames === undefined
+        ? {}
+        : record(collection.routeNames, `${path}.routeNames`);
     for (const override of [
       ...Object.keys(titles),
       ...Object.keys(overrides),
+      ...Object.keys(routeNames),
     ]) {
       if (!files.includes(override)) {
         fail(path, `override refers to unlisted file ${override}`);
@@ -138,6 +154,10 @@ export function compileCatalog(value) {
     }
 
     const idPrefix = string(collection.idPrefix, `${path}.idPrefix`);
+    const routePrefix = routeSlug(
+      collection.routePrefix,
+      `${path}.routePrefix`,
+    );
     const sourceDirectory = string(
       collection.sourceDirectory,
       `${path}.sourceDirectory`,
@@ -153,9 +173,15 @@ export function compileCatalog(value) {
     const collectionSource = source(collection.source, `${path}.source`);
 
     for (const file of files) {
+      const gameTitle = title(file, titles, titleStyle);
+      const routeName =
+        routeNames[file] === undefined
+          ? routeSlug(gameTitle, `${path}.titles.${file}`)
+          : routeSlug(routeNames[file], `${path}.routeNames.${file}`);
       gameValues.push({
         id: `${idPrefix}${file}`,
-        title: title(file, titles, titleStyle),
+        title: gameTitle,
+        route: `${routePrefix}-${routeName}`,
         collection: string(collection.collection, `${path}.collection`),
         description: string(collection.description, `${path}.description`),
         sourcePath: `${sourceDirectory}/${file}.bas`,
@@ -183,9 +209,7 @@ export function compileCatalog(value) {
   if (Object.keys(games).length !== gameEntries.length) {
     fail("catalog.games", "game IDs must be unique");
   }
-  const routes = Object.values(games)
-    .map((game) => game.route)
-    .filter(Boolean);
+  const routes = Object.values(games).map((game) => game.route);
   if (new Set(routes).size !== routes.length) {
     fail("catalog.games", "routes must be unique");
   }

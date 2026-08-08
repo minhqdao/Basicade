@@ -2,9 +2,9 @@
 
 [![npm](https://img.shields.io/npm/v/bwbasic-wasm.svg)](https://www.npmjs.com/package/bwbasic-wasm)
 [![license: GPL-2.0-only](https://img.shields.io/badge/license-GPL--2.0--only-blue.svg)](https://github.com/minhqdao/Basicade/blob/main/packages/bwbasic-wasm/LICENSE)
-[![play demo](https://img.shields.io/badge/play-demo-4caf50?style=flat&logo=githubpages&logoColor=white)](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=bwbasic)
+[![play demo](https://img.shields.io/badge/play-demo-4caf50?style=flat&logo=githubpages&logoColor=white)](https://minhqdao.github.io/Basicade/oregon-trail/)
 
-Run classic BASIC programs wherever JavaScript runs. `bwbasic-wasm` packages the [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) interpreter as a zero-dependency, single-file WebAssembly bundle. Perfect for preserving classic ANSI BASIC software and running retro text games like [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=bwbasic), [Hammurabi](https://minhqdao.github.io/Basicade/?game=bcg-hammurabi&interpreter=bwbasic), and [Lunar Lander](https://minhqdao.github.io/Basicade/?game=bcg-lunar&interpreter=bwbasic) directly in Node.js or modern browsers.
+Run classic BASIC programs wherever JavaScript runs. `bwbasic-wasm` packages the [Bywater BASIC](https://sourceforge.net/projects/bwbasic/) interpreter as a zero-dependency, single-file WebAssembly bundle. Perfect for preserving classic ANSI BASIC software and running retro text games like [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/), [Hammurabi](https://minhqdao.github.io/Basicade/bcg-hammurabi/), and [Lunar Lander](https://minhqdao.github.io/Basicade/bcg-lunar/) directly in Node.js or modern browsers.
 
 ## Install
 
@@ -106,7 +106,7 @@ Bywater BASIC implements its own ANSI BASIC dialect. Program compatibility depen
 
 ## Demo
 
-The repository includes an interactive browser demo running [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=bwbasic), [Hammurabi](https://minhqdao.github.io/Basicade/?game=bcg-hammurabi&interpreter=bwbasic), and [Lunar Lander](https://minhqdao.github.io/Basicade/?game=bcg-lunar&interpreter=bwbasic). [Super Star Trek](https://minhqdao.github.io/Basicade/?game=bcg-superstartrek&interpreter=retrobasic) is also available with RetroBASIC.
+The repository includes an interactive browser demo running [The Oregon Trail](https://minhqdao.github.io/Basicade/oregon-trail/), [Hammurabi](https://minhqdao.github.io/Basicade/bcg-hammurabi/), and [Lunar Lander](https://minhqdao.github.io/Basicade/bcg-lunar/). [Super Star Trek](https://minhqdao.github.io/Basicade/bcg-super-star-trek/?interpreter=retrobasic) is also available with RetroBASIC.
 
 ## Development
 

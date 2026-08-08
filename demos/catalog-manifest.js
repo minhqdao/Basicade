@@ -32,6 +32,7 @@ export const catalogManifest = {
   generatedCollections: [
     {
       idPrefix: "101-",
+      routePrefix: "101-",
       order: 2,
       titleStyle: "uppercase",
       collection: "101 BASIC Computer Games",
@@ -96,6 +97,18 @@ export const catalogManifest = {
         rusrou: "Russian Roulette",
         wekday: "Weekday",
       },
+      routeNames: {
+        basket: "basketball",
+        batnum: "battle-of-numbers",
+        bowl: "bowling",
+        buzzwd: "buzzword",
+        chemst: "chemist",
+        diamnd: "diamond",
+        even: "even-wins",
+        even1: "game-of-even-wins",
+        litqz: "literature-quiz",
+        mathd: "math-dice",
+      },
       interpreterOverrides: {
         "1check": ["bwbasic", "retrobasic"],
         "23mtch": ["bwbasic", "retrobasic"],
@@ -131,6 +144,7 @@ export const catalogManifest = {
     },
     {
       idPrefix: "bcg-",
+      routePrefix: "bcg-",
       order: 1,
       titleStyle: "capitalize",
       collection: "BASIC Computer Games",
@@ -264,6 +278,17 @@ export const catalogManifest = {
         superstartrek: "Super Star Trek",
         superstartrekins: "Super Star Trek Instructions",
         tictactoe1: "Tic-Tac-Toe I",
+      },
+      routeNames: {
+        bombsaway: "bombs-away",
+        civilwar: "civil-war",
+        depthcharge: "depth-charge",
+        evenwins: "even-wins",
+        flipflop: "flip-flop",
+        furtrader: "fur-trader",
+        highiq: "high-iq",
+        horserace: "horse-race",
+        litquiz: "literature-quiz",
       },
       interpreterOverrides: {
         banner: ["bwbasic"],

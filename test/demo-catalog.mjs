@@ -11,6 +11,7 @@ import {
 import { catalogManifest } from "../demos/catalog-manifest.js";
 import { compileCatalog } from "../demos/catalog-schema.js";
 import { runnerCommand, runnerEvent } from "../demos/runner-protocol.js";
+import { staticRoutes } from "../demos/routes.js";
 
 const defaultSelection = resolveSelection();
 assert.equal(defaultSelection.game.id, DEFAULT_GAME_ID);
@@ -28,6 +29,13 @@ const basic101Selection = resolveSelection(
 assert.equal(basic101Selection.game.id, "101-aceydu");
 assert.equal(basic101Selection.game.collection, "101 BASIC Computer Games");
 assert.equal(basic101Selection.interpreter.id, "retrobasic");
+
+const basic101RouteSelection = resolveSelection(
+  "?interpreter=retrobasic",
+  "/Basicade/101-acey-ducey/",
+);
+assert.equal(basic101RouteSelection.game.id, "101-aceydu");
+assert.equal(basic101RouteSelection.interpreter.id, "retrobasic");
 
 const oregonTrailSelection = resolveSelection("", "/Basicade/oregon-trail/");
 assert.equal(oregonTrailSelection.game.id, "oregon-trail");
@@ -61,7 +69,15 @@ for (const game of Object.values(games)) {
   for (const interpreterId of game.interpreters) {
     assert.ok(interpreterId in interpreters);
   }
+  assert.match(game.route, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  assert.equal(resolveSelection("", `/Basicade/${game.route}/`).game.id, game.id);
 }
+assert.deepEqual(
+  [...staticRoutes].sort(),
+  Object.values(games)
+    .map((game) => game.route)
+    .sort(),
+);
 
 for (const collection of catalogManifest.generatedCollections) {
   const expectedSources = collection.files
@@ -91,6 +107,10 @@ const strayOverrideManifest = structuredClone(catalogManifest);
 strayOverrideManifest.generatedCollections[0].titles.missing = "Missing";
 assert.throws(() => compileCatalog(strayOverrideManifest), /unlisted file/);
 
+const duplicateRouteManifest = structuredClone(catalogManifest);
+duplicateRouteManifest.games[0].route = "bcg-hammurabi";
+assert.throws(() => compileCatalog(duplicateRouteManifest), /routes must be unique/);
+
 const protocolBuffer = new SharedArrayBuffer(4);
 assert.equal(runnerCommand({ type: "INIT", wasmUrl: "/runner.js" }).type, "INIT");
 assert.equal(
@@ -111,8 +131,8 @@ const url = selectionUrl(new URL("https://example.test/Basicade/?ref=readme"), {
   game: games["101-aceydu"],
   interpreter: interpreters.retrobasic,
 });
-assert.equal(url.pathname, "/Basicade/");
-assert.equal(url.search, "?ref=readme&game=101-aceydu&interpreter=retrobasic");
+assert.equal(url.pathname, "/Basicade/101-acey-ducey/");
+assert.equal(url.search, "?ref=readme&interpreter=retrobasic");
 
 const oregonTrailUrl = selectionUrl(
   new URL("https://example.test/Basicade/?ref=readme"),

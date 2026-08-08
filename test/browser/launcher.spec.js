@@ -360,7 +360,9 @@ test("keyboard-only navigation changes controls, restarts, and returns to input"
   await expect(page.locator("#game-select")).toBeFocused();
   await page.locator("#game-select").press("2");
   await page.locator("#game-select").press("Tab");
-  await expect(page).toHaveURL(/game=bcg-23matches/);
+  await expect(page).toHaveURL(
+    /\/bcg-23-matches\/\?interpreter=retrobasic$/,
+  );
 
   await openLauncher(page);
   await page.locator(terminalInput).press(browserName === "webkit" ? "Alt+Tab" : "Tab");

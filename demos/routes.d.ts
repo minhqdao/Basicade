@@ -1,1 +1,1 @@
-export const staticRoutes: readonly ["oregon-trail"];
+export const staticRoutes: readonly string[];

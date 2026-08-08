@@ -6,7 +6,7 @@ Basicade preserves retro computing history by bringing original 1970s and 1980s 
 
 ## Features
 
-- 🎮 **Playable Arcade:** Play [*The Oregon Trail*](https://minhqdao.github.io/Basicade/oregon-trail/?interpreter=bwbasic), [*Hammurabi*](https://minhqdao.github.io/Basicade/?game=bcg-hammurabi&interpreter=bwbasic), [*Lunar Lander*](https://minhqdao.github.io/Basicade/?game=bcg-lunar&interpreter=bwbasic), and [*Super Star Trek*](https://minhqdao.github.io/Basicade/?game=bcg-superstartrek&interpreter=retrobasic) directly in your browser.
+- 🎮 **Playable Arcade:** Play [*The Oregon Trail*](https://minhqdao.github.io/Basicade/oregon-trail/), [*Hammurabi*](https://minhqdao.github.io/Basicade/bcg-hammurabi/), [*Lunar Lander*](https://minhqdao.github.io/Basicade/bcg-lunar/), and [*Super Star Trek*](https://minhqdao.github.io/Basicade/bcg-super-star-trek/?interpreter=retrobasic) directly in your browser.
 - 📦 **NPM Packages:** Import [bwbasic-wasm](https://www.npmjs.com/package/bwbasic-wasm) or [retrobasic-wasm](https://www.npmjs.com/package/retrobasic-wasm) to run legacy BASIC code inside your own JS/TS applications.
 - 📜 **100% Original Code:** Runs raw `.bas` source code without changing line numbers, commands, or dialect syntax.
 - ⚡ **WebAssembly Powered:** High-performance runtime isolation powered by Emscripten and SharedArrayBuffer worker threads.
@@ -61,8 +61,9 @@ The launcher opens at:
 http://localhost:5173/oregon-trail/
 ```
 
-Use `?interpreter=retrobasic` to run the same program with RetroBASIC. The
-catalogue also supports `?game=<id>&interpreter=<id>` for every selection.
+Every game has a shareable path. Use `?interpreter=retrobasic` to choose a
+non-default interpreter. Legacy `?game=<id>&interpreter=<id>` links remain
+supported and are automatically updated to the canonical game path.
 
 ## Deploying the demo to GitHub Pages
 
