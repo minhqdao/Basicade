@@ -25,10 +25,12 @@ cleared.
 
 The [Internet Archive copy of the 1978 edition](https://archive.org/details/Basic_Computer_Games_Microcomputer_Edition_1978_Creative_Computing)
 is the bibliographic reference for the collection. It is not claimed as the
-verified byte source of the local files. `SOURCE-MANIFEST.sha256` records the
-exact files currently distributed by Basicade; checksums identify content but
-do not prove provenance.
+verified byte source of the local files. Git history records the files imported
+into Basicade and all subsequent compatibility changes; it does not establish
+the unknown file-level origin of the initial import.
 
 Preserve original author credits in the listings. When replacing or
 retranscribing a file, record its source URL, edition, upstream revision when
-applicable, and the nature of the change.
+applicable, and the nature of the change. If the exact byte source of the
+initial import is recovered later, record it in an immutable import manifest
+that is not rewritten for local compatibility fixes.

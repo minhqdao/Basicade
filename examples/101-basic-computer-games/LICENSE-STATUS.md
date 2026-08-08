@@ -13,5 +13,6 @@ public domain](https://blog.adafruit.com/2022/06/16/david-ahl-places-all-his-cla
 
 These program listings are maintained and distributed here for historical,
 educational, and archival preservation. Basicade does not claim authorship of
-the original programs; it preserves attribution, source history, and the
-upstream commit above.
+the original programs. The upstream commit above identifies the immutable
+import baseline; Git history records Basicade's subsequent compatibility
+changes.
