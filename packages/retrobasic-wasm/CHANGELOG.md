@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ### Changed
 
 - Skip `FOR` loop bodies when their initial bounds are already exhausted.
+- Replace abandoned `FOR` contexts when re-entering a loop with the same control variable.
 - Share the `runBasic()` implementation with the Bywater BASIC package.
 - Omit generated source maps from the npm package to avoid shipping maps larger than the bundled interpreter.
 

@@ -3466,6 +3466,35 @@ static void perform_statement(list_t *statement_entry)
         
       case FOR:
       {
+        // Re-entering a FOR with the same control variable replaces its old
+        // loop context. A GOTO may have bypassed that loop's NEXT, and leaving
+        // the abandoned entry on the stack makes a later NEXT match the wrong
+        // loop. Do not cross a GOSUB boundary: a subroutine may legitimately
+        // use the same control variable as its caller.
+        list_t *existing_for_node = lst_last_node(interpreter_state.runtime_stack);
+        while (existing_for_node != NULL) {
+          stack_entry_t *existing_entry = existing_for_node->data;
+          if (existing_entry->type == gosub_entry)
+            break;
+          if (strcmp(existing_entry->_for.index_variable->name,
+                     statement->parms._for.variable->name) == 0) {
+            list_t *discard_node = lst_last_node(interpreter_state.runtime_stack);
+            while (discard_node != NULL) {
+              list_t *previous_node = lst_previous(discard_node);
+              stack_entry_t *discard_entry = discard_node->data;
+              bool removed_existing_for = discard_node == existing_for_node;
+              interpreter_state.runtime_stack = lst_remove_node_with_data(
+                interpreter_state.runtime_stack, discard_entry);
+              free(discard_entry);
+              if (removed_existing_for)
+                break;
+              discard_node = previous_node;
+            }
+            break;
+          }
+          existing_for_node = lst_previous(existing_for_node);
+        }
+
         stack_entry_t *new_for = calloc(1, sizeof(*new_for));
         interpreter_state.runtime_stack = lst_append(interpreter_state.runtime_stack, new_for);
         
