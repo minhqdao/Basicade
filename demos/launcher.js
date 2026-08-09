@@ -215,7 +215,8 @@ const usesMobilePointer = window.matchMedia("(pointer: coarse)");
 let previousViewportWidth = keyboardViewport.width ?? window.innerWidth;
 let keyboardResizeFrame;
 let constrainedTerminalHeight;
-let keyboardClosedViewportHeight;
+let keyboardClosedViewportHeight =
+  keyboardViewport.height ?? window.innerHeight;
 let keyboardCheckTimers = [];
 
 function usesTouchInput() {
@@ -252,7 +253,9 @@ function constrainTerminalAboveKeyboard() {
     : availableTerminalHeight;
   if (terminalHeight === constrainedTerminalHeight) return;
 
-  const shouldKeepPromptPinned = isTerminalScrolledToBottom(screen);
+  const shouldKeepPromptPinned =
+    constrainedTerminalHeight === undefined ||
+    isTerminalScrolledToBottom(screen);
   terminalContainer.style.setProperty(
     "--keyboard-terminal-height",
     `${terminalHeight}px`,
@@ -261,6 +264,7 @@ function constrainTerminalAboveKeyboard() {
   constrainedTerminalHeight = terminalHeight;
 
   if (shouldKeepPromptPinned) {
+    scrollTerminalToBottom(screen);
     keyboardResizeFrame = requestAnimationFrame(() => {
       keyboardResizeFrame = undefined;
       scrollTerminalToBottom(screen);
@@ -289,12 +293,13 @@ function handleKeyboardViewportResize() {
 
   if (widthChanged) {
     clearKeyboardConstraint();
+    keyboardClosedViewportHeight = height;
     return;
   }
   if (
-    constrainedTerminalHeight &&
     keyboardClosedViewportHeight &&
-    height >= keyboardClosedViewportHeight - 80
+    (height >= keyboardClosedViewportHeight - 80 ||
+      height >= window.innerHeight - 80)
   ) {
     clearKeyboardConstraint();
     return;
@@ -308,7 +313,10 @@ keyboardViewport.addEventListener("scroll", queueKeyboardConstraintCheck);
 terminalInput.addEventListener("focus", () => {
   render();
   keepActiveInputVisible();
-  keyboardClosedViewportHeight = keyboardViewport.height ?? window.innerHeight;
+  keyboardClosedViewportHeight = Math.max(
+    keyboardClosedViewportHeight ?? 0,
+    keyboardViewport.height ?? window.innerHeight,
+  );
   previousViewportWidth = keyboardViewport.width ?? window.innerWidth;
   keyboardCheckTimers = [50, 300, 700].map((delay) =>
     setTimeout(queueKeyboardConstraintCheck, delay),
@@ -317,7 +325,10 @@ terminalInput.addEventListener("focus", () => {
 terminalInput.addEventListener("blur", () => {
   cancelKeyboardChecks();
   clearKeyboardConstraint();
-  keyboardClosedViewportHeight = undefined;
+  keyboardClosedViewportHeight = Math.max(
+    keyboardClosedViewportHeight,
+    keyboardViewport.height ?? window.innerHeight,
+  );
   render();
 });
 

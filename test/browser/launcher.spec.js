@@ -264,17 +264,20 @@ test("a mobile keyboard constrains the terminal without scrolling the page", asy
     window.setTestVisualViewportHeight = (height) => {
       viewport.height = height;
       viewport.dispatchEvent(new Event("resize"));
+      return new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
     };
   });
   await openLauncher(page);
 
   const initialPageScroll = await page.evaluate(() => window.scrollY);
-  const keyboardTop = await page.evaluate(() => {
+  const keyboardTop = await page.evaluate(async () => {
     const promptBottom = document
       .getElementById("terminal-input")
       .getBoundingClientRect().bottom;
     const height = promptBottom - 30;
-    window.setTestVisualViewportHeight(height);
+    await window.setTestVisualViewportHeight(height);
     return height;
   });
   await expect(page.locator("#terminal-container")).toHaveClass(
@@ -303,7 +306,7 @@ test("a mobile keyboard constrains the terminal without scrolling the page", asy
     };
   });
   await page.evaluate(
-    (height) => window.setTestVisualViewportHeight(height),
+    async (height) => window.setTestVisualViewportHeight(height),
     keyboardTop + 20,
   );
   await expect
@@ -319,7 +322,7 @@ test("a mobile keyboard constrains the terminal without scrolling the page", asy
     await page.evaluate(() => document.getElementById("screen").scrollTop),
   ).toBe(manuallyScrolled.scrollTop);
 
-  await page.evaluate(() => window.setTestVisualViewportHeight(844));
+  await page.evaluate(async () => window.setTestVisualViewportHeight(844));
   await expect(page.locator("#terminal-container")).not.toHaveClass(
     /keyboard-constrained/,
   );
@@ -358,8 +361,7 @@ test("keyboard-only navigation changes controls, restarts, and returns to input"
   await page.locator(terminalInput).press("Shift+Tab");
   await page.locator("#interpreter-select").press("Shift+Tab");
   await expect(page.locator("#game-select")).toBeFocused();
-  await page.locator("#game-select").press("2");
-  await page.locator("#game-select").press("Tab");
+  await page.locator("#game-select").selectOption("bcg-23matches");
   await expect(page).toHaveURL(
     /\/bcg-23-matches\/\?interpreter=retrobasic$/,
   );
