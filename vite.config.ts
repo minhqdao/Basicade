@@ -8,11 +8,6 @@ function copyLauncherAssets() {
     async closeBundle() {
       await Promise.all([
         cp("examples", "dist/examples", { recursive: true }),
-        cp("demos/favicon.svg", "dist/favicon.svg"),
-        cp("demos/favicon.png", "dist/favicon.png"),
-        cp("demos/favicon.ico", "dist/favicon.ico"),
-        cp("demos/safari-pinned-tab.svg", "dist/safari-pinned-tab.svg"),
-        cp("demos/apple-touch-icon.png", "dist/apple-touch-icon.png"),
         cp("packages/bwbasic-wasm/wasm", "dist/packages/bwbasic-wasm/wasm", {
           recursive: true,
         }),
