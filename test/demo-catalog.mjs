@@ -37,6 +37,7 @@ const basic101Selection = resolveSelection(
 assert.equal(basic101Selection.game.id, "101-aceydu");
 assert.equal(basic101Selection.game.collection, "101 BASIC Computer Games");
 assert.equal(basic101Selection.interpreter.id, "retrobasic");
+assert.equal(games["101-basbal"], undefined);
 
 const basic101RouteSelection = resolveSelection(
   "?interpreter=retrobasic",
