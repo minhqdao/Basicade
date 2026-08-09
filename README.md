@@ -65,6 +65,11 @@ Every game has a shareable path. Use `?interpreter=retrobasic` to choose a
 non-default interpreter. Legacy `?game=<id>&interpreter=<id>` links remain
 supported and are automatically updated to the canonical game path.
 
+**Input behavior:** In RetroBASIC, pressing Enter without typing at an `INPUT`
+prompt keeps the variable's previous value, so a game may repeat your last
+answer. Bywater BASIC uses `0` for blank numeric input and an empty string for
+blank text input. This difference reflects the interpreters' BASIC dialects.
+
 ## Deploying the demo to GitHub Pages
 
 The [demo](https://minhqdao.github.io/Basicade/) is automatically deployed to GitHub Pages using GitHub Actions upon push to `main` if CI and build jobs succeed.
