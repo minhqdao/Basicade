@@ -13,6 +13,43 @@ async function openLauncher(page) {
   await expect(page.locator(terminalInput)).toBeFocused();
 }
 
+test("all routes use the same available site icons", async ({ page }) => {
+  const iconPaths = [
+    "/Basicade/favicon.svg?v=3",
+    "/Basicade/favicon.png?v=3",
+    "/Basicade/favicon.ico?v=3",
+    "/Basicade/safari-pinned-tab.svg?v=3",
+    "/Basicade/apple-touch-icon.png?v=3",
+  ];
+
+  for (const route of [
+    "",
+    "oregon-trail/",
+    "oregon-trail/?interpreter=retrobasic",
+    "101-1-check/",
+  ]) {
+    await page.goto(route);
+    await expect
+      .poll(async () => {
+        try {
+          return await page.evaluate(() => window.crossOriginIsolated);
+        } catch {
+          return false;
+        }
+      })
+      .toBe(true);
+    const hrefs = await page.locator('link[rel*="icon"]').evaluateAll((links) =>
+      links.map((link) => `${new URL(link.href).pathname}${new URL(link.href).search}`),
+    );
+    expect(hrefs).toEqual(iconPaths);
+  }
+
+  for (const path of iconPaths) {
+    const response = await page.request.get(path);
+    expect(response.ok(), `${path} is available`).toBe(true);
+  }
+});
+
 test("service worker establishes isolation and leaves the game ready", async ({
   page,
 }) => {
