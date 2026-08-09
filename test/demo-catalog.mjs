@@ -16,6 +16,14 @@ import { staticRoutes } from "../demos/routes.js";
 const defaultSelection = resolveSelection();
 assert.equal(defaultSelection.game.id, DEFAULT_GAME_ID);
 assert.equal(defaultSelection.interpreter.id, "bwbasic");
+assert.deepEqual(
+  [...new Set(Object.values(games).map((game) => game.collection))],
+  [
+    "Creative Computing Magazine",
+    "101 BASIC Computer Games",
+    "BASIC Computer Games",
+  ],
+);
 
 const requestedSelection = resolveSelection(
   "?game=oregon-trail&interpreter=retrobasic",

@@ -33,7 +33,7 @@ export const catalogManifest = {
     {
       idPrefix: "101-",
       routePrefix: "101-",
-      order: 2,
+      order: 1,
       titleStyle: "uppercase",
       collection: "101 BASIC Computer Games",
       description:
@@ -145,7 +145,7 @@ export const catalogManifest = {
     {
       idPrefix: "bcg-",
       routePrefix: "bcg-",
-      order: 1,
+      order: 2,
       titleStyle: "capitalize",
       collection: "BASIC Computer Games",
       description: "A classic BASIC program verified to start in Basicade.",
