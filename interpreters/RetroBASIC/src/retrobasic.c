@@ -3493,6 +3493,33 @@ static void perform_statement(list_t *statement_entry)
         int type = 0;
         either_t *loop_value = variable_value(new_for->_for.index_variable, &type);
         loop_value->number = new_for->_for.begin;
+
+        // A FOR whose bounds are already exhausted must not execute its body.
+        // Find the matching NEXT, accounting for nested loops and NEXT I,J.
+        if (((new_for->_for.step > 0) && (new_for->_for.begin > new_for->_for.end)) ||
+            ((new_for->_for.step < 0) && (new_for->_for.begin < new_for->_for.end))) {
+          interpreter_state.runtime_stack = lst_remove_node_with_data(interpreter_state.runtime_stack, new_for);
+          free(new_for);
+
+          int nested_for_count = 0;
+          list_t *test_statement = interpreter_state.next_statement;
+          while (test_statement != NULL) {
+            statement_t *test = test_statement->data;
+            if (test->type == FOR) {
+              nested_for_count++;
+            } else if (test->type == NEXT) {
+              int next_count = lst_length(test->parms.next);
+              if (next_count == 0)
+                next_count = 1;
+              if (next_count > nested_for_count) {
+                interpreter_state.next_statement = lst_next(test_statement);
+                break;
+              }
+              nested_for_count -= next_count;
+            }
+            test_statement = lst_next(test_statement);
+          }
+        }
       }
         break;
         
