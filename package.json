@@ -18,6 +18,7 @@
     "build:wasm": "npm run build:wasm -w packages/bwbasic-wasm && npm run build:wasm -w packages/retrobasic-wasm",
     "build:wasm:bwbasic": "npm run build:wasm -w packages/bwbasic-wasm",
     "build:wasm:retrobasic": "npm run build:wasm -w packages/retrobasic-wasm",
+    "generate:favicons": "node tools/generate-favicons.mjs",
     "build:demo": "vite build",
     "lint": "eslint .",
     "typecheck:browser": "tsc -p tsconfig.browser.json",

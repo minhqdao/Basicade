@@ -15,11 +15,11 @@ async function openLauncher(page) {
 
 test("all routes use the same available site icons", async ({ page }) => {
   const iconPaths = [
-    "/Basicade/favicon.svg?v=4",
-    "/Basicade/favicon.png?v=4",
-    "/Basicade/favicon.ico?v=4",
-    "/Basicade/safari-pinned-tab.svg?v=4",
-    "/Basicade/apple-touch-icon.png?v=4",
+    "/Basicade/favicon.svg?v=5",
+    "/Basicade/favicon.png?v=5",
+    "/Basicade/favicon.ico?v=5",
+    "/Basicade/safari-pinned-tab.svg?v=5",
+    "/Basicade/apple-touch-icon.png?v=5",
   ];
 
   for (const route of [
