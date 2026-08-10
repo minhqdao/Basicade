@@ -90,8 +90,12 @@ let waitingForInput = false;
 let hasReceivedFirstOutput = false;
 let isCursorActive = false;
 let worker;
+let workerStartupTimer;
 let runId = 0;
 const maxInputLength = 254;
+const maxStartupRetries = 1;
+const sourceFetchTimeoutMs = 10_000;
+const workerStartupTimeoutMs = 15_000;
 
 function appendOutput(text) {
   if (!hasReceivedFirstOutput) {
@@ -139,6 +143,8 @@ function setStatus(message) {
 
 function releaseWorker() {
   terminalInput.blur();
+  clearTimeout(workerStartupTimer);
+  workerStartupTimer = undefined;
   if (worker) {
     worker.terminate();
     worker = undefined;
@@ -415,15 +421,7 @@ async function start() {
     );
   }
 
-  const response = await fetch(applicationUrl(selection.game.sourcePath));
-  if (currentRunId !== runId) return;
-  if (!response.ok) {
-    throw new Error(
-      `Could not load ${selection.game.sourcePath} (${response.status}).`,
-    );
-  }
-
-  const source = await response.text();
+  const source = await fetchGameSource(currentRunId);
   if (currentRunId !== runId) return;
   const buffer = new SharedArrayBuffer(4);
   const keys = new SharedArrayBuffer(256);
@@ -432,13 +430,84 @@ async function start() {
   Atomics.store(sharedBuffer, 0, 0);
   Atomics.store(sharedKeys, 0, 0);
 
-  const activeWorker = new Worker(
-    new URL("./runner.worker.js", import.meta.url),
-    {
+  launchWorker(source, buffer, keys, currentRunId);
+}
+
+async function fetchGameSource(currentRunId, attempt = 0) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), sourceFetchTimeoutMs);
+
+  try {
+    const response = await fetch(applicationUrl(selection.game.sourcePath), {
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.text();
+  } catch (error) {
+    if (currentRunId !== runId) throw error;
+    if (attempt < maxStartupRetries) {
+      return fetchGameSource(currentRunId, attempt + 1);
+    }
+    const reason =
+      error instanceof Error && error.name !== "AbortError"
+        ? `: ${error.message}`
+        : " (timed out)";
+    throw new Error(`Could not load ${selection.game.sourcePath}${reason}.`, {
+      cause: error,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function launchWorker(source, buffer, keys, currentRunId, attempt = 0) {
+  if (currentRunId !== runId) return;
+
+  let activeWorker;
+  try {
+    activeWorker = new Worker(new URL("./runner.worker.js", import.meta.url), {
       type: "module",
-    },
-  );
+    });
+  } catch (error) {
+    if (attempt < maxStartupRetries) {
+      launchWorker(source, buffer, keys, currentRunId, attempt + 1);
+      return;
+    }
+    throw error;
+  }
   worker = activeWorker;
+  let hasStarted = false;
+
+  function markInterpreterStarted() {
+    hasStarted = true;
+    clearTimeout(workerStartupTimer);
+    workerStartupTimer = undefined;
+  }
+
+  function handleStartupFailure(message) {
+    if (worker !== activeWorker) return;
+    clearTimeout(workerStartupTimer);
+    workerStartupTimer = undefined;
+    activeWorker.terminate();
+    worker = undefined;
+
+    if (currentRunId !== runId) return;
+    if (!hasStarted && attempt < maxStartupRetries) {
+      launchWorker(source, buffer, keys, currentRunId, attempt + 1);
+      return;
+    }
+
+    setStatus(message);
+    waitingForInput = false;
+    render();
+    releaseWorker();
+  }
+
+  workerStartupTimer = setTimeout(() => {
+    handleStartupFailure("The interpreter worker timed out during startup.");
+  }, workerStartupTimeoutMs);
 
   activeWorker.onmessage = (event) => {
     if (worker !== activeWorker) return;
@@ -453,6 +522,8 @@ async function start() {
           keys,
         }),
       );
+    } else if (data.type === "STARTED") {
+      markInterpreterStarted();
     } else if (data.type === "STDOUT") {
       appendOutput(data.text);
     } else if (data.type === "REQUEST_INPUT") {
@@ -462,6 +533,10 @@ async function start() {
       render();
       focusTerminalInput(); // Auto-focus input field and pull up mobile keyboard
     } else if (data.type === "ERROR") {
+      if (!hasStarted) {
+        handleStartupFailure(data.message);
+        return;
+      }
       setStatus(data.message);
       waitingForInput = false;
       render();
@@ -475,11 +550,8 @@ async function start() {
   };
 
   activeWorker.onerror = (event) => {
-    if (worker !== activeWorker) return;
-    setStatus(event.message || "The interpreter worker failed.");
-    waitingForInput = false;
-    render();
-    releaseWorker();
+    event.preventDefault();
+    handleStartupFailure(event.message || "The interpreter worker failed.");
   };
   activeWorker.postMessage(
     runnerCommand({

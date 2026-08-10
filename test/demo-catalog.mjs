@@ -133,6 +133,7 @@ assert.equal(
   "START",
 );
 assert.equal(runnerEvent({ type: "STDOUT", text: "READY" }).type, "STDOUT");
+assert.equal(runnerEvent({ type: "STARTED" }).type, "STARTED");
 assert.throws(() => runnerCommand({ type: "START" }), /source|shared memory/);
 assert.throws(() => runnerEvent({ type: "UNKNOWN" }), /Unknown runner event/);
 

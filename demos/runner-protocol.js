@@ -1,7 +1,7 @@
 // @ts-check
 
 /** @typedef {{type: "INIT", wasmUrl: string} | {type: "START", source: string, filename: string, buffer: SharedArrayBuffer, keys: SharedArrayBuffer}} RunnerCommand */
-/** @typedef {{type: "READY"} | {type: "STDOUT", text: string} | {type: "REQUEST_INPUT"} | {type: "ERROR", message: string} | {type: "EXIT"}} RunnerEvent */
+/** @typedef {{type: "READY"} | {type: "STARTED"} | {type: "STDOUT", text: string} | {type: "REQUEST_INPUT"} | {type: "ERROR", message: string} | {type: "EXIT"}} RunnerEvent */
 
 function messageRecord(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -50,7 +50,12 @@ export function runnerCommand(value) {
 export function runnerEvent(value) {
   const message = messageRecord(value);
   const type = requiredString(message, "type");
-  if (type === "READY" || type === "REQUEST_INPUT" || type === "EXIT") {
+  if (
+    type === "READY" ||
+    type === "STARTED" ||
+    type === "REQUEST_INPUT" ||
+    type === "EXIT"
+  ) {
     return /** @type {RunnerEvent} */ ({ type });
   }
   if (type === "STDOUT") {

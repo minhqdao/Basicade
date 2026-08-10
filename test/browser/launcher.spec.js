@@ -108,6 +108,331 @@ test("restart is safe both immediately and while waiting for input", async ({
   await expect(page.locator("#status")).toBeHidden();
 });
 
+test("both interpreters recover from an initial worker startup failure", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const NativeWorker = window.Worker;
+    let shouldFail = true;
+
+    window.Worker = class RetryTestWorker {
+      constructor(...arguments_) {
+        if (!shouldFail) return new NativeWorker(...arguments_);
+        shouldFail = false;
+      }
+
+      postMessage() {
+        queueMicrotask(() => {
+          this.onerror?.({
+            message: "Simulated worker startup failure",
+            preventDefault() {},
+          });
+        });
+      }
+
+      terminate() {}
+    };
+  });
+
+  for (const interpreter of ["bwbasic", "retrobasic"]) {
+    await page.goto(`oregon-trail/?interpreter=${interpreter}`);
+    await expect(page.locator("#output")).not.toHaveText("LOADING...\n", {
+      timeout: 15_000,
+    });
+    await expect(page.locator(terminalInput)).toBeFocused();
+    await expect(page.locator("#status")).toBeHidden();
+  }
+});
+
+test("both interpreters retry an initialization error reported by the worker", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const NativeWorker = window.Worker;
+    let shouldFail = true;
+
+    window.Worker = class RetryTestWorker {
+      constructor(...arguments_) {
+        if (!shouldFail) return new NativeWorker(...arguments_);
+        shouldFail = false;
+      }
+
+      postMessage() {
+        queueMicrotask(() => {
+          this.onmessage?.({
+            data: {
+              type: "ERROR",
+              message: "Simulated interpreter initialization failure",
+            },
+          });
+        });
+      }
+
+      terminate() {}
+    };
+  });
+
+  for (const interpreter of ["bwbasic", "retrobasic"]) {
+    await page.goto(`oregon-trail/?interpreter=${interpreter}`);
+    await expect(page.locator(terminalInput)).toBeFocused({ timeout: 15_000 });
+    await expect(page.locator("#status")).toBeHidden();
+  }
+});
+
+test("both interpreters recover when worker construction initially throws", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const NativeWorker = window.Worker;
+    let shouldFail = true;
+    window.workerConstructionAttempts = 0;
+
+    window.Worker = class RetryTestWorker {
+      constructor(...arguments_) {
+        window.workerConstructionAttempts++;
+        if (shouldFail) {
+          shouldFail = false;
+          throw new Error("Simulated worker construction failure");
+        }
+        return new NativeWorker(...arguments_);
+      }
+    };
+  });
+
+  for (const interpreter of ["bwbasic", "retrobasic"]) {
+    await page.goto(`oregon-trail/?interpreter=${interpreter}`);
+    await expect(page.locator(terminalInput)).toBeFocused({ timeout: 15_000 });
+    await expect(page.locator("#status")).toBeHidden();
+    expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(
+      2,
+    );
+  }
+});
+
+test("game source loading retries once for both interpreters", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const nativeFetch = window.fetch.bind(window);
+    let shouldFail = true;
+    window.gameSourceFetchAttempts = 0;
+
+    window.fetch = (input, init) => {
+      const url = new URL(
+        input instanceof Request ? input.url : String(input),
+        window.location.href,
+      );
+      if (url.pathname.endsWith("/oregon.bas")) {
+        window.gameSourceFetchAttempts++;
+        if (shouldFail) {
+          shouldFail = false;
+          return Promise.reject(new TypeError("Simulated source fetch failure"));
+        }
+      }
+      return nativeFetch(input, init);
+    };
+  });
+
+  for (const interpreter of ["bwbasic", "retrobasic"]) {
+    await page.goto(`oregon-trail/?interpreter=${interpreter}`);
+    await expect(page.locator(terminalInput)).toBeFocused({ timeout: 15_000 });
+    await expect(page.locator("#status")).toBeHidden();
+    expect(await page.evaluate(() => window.gameSourceFetchAttempts)).toBe(2);
+  }
+});
+
+test("game source retry is bounded", async ({ page }) => {
+  await page.addInitScript(() => {
+    const nativeFetch = window.fetch.bind(window);
+    window.gameSourceFetchAttempts = 0;
+
+    window.fetch = (input, init) => {
+      const url = new URL(
+        input instanceof Request ? input.url : String(input),
+        window.location.href,
+      );
+      if (url.pathname.endsWith("/oregon.bas")) {
+        window.gameSourceFetchAttempts++;
+        return Promise.reject(new TypeError("Simulated source fetch failure"));
+      }
+      return nativeFetch(input, init);
+    };
+  });
+
+  await page.goto("oregon-trail/");
+  await expect(page.locator("#status")).toContainText(
+    "Could not load examples/creative-computing-magazine/oregon.bas",
+  );
+  expect(await page.evaluate(() => window.gameSourceFetchAttempts)).toBe(2);
+});
+
+test("worker startup retry is bounded", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.workerConstructionAttempts = 0;
+
+    window.Worker = class FailingTestWorker {
+      constructor() {
+        window.workerConstructionAttempts++;
+      }
+
+      postMessage() {
+        queueMicrotask(() => {
+          this.onerror?.({
+            message: "Simulated persistent worker failure",
+            preventDefault() {},
+          });
+        });
+      }
+
+      terminate() {}
+    };
+  });
+
+  await page.goto("oregon-trail/");
+  await expect(page.locator("#status")).toHaveText(
+    "Simulated persistent worker failure",
+  );
+  expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(2);
+});
+
+test("worker startup timeout retries once and then reports failure", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.addInitScript(() => {
+    window.workerConstructionAttempts = 0;
+
+    window.Worker = class HangingTestWorker {
+      constructor() {
+        window.workerConstructionAttempts++;
+      }
+
+      postMessage() {}
+
+      terminate() {}
+    };
+  });
+
+  await page.goto("oregon-trail/", { waitUntil: "domcontentloaded" });
+  await expect
+    .poll(async () => {
+      try {
+        return await page.evaluate(() => window.crossOriginIsolated);
+      } catch {
+        return false;
+      }
+    })
+    .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.workerConstructionAttempts))
+    .toBe(1);
+
+  await page.clock.fastForward(15_001);
+  await expect
+    .poll(() => page.evaluate(() => window.workerConstructionAttempts))
+    .toBe(2);
+  await page.clock.fastForward(15_001);
+
+  await expect(page.locator("#status")).toHaveText(
+    "The interpreter worker timed out during startup.",
+  );
+  expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(2);
+});
+
+test("STARTED permits a BASIC program to remain silent past the startup timeout", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.addInitScript(() => {
+    window.workerConstructionAttempts = 0;
+    window.workerStarted = false;
+
+    window.Worker = class SilentStartedTestWorker {
+      constructor() {
+        window.workerConstructionAttempts++;
+      }
+
+      postMessage(message) {
+        if (message.type === "INIT") {
+          queueMicrotask(() => this.onmessage?.({ data: { type: "READY" } }));
+        } else if (message.type === "START") {
+          queueMicrotask(() => {
+            window.workerStarted = true;
+            this.onmessage?.({ data: { type: "STARTED" } });
+          });
+        }
+      }
+
+      terminate() {}
+    };
+  });
+
+  await page.goto("oregon-trail/", { waitUntil: "domcontentloaded" });
+  await expect
+    .poll(async () => {
+      try {
+        return await page.evaluate(() => window.workerStarted);
+      } catch {
+        return false;
+      }
+    })
+    .toBe(true);
+
+  await page.clock.fastForward(30_002);
+
+  await expect(page.locator("#status")).toBeHidden();
+  expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(1);
+  await expect(page.locator("#output")).toHaveText("LOADING...\n");
+});
+
+test("a stale worker failure cannot disrupt a restarted game", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const NativeWorker = window.Worker;
+    let shouldFailLate = true;
+    window.workerConstructionAttempts = 0;
+
+    window.Worker = class StaleTestWorker {
+      constructor(...arguments_) {
+        window.workerConstructionAttempts++;
+        if (!shouldFailLate) return new NativeWorker(...arguments_);
+        shouldFailLate = false;
+      }
+
+      postMessage() {
+        setTimeout(() => {
+          this.onerror?.({
+            message: "Simulated stale worker failure",
+            preventDefault() {},
+          });
+        }, 2_000);
+      }
+
+      terminate() {}
+    };
+  });
+
+  await page.goto("oregon-trail/", { waitUntil: "domcontentloaded" });
+  await expect
+    .poll(async () => {
+      try {
+        return await page.evaluate(() => window.crossOriginIsolated);
+      } catch {
+        return false;
+      }
+    })
+    .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.workerConstructionAttempts))
+    .toBe(1);
+  await page.locator("#restart-game").click();
+  await expect(page.locator(terminalInput)).toBeFocused({ timeout: 15_000 });
+  await page.waitForTimeout(2_200);
+  await expect(page.locator("#status")).toBeHidden();
+  expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(2);
+});
+
 test("a terminal text selection is not collapsed or replaced by refocusing", async ({
   page,
 }) => {

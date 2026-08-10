@@ -75,6 +75,7 @@ self.onmessage = async (event) => {
     });
 
     module.FS.writeFile(`/${data.filename}`, data.source);
+    send({ type: "STARTED" });
     module.callMain([`/${data.filename}`]);
     flushStdout();
     send({ type: "EXIT" });
