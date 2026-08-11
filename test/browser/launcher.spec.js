@@ -108,15 +108,19 @@ test("restart is safe both immediately and while waiting for input", async ({
   await expect(page.locator("#status")).toBeHidden();
 });
 
-test("restoring visibility repaints without moving or clearing the terminal", async ({
+test("restoring visibility repaints and focuses input without moving the terminal", async ({
   page,
   isMobile,
 }) => {
   test.skip(isMobile, "reported desktop Safari repaint path");
   await openLauncher(page);
-  await page.locator("#output").evaluate((output) => {
-    output.textContent += `\n${"REPAINT TEST LINE\n".repeat(100)}`;
-  });
+  await page.locator(terminalInput).fill("YES");
+  await page.locator(terminalInput).press("Enter");
+  await expect(page.locator("#output")).toContainText(
+    "HOW GOOD A SHOT ARE YOU WITH YOUR RIFLE?",
+  );
+  await page.locator("#game-select").focus();
+  await expect(page.locator("#game-select")).toBeFocused();
 
   const before = await page.locator("#screen").evaluate((screen) => {
     screen.scrollTop = Math.floor((screen.scrollHeight - screen.clientHeight) / 2);
@@ -138,6 +142,7 @@ test("restoring visibility repaints without moving or clearing the terminal", as
     scrollable: screen.scrollHeight > screen.clientHeight,
   }));
   expect(after).toEqual(before);
+  await expect(page.locator(terminalInput)).toBeFocused();
   await expect(page.locator("#status")).toBeHidden();
 });
 

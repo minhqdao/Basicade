@@ -170,10 +170,19 @@ function submitInput() {
   Atomics.notify(sharedBuffer, 0, 1);
 }
 
-function focusTerminalInput() {
+let preserveTerminalScrollOnFocus = false;
+
+function focusTerminalInput({ preserveScroll = false } = {}) {
   if (!waitingForInput || document.activeElement === terminalInput) return;
-  terminalInput.focus({ preventScroll: true });
+  const scrollTop = screen.scrollTop;
+  preserveTerminalScrollOnFocus = preserveScroll;
+  try {
+    terminalInput.focus({ preventScroll: true });
+  } finally {
+    preserveTerminalScrollOnFocus = false;
+  }
   moveInputCaretToEnd(terminalInput);
+  if (preserveScroll) screen.scrollTop = scrollTop;
 }
 
 function keepActiveInputVisible() {
@@ -182,15 +191,16 @@ function keepActiveInputVisible() {
   }
 }
 
-function repaintTerminalAfterVisibilityChange() {
+function restoreTerminalAfterVisibilityChange() {
   if (document.visibilityState !== "visible") return;
 
   const scrollTop = screen.scrollTop;
   const maxScrollTop = screen.scrollHeight - screen.clientHeight;
-  if (maxScrollTop <= 0) return;
-
-  screen.scrollTop = scrollTop > 0 ? scrollTop - 1 : 1;
-  screen.scrollTop = scrollTop;
+  if (maxScrollTop > 0) {
+    screen.scrollTop = scrollTop > 0 ? scrollTop - 1 : 1;
+    screen.scrollTop = scrollTop;
+  }
+  if (!usesTouchInput()) focusTerminalInput({ preserveScroll: true });
 }
 
 let terminalPointerInteraction = false;
@@ -341,12 +351,12 @@ keyboardViewport.addEventListener("resize", handleKeyboardViewportResize);
 keyboardViewport.addEventListener("scroll", queueKeyboardConstraintCheck);
 document.addEventListener(
   "visibilitychange",
-  repaintTerminalAfterVisibilityChange,
+  restoreTerminalAfterVisibilityChange,
 );
 
 terminalInput.addEventListener("focus", () => {
   render();
-  keepActiveInputVisible();
+  if (!preserveTerminalScrollOnFocus) keepActiveInputVisible();
   keyboardClosedViewportHeight = Math.max(
     keyboardClosedViewportHeight ?? 0,
     keyboardViewport.height ?? window.innerHeight,
