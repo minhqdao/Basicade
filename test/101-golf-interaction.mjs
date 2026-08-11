@@ -34,4 +34,28 @@ for (const holes of ["1", "18"]) {
   assert.doesNotMatch(transcript, /TYPE MISMATCH|Syntax error|Error at line/i);
 }
 
-console.log("test: 101 Golf reaches the first hole with RetroBASIC");
+const fairwaySource = originalSource
+  .replace("640LETL=INT(RND(X)*100)", "640LETL=0")
+  .replace("870GOTO540", '870PRINT"FAIRWAY SHOT COMPLETE":END');
+const fairwayOutput = [];
+
+await runRetroBasic({
+  source: fairwaySource,
+  stdin: ["N", "1", "1", "1"],
+  onStdout: (line) => fairwayOutput.push(line),
+  onStderr: (line) => fairwayOutput.push(line),
+});
+
+const fairwayTranscript = fairwayOutput.join("\n");
+assert.match(fairwayTranscript, /DISTANCE OF SHOT IS\s+270\s+YARDS/);
+assert.match(
+  fairwayTranscript,
+  /DISTANCE REMAINING TO PIN IS\s+90\s+YARDS/,
+);
+assert.match(fairwayTranscript, /FAIRWAY SHOT COMPLETE/);
+assert.doesNotMatch(
+  fairwayTranscript,
+  /TYPE MISMATCH|BAD SUBSCRIPT|Syntax error|Error at line/i,
+);
+
+console.log("test: 101 Golf starts and calculates fairway distance correctly");
