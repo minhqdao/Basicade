@@ -182,6 +182,17 @@ function keepActiveInputVisible() {
   }
 }
 
+function repaintTerminalAfterVisibilityChange() {
+  if (document.visibilityState !== "visible") return;
+
+  const scrollTop = screen.scrollTop;
+  const maxScrollTop = screen.scrollHeight - screen.clientHeight;
+  if (maxScrollTop <= 0) return;
+
+  screen.scrollTop = scrollTop > 0 ? scrollTop - 1 : 1;
+  screen.scrollTop = scrollTop;
+}
+
 function handleTerminalClick() {
   // A click is also fired after dragging to select text. Refocusing the hidden
   // input here would collapse the range the user just created.
@@ -315,6 +326,10 @@ function handleKeyboardViewportResize() {
 
 keyboardViewport.addEventListener("resize", handleKeyboardViewportResize);
 keyboardViewport.addEventListener("scroll", queueKeyboardConstraintCheck);
+document.addEventListener(
+  "visibilitychange",
+  repaintTerminalAfterVisibilityChange,
+);
 
 terminalInput.addEventListener("focus", () => {
   render();

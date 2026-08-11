@@ -108,6 +108,39 @@ test("restart is safe both immediately and while waiting for input", async ({
   await expect(page.locator("#status")).toBeHidden();
 });
 
+test("restoring visibility repaints without moving or clearing the terminal", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "reported desktop Safari repaint path");
+  await openLauncher(page);
+  await page.locator("#output").evaluate((output) => {
+    output.textContent += `\n${"REPAINT TEST LINE\n".repeat(100)}`;
+  });
+
+  const before = await page.locator("#screen").evaluate((screen) => {
+    screen.scrollTop = Math.floor((screen.scrollHeight - screen.clientHeight) / 2);
+    return {
+      output: screen.textContent,
+      scrollTop: screen.scrollTop,
+      scrollable: screen.scrollHeight > screen.clientHeight,
+    };
+  });
+  expect(before.scrollable).toBe(true);
+
+  await page.evaluate(() =>
+    document.dispatchEvent(new Event("visibilitychange")),
+  );
+
+  const after = await page.locator("#screen").evaluate((screen) => ({
+    output: screen.textContent,
+    scrollTop: screen.scrollTop,
+    scrollable: screen.scrollHeight > screen.clientHeight,
+  }));
+  expect(after).toEqual(before);
+  await expect(page.locator("#status")).toBeHidden();
+});
+
 test("both interpreters recover from an initial worker startup failure", async ({
   page,
 }) => {
