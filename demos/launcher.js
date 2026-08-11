@@ -404,7 +404,10 @@ terminalInput.addEventListener("keydown", (event) => {
 });
 
 terminalContainer.addEventListener("pointerdown", handleTerminalPointerDown);
-terminalContainer.addEventListener("pointercancel", handleTerminalPointerCancel);
+terminalContainer.addEventListener(
+  "pointercancel",
+  handleTerminalPointerCancel,
+);
 terminalContainer.addEventListener("mousedown", handleTerminalMouseDown);
 terminalContainer.addEventListener("click", handleTerminalClick);
 
