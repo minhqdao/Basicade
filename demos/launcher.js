@@ -193,17 +193,30 @@ function repaintTerminalAfterVisibilityChange() {
   screen.scrollTop = scrollTop;
 }
 
+let terminalPointerInteraction = false;
+
 function handleTerminalClick() {
   // A click is also fired after dragging to select text. Refocusing the hidden
   // input here would collapse the range the user just created.
-  if (!hasTextSelection(window.getSelection())) focusTerminalInput();
+  if (!hasTextSelection(window.getSelection())) {
+    focusTerminalInput();
+  } else {
+    render();
+  }
+  terminalPointerInteraction = false;
 }
 
 let touchMouseEventPending = false;
 
 function handleTerminalPointerDown(event) {
+  terminalPointerInteraction = true;
   touchMouseEventPending = isTouchPointer(event);
   if (touchMouseEventPending) focusTerminalInput();
+}
+
+function handleTerminalPointerCancel() {
+  terminalPointerInteraction = false;
+  render();
 }
 
 function handleTerminalMouseDown(event) {
@@ -350,7 +363,10 @@ terminalInput.addEventListener("blur", () => {
     keyboardClosedViewportHeight,
     keyboardViewport.height ?? window.innerHeight,
   );
-  render();
+  // Clicking terminal text briefly transfers focus so the browser can retain
+  // native text selection. Keep the existing cursor animation running until
+  // the click determines whether this was a tap/click or a selection drag.
+  if (!terminalPointerInteraction) render();
 });
 
 // 1. Handle live typing, backspacing, and mobile "Return/Go" keys
@@ -388,6 +404,7 @@ terminalInput.addEventListener("keydown", (event) => {
 });
 
 terminalContainer.addEventListener("pointerdown", handleTerminalPointerDown);
+terminalContainer.addEventListener("pointercancel", handleTerminalPointerCancel);
 terminalContainer.addEventListener("mousedown", handleTerminalMouseDown);
 terminalContainer.addEventListener("click", handleTerminalClick);
 

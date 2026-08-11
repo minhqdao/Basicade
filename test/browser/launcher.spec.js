@@ -520,7 +520,7 @@ test("tapping an active mobile terminal does not refocus or reposition it", asyn
   await openLauncher(page);
 
   const beforeTap = await page.locator(terminalInput).evaluate((input) => {
-    window.terminalInputCalls = { focus: 0, selection: 0 };
+    window.terminalInputCalls = { focus: 0, selection: 0, cursorMutations: 0 };
     const nativeFocus = input.focus.bind(input);
     const nativeSetSelectionRange = input.setSelectionRange.bind(input);
     input.focus = (...arguments_) => {
@@ -531,6 +531,10 @@ test("tapping an active mobile terminal does not refocus or reposition it", asyn
       window.terminalInputCalls.selection++;
       return nativeSetSelectionRange(...arguments_);
     };
+    new MutationObserver(() => window.terminalInputCalls.cursorMutations++).observe(
+      document.getElementById("cursor"),
+      { attributeFilter: ["class"] },
+    );
 
     const terminal = document.getElementById("terminal-container");
     const screen = document.getElementById("screen");
@@ -540,12 +544,13 @@ test("tapping an active mobile terminal does not refocus or reposition it", asyn
     };
   });
 
-  await page.locator("#terminal-container").tap({ position: { x: 20, y: 20 } });
+  await page.locator("#output").tap({ position: { x: 20, y: 8 } });
 
   await expect(page.locator(terminalInput)).toBeFocused();
   expect(await page.evaluate(() => window.terminalInputCalls)).toEqual({
     focus: 0,
     selection: 0,
+    cursorMutations: 0,
   });
   expect(
     await page.evaluate(() => ({
@@ -607,6 +612,38 @@ test("clicking an active desktop terminal does not restart its cursor", async ({
     selection: 0,
     cursorMutations: 0,
   });
+});
+
+test("clicking terminal text preserves the cursor interval and text selection", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "desktop mouse behavior");
+  await openLauncher(page);
+
+  await page.locator("#cursor").evaluate((cursor) => {
+    window.textClickCursorMutations = 0;
+    new MutationObserver(() => window.textClickCursorMutations++).observe(
+      cursor,
+      { attributeFilter: ["class"] },
+    );
+  });
+
+  await page.locator("#output").click({ position: { x: 20, y: 8 } });
+  await expect(page.locator(terminalInput)).toBeFocused();
+  expect(await page.evaluate(() => window.textClickCursorMutations)).toBe(0);
+
+  const output = page.locator("#output");
+  const box = await output.boundingBox();
+  if (!box) throw new Error("terminal output is not visible");
+  await page.mouse.move(box.x + 4, box.y + 8);
+  await page.mouse.down();
+  await page.mouse.move(box.x + Math.min(box.width - 4, 180), box.y + 8);
+  await page.mouse.up();
+
+  await expect
+    .poll(() => page.evaluate(() => window.getSelection()?.toString().length ?? 0))
+    .toBeGreaterThan(0);
 });
 
 test("mobile portrait and landscape preserve the active input layout", async ({
