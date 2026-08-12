@@ -14,6 +14,7 @@ import {
 } from "./terminal-scroll.js";
 import { hasTextSelection, updateTextContent } from "./terminal-selection.js";
 import { runnerCommand, runnerEvent } from "./runner-protocol.js";
+import { createFrameBatcher } from "./terminal-render.js";
 
 const output = document.getElementById("output");
 const input = document.getElementById("input");
@@ -114,8 +115,27 @@ function appendOutput(text) {
   }
 
   terminalText += sanitizeTerminalOutput(text);
+  scheduleOutputRender();
+}
+
+function scheduleOutputRender() {
+  // Interpreters can emit a block as a burst of individual lines. Rendering
+  // and scrolling for every worker message makes the bottom of the terminal
+  // visibly jump between intermediate layouts. Paint the complete burst once.
+  outputRenderer.schedule();
+}
+
+const outputRenderer = createFrameBatcher(() => {
   render();
   scrollTerminalToBottom(screen);
+});
+
+function flushOutputRender() {
+  outputRenderer.flush();
+}
+
+function cancelOutputRender() {
+  outputRenderer.cancel();
 }
 
 function render() {
@@ -585,7 +605,7 @@ function launchWorker(source, buffer, keys, currentRunId, attempt = 0) {
       currentInput = "";
       terminalInput.value = "";
       waitingForInput = true;
-      render();
+      flushOutputRender();
       focusTerminalInput(); // Auto-focus input field and pull up mobile keyboard
     } else if (data.type === "ERROR") {
       if (!hasStarted) {
@@ -599,7 +619,7 @@ function launchWorker(source, buffer, keys, currentRunId, attempt = 0) {
     } else if (data.type === "EXIT") {
       appendOutput("\n*** SYSTEM OFFLINE ***\n");
       waitingForInput = false;
-      render();
+      flushOutputRender();
       releaseWorker();
     }
   };
@@ -620,6 +640,7 @@ window.addEventListener("pagehide", releaseWorker, { once: true });
 
 function reportStartError(error) {
   releaseWorker();
+  cancelOutputRender();
   setStatus(error.message);
   terminalText = "";
   hasReceivedFirstOutput = false;
@@ -629,6 +650,7 @@ function reportStartError(error) {
 function restartGame() {
   runId += 1;
   releaseWorker();
+  cancelOutputRender();
   terminalText = "LOADING...\n";
   hasReceivedFirstOutput = false;
   currentInput = "";
