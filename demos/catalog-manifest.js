@@ -77,7 +77,6 @@ export const catalogManifest = {
         "mugwump",
         "number",
         "pizza",
-        "qubic",
         "reverse",
         "rusrou",
         "stars",

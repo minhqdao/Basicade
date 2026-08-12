@@ -38,6 +38,8 @@ assert.equal(basic101Selection.game.id, "101-aceydu");
 assert.equal(basic101Selection.game.collection, "101 BASIC Computer Games");
 assert.equal(basic101Selection.interpreter.id, "retrobasic");
 assert.equal(games["101-basbal"], undefined);
+assert.equal(games["101-qubic"], undefined);
+assert.equal(games["bcg-qubit"].title, "Qubit");
 
 const basic101RouteSelection = resolveSelection(
   "?interpreter=retrobasic",
