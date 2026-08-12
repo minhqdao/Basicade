@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - Share the `runBasic()` implementation with the RetroBASIC package.
 - Omit generated source maps from the npm package to avoid shipping maps larger than the bundled interpreter.
+- Accept whitespace as well as commas between numeric values in console `INPUT` statements, while preserving whitespace in string input.
 
 ## [0.1.2] - 2026-07-22
 

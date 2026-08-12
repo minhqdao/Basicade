@@ -29,11 +29,41 @@ const concurrentExitCodes = await Promise.all(
     }),
   ),
 );
+const numericOutput = [];
+await runBasic({
+  source: `10 INPUT A,B,C\n20 PRINT A;B;C\n30 END`,
+  stdin: ["-3.5 6E2 7"],
+  onStdout: (line) => numericOutput.push(line),
+});
+const stringOutput = [];
+await runBasic({
+  source: `10 INPUT A$\n20 PRINT "[";A$;"]"\n30 END`,
+  stdin: ["123 456"],
+  onStdout: (line) => stringOutput.push(line),
+});
+const mixedOutput = [];
+await runBasic({
+  source: `10 INPUT A,B$\n20 PRINT A;"[";B$;"]"\n30 END`,
+  stdin: ["1 123 456"],
+  onStdout: (line) => mixedOutput.push(line),
+});
 const checks = [
   ["returns a successful exit code", exitCode === 0],
   ["reads multiple stdin lines in order", /Ada\s+Lovelace/i.test(fullOutput)],
   ["does not mutate the caller's input", input.join(",") === "Ada,Lovelace"],
   ["does not write to stderr", fullErrors.length === 0],
+  [
+    "accepts whitespace-separated numeric INPUT values",
+    /-3\.5\s+600\s+7/.test(numericOutput.join("\n")),
+  ],
+  [
+    "preserves whitespace inside string INPUT values",
+    stringOutput.join("\n").includes("[123 456]"),
+  ],
+  [
+    "preserves a string tail after a whitespace-separated numeric value",
+    /1\s+\[123 456\]/.test(mixedOutput.join("\n")),
+  ],
   [
     "keeps concurrent interpreter instances isolated",
     concurrentExitCodes.every((code) => code === 0) &&

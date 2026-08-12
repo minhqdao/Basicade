@@ -2274,6 +2274,9 @@ user_input_values (LineType * Line, char *buffer, int IsReal)
    **
    */
   int p;
+  int q;
+  int HasMoreVariables;
+  int HasValueSeparator;
    
   assert (Line != NULL);
   assert (buffer != NULL);
@@ -2283,7 +2286,7 @@ user_input_values (LineType * Line, char *buffer, int IsReal)
 
   p = 0;
   /* Read elements in buffer and assign them to variables in Line */
-  do
+  while (TRUE)
   {
     ResultType Result;
     VariableType *Variable;
@@ -2358,9 +2361,33 @@ user_input_values (LineType * Line, char *buffer, int IsReal)
      ** Note: do NOT free() or RELEASE_VARIANT because 'X->Buffer' points into 'buffer'
      **
      */
+    HasMoreVariables = line_skip_seperator (Line);
+    if (!HasMoreVariables)
+    {
+      break;
+    }
+
+    HasValueSeparator = buff_skip_char (buffer, &p, My->CurrentFile->delimit);
+    if (!HasValueSeparator && !VAR_IS_STRING (Variable))
+    {
+      /*
+       ** RetroBASIC and several classic programs allow numeric INPUT values
+       ** to be separated by whitespace as well as commas.  Only accept this
+       ** extension after a numeric value so string input remains untouched.
+       */
+      q = p;
+      buff_skip_spaces (buffer, &q);
+      if (q > p && buffer[q] != NulChar)
+      {
+        p = q;
+        HasValueSeparator = TRUE;
+      }
+    }
+    if (!HasValueSeparator)
+    {
+      return RESULT_UNPARSED;
+    }
   }
-  while (line_skip_seperator (Line)
-         && buff_skip_char (buffer, &p, My->CurrentFile->delimit));
 
   /* verify all variables and values consumed */
   if (line_is_eol (Line) && buff_is_eol (buffer, &p))
