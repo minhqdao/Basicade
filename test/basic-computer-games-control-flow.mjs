@@ -25,6 +25,12 @@ async function runGame(game, input) {
 
 const animal = await runGame("animal", "YES");
 assert.match(animal.output, /IS IT A\s+FISH/i);
+assert.match(animal.output, /DOES IT SWIM\?/i);
+assert.doesNotMatch(
+  animal.output,
+  /DOES IT SWIMY2N3/i,
+  "Animal hides its encoded yes/no branch targets from the player",
+);
 assert.doesNotMatch(
   `${animal.output}\n${animal.errors}`,
   /NEXT without FOR|FOR without NEXT/i,
