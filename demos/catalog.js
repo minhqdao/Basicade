@@ -43,9 +43,11 @@ export function resolveSelection(search = "", pathname = "") {
   };
 }
 
-export function selectionUrl(location, { game, interpreter }) {
+export function selectionUrl(location, { game, interpreter }, applicationBase) {
   const url = new URL(location.href);
-  const basePath = basePathname(url.pathname);
+  const basePath = applicationBase
+    ? new URL(applicationBase, url.origin).pathname
+    : basePathname(url.pathname);
 
   if (game.route) {
     url.pathname = `${basePath}${game.route}/`;

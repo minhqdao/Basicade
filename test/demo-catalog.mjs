@@ -156,6 +156,27 @@ const oregonTrailUrl = selectionUrl(
 assert.equal(oregonTrailUrl.pathname, "/Basicade/oregon-trail/");
 assert.equal(oregonTrailUrl.search, "?ref=readme");
 
+const removedRouteUrl = selectionUrl(
+  new URL("http://localhost:5173/101-qubic/"),
+  {
+    game: games["101-reverse"],
+    interpreter: interpreters.retrobasic,
+  },
+  "/",
+);
+assert.equal(removedRouteUrl.pathname, "/101-reverse/");
+assert.equal(removedRouteUrl.search, "?interpreter=retrobasic");
+
+const deployedRemovedRouteUrl = selectionUrl(
+  new URL("https://example.test/Basicade/101-qubic/"),
+  {
+    game: games["101-reverse"],
+    interpreter: interpreters.retrobasic,
+  },
+  "/Basicade/",
+);
+assert.equal(deployedRemovedRouteUrl.pathname, "/Basicade/101-reverse/");
+
 const launcherMarkup = readFileSync("index.html", "utf8");
 const launcherScript = readFileSync("demos/launcher.js", "utf8");
 assert.match(launcherMarkup, /id="terminal-input"/);

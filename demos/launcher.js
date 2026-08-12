@@ -25,12 +25,16 @@ const interpreterSelect = document.getElementById("interpreter-select");
 const status = document.getElementById("status");
 const restartButton = document.getElementById("restart-game");
 const terminalInput = document.getElementById("terminal-input");
+const applicationBase = new URL(
+  import.meta.env.BASE_URL,
+  window.location.origin,
+).pathname;
 
 const selection = resolveSelection(
   window.location.search,
   window.location.pathname,
 );
-const canonicalUrl = selectionUrl(window.location, selection);
+const canonicalUrl = selectionUrl(window.location, selection, applicationBase);
 if (canonicalUrl.href !== window.location.href) {
   window.history.replaceState(null, "", canonicalUrl);
 }
@@ -72,15 +76,21 @@ gameSelect.addEventListener("change", () => {
   const interpreter = game.interpreters.includes(selection.interpreter.id)
     ? selection.interpreter
     : interpreters[game.interpreters[0]];
-  window.location.assign(selectionUrl(window.location, { game, interpreter }));
+  window.location.assign(
+    selectionUrl(window.location, { game, interpreter }, applicationBase),
+  );
 });
 
 interpreterSelect.addEventListener("change", () => {
   window.location.assign(
-    selectionUrl(window.location, {
-      game: selection.game,
-      interpreter: interpreters[interpreterSelect.value],
-    }),
+    selectionUrl(
+      window.location,
+      {
+        game: selection.game,
+        interpreter: interpreters[interpreterSelect.value],
+      },
+      applicationBase,
+    ),
   );
 });
 
