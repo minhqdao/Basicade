@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-08-12
+
 ### Changed
 
 - Skip `FOR` loop bodies when their initial bounds are already exhausted.

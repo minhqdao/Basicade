@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-12
+
 ### Changed
 
 - Share the `runBasic()` implementation with the RetroBASIC package.
