@@ -24,6 +24,9 @@ async function play(name, runBasic, stdin) {
     onStdout: (line) => output.push(line),
     onStderr: (line) => errors.push(line),
   });
+  // RetroBASIC sets the host process status when scripted input ends while
+  // the replayed game is waiting at its next prompt.
+  process.exitCode = undefined;
 
   const diagnostics = errors.join("\n");
   assert.equal(diagnostics, "", `${name} reports no Awari errors`);

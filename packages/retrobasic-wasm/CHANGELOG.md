@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Fixed
+
+- Correct string `<` and `<=` comparisons so equality is no longer treated as strictly less than and is included in less-than-or-equal comparisons.
+
 ## [0.1.3] - 2026-08-12
 
 ### Changed
