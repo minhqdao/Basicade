@@ -74,13 +74,6 @@ blank text input. This difference reflects the interpreters' BASIC dialects.
 
 The [demo](https://minhqdao.github.io/Basicade/) is automatically deployed to GitHub Pages using GitHub Actions upon push to `main` if CI and build jobs succeed.
 
-## AI Disclaimer
-
-Basicade was designed and built with assistance from several Large Language Models:
-
-- **Architecture & Planning:** Early setup, design planning, and strategy were assisted by ChatGPT.
-- **Execution & Integration:** Core implementation—including WebAssembly compilation/packaging, catalog management, game wiring, testing, and deployment workflows—was developed in collaboration with Codex and ChatGPT 5.6.
-
 ## License and Sources
 
 Copyrightable contributions to Basicade are licensed under the [MIT License](LICENSE) in
