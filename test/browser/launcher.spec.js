@@ -809,6 +809,7 @@ test("keyboard-only navigation changes controls, restarts, and returns to input"
   } else {
     await page.locator(terminalInput).press("Tab");
   }
+  await expect(page.locator("#github-link")).toBeFocused();
   await page.locator("#github-link").press("Tab");
   await expect(page.getByRole("button", { name: "Restart game" })).toBeFocused();
   await page.getByRole("button", { name: "Restart game" }).press("Enter");
