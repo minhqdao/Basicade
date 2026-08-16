@@ -41,6 +41,7 @@
     <style>
       * {
         box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
       }
       html,
       body {
@@ -183,6 +184,8 @@
       .terminal-actions a {
         align-items: center;
         display: inline-flex;
+        -webkit-appearance: none;
+        appearance: none;
         border: 1px solid rgba(200, 248, 200, 0.25);
         border-radius: 6px;
         color: rgba(200, 248, 200, 0.65);
@@ -198,7 +201,6 @@
       button {
         --button-transition: 0.18s ease-out;
         -webkit-appearance: none;
-        -webkit-tap-highlight-color: transparent;
         appearance: none;
         background: transparent;
         border: 1px solid rgba(200, 248, 200, 0.25);
