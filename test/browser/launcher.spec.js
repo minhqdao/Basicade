@@ -804,7 +804,12 @@ test("keyboard-only navigation changes controls, restarts, and returns to input"
   );
 
   await openLauncher(page);
-  await page.locator(terminalInput).press(browserName === "webkit" ? "Alt+Tab" : "Tab");
+  if (browserName === "webkit") {
+    await page.locator(terminalInput).press("Alt+Tab");
+  } else {
+    await page.locator(terminalInput).press("Tab");
+  }
+  await page.locator("#github-link").press("Tab");
   await expect(page.getByRole("button", { name: "Restart game" })).toBeFocused();
   await page.getByRole("button", { name: "Restart game" }).press("Enter");
   await expect(page.locator(terminalInput)).toBeFocused({ timeout: 15_000 });
