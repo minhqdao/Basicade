@@ -804,13 +804,21 @@ test("keyboard-only navigation changes controls, restarts, and returns to input"
   );
 
   await openLauncher(page);
-  if (browserName === "webkit") {
-    await page.locator(terminalInput).press("Alt+Tab");
-  } else {
-    await page.locator(terminalInput).press("Tab");
-  }
+  // WebKit's default Tab stops only at text controls and buttons, never at
+  // links; Alt+Tab walks every focusable control. Chromium tabs through all
+  // of them with plain Tab.
+  const tabKey = browserName === "webkit" ? "Alt+Tab" : "Tab";
+  await page.locator(terminalInput).press(tabKey);
+  await expect(page.getByRole("button", { name: "Restart game" })).toBeFocused();
+  await page.getByRole("button", { name: "Restart game" }).press(tabKey);
   await expect(page.locator("#github-link")).toBeFocused();
-  await page.locator("#github-link").press("Tab");
+  await page.locator("#github-link").press("Shift+Tab");
+  // WebKit's Shift+Tab from a link lands on the previous text stop (the
+  // hidden terminal input); every other engine returns to the button.
+  if (browserName === "webkit") {
+    await expect(page.locator(terminalInput)).toBeFocused();
+    await page.locator(terminalInput).press("Alt+Tab");
+  }
   await expect(page.getByRole("button", { name: "Restart game" })).toBeFocused();
   await page.getByRole("button", { name: "Restart game" }).press("Enter");
   await expect(page.locator(terminalInput)).toBeFocused({ timeout: 15_000 });

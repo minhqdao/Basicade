@@ -182,21 +182,88 @@
         margin-top: 12px;
       }
       .terminal-actions a {
-        align-items: center;
-        display: inline-flex;
         -webkit-appearance: none;
         appearance: none;
         border: 1px solid rgba(200, 248, 200, 0.25);
         border-radius: 6px;
         color: rgba(200, 248, 200, 0.65);
-        justify-content: center;
+        font-size: 14px;
+        letter-spacing: 0.08em;
         outline: 0;
-        padding: 0 10px;
         text-decoration: none;
+        text-transform: uppercase;
         transition:
           background-color 0.18s ease-out,
           border-color 0.18s ease-out,
-          color 0.18s ease-out;
+          color 0.18s ease-out,
+          text-shadow 0.18s ease-out;
+      }
+      /* The arrow stands ON the text's baseline, like any glyph: an inline
+         replaced element's baseline is its bottom edge, so SOURCE and the
+         icon share the one vertical anchor every platform agrees on, and
+         the 8px box spans roughly the caps' 8px height -- center-to-center
+         drift is impossible by construction. Box-center alignment (flex,
+         vertical-align middle) instead anchors to the line box center,
+         (ascent - descent) / 2 above the baseline where caps center at
+         cap-height / 2: numbers that differ per platform for the same
+         font family, which is what made the icon drift. */
+      .terminal-actions a svg {
+        fill: none;
+        /* No literal whitespace between label and icon in the markup: in
+           inline flow it would render as a full Courier space (~8px). A
+           fixed margin reproduces the original gap exactly. */
+        margin-left: 6px;
+        shape-rendering: crispEdges;
+        stroke: currentColor;
+        stroke-linecap: butt;
+        stroke-linejoin: miter;
+        stroke-width: 1;
+        vertical-align: baseline;
+      }
+      /* Both controls share this box: the label centered by line-height,
+         no flex, because iOS Safari does not stretch a flex-item
+         <button>. The FLOOR (not a fixed height) keeps single labels at
+         32px but lets the border grow with the text where a narrow
+         screen wraps a label onto a second line -- with a fixed height
+         the box stayed at its 32px border while lines two and beyond
+         spilled out of it. */
+      .terminal-actions a,
+      .terminal-actions button {
+        box-sizing: border-box;
+        line-height: 30px;
+        min-height: 32px;
+        padding: 0 20px;
+        text-align: center;
+      }
+      /* iOS only: WebKit sizes the Source link's inline line box (label +
+         baseline-standing svg) a touch taller than the button's, and --
+         unlike every other engine -- will not stretch a flex-item
+         <button> up to match. The row then shows two heights, with the
+         link's content riding high in its taller box. The fix pins BOTH
+         controls to the shared 32px box, so their borders sit on the same
+         line and both text baselines land at the same offset by
+         construction (each content box is exactly the 30px line-height,
+         centered in the 32px border box). The link's content stays in
+         PLAIN INLINE flow -- the same construction every other platform
+         already uses -- so the arrow keeps standing on the text baseline
+         via vertical-align instead of being box-centered: a flex overlay
+         would re-center the svg against the line box (the arrow then
+         hangs a few px below the baseline). Pinning the border boxes is
+         safe here: "Source" and "Restart game" both fit one line down to
+         ~270px of content width, below any iOS viewport, so the
+         wrap-with-fixed-height bug cannot trigger. @supports
+         (-webkit-touch-callout: none) matches iOS only: desktop Safari,
+         Android Chrome and Firefox do not implement it, so every other
+         platform renders exactly as before. */
+      @supports (-webkit-touch-callout: none) {
+        .terminal-actions a,
+        .terminal-actions button {
+          height: 32px;
+        }
+        .terminal-actions a svg {
+          height: 8px;
+          width: 8px;
+        }
       }
       button {
         --button-transition: 0.18s ease-out;
@@ -235,6 +302,7 @@
           background: rgba(200, 248, 200, 0.04);
           border-color: rgba(200, 248, 200, 0.7);
           color: #c8f8c8;
+          text-shadow: 0 0 5px rgba(200, 248, 200, 0.5);
         }
       }
       @media (hover: none) {
@@ -377,20 +445,23 @@
         </div>
       </div>
       <div class="terminal-actions">
+        <button id="restart-game" type="button">Restart game</button>
         <a
           id="github-link"
           href="https://github.com/minhqdao/Basicade"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="GitHub"
         >
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
-            <path
-              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
-            />
+          Source<svg
+            aria-hidden="true"
+            width="8"
+            height="8"
+            viewBox="0 0 8 8"
+            focusable="false"
+          >
+            <path d="M0.5 7.5 L7 1 M7 1 H3 M7 1 V5" />
           </svg>
         </a>
-        <button id="restart-game" type="button">Restart game</button>
       </div>
     </main>
     <script src="./demos/launcher.js" type="module"></script>
