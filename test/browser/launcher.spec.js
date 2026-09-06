@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import process from "node:process";
 
 const terminalInput = "#terminal-input";
 
@@ -804,18 +805,22 @@ test("keyboard-only navigation changes controls, restarts, and returns to input"
   );
 
   await openLauncher(page);
-  // WebKit's default Tab stops only at text controls and buttons, never at
-  // links; Alt+Tab walks every focusable control. Chromium tabs through all
-  // of them with plain Tab.
-  const tabKey = browserName === "webkit" ? "Alt+Tab" : "Tab";
+  // The macOS and Windows WebKit builds only stop plain Tab at text controls
+  // and buttons, never at links; Alt+Tab walks every focusable control. The
+  // Linux WebKit build has no such restriction and tabs through everything,
+  // like Chromium.
+  const macStyleWebkitTabs =
+    browserName === "webkit" && process.platform !== "linux";
+  const tabKey = macStyleWebkitTabs ? "Alt+Tab" : "Tab";
   await page.locator(terminalInput).press(tabKey);
   await expect(page.getByRole("button", { name: "Restart game" })).toBeFocused();
   await page.getByRole("button", { name: "Restart game" }).press(tabKey);
   await expect(page.locator("#github-link")).toBeFocused();
   await page.locator("#github-link").press("Shift+Tab");
-  // WebKit's Shift+Tab from a link lands on the previous text stop (the
-  // hidden terminal input); every other engine returns to the button.
-  if (browserName === "webkit") {
+  if (macStyleWebkitTabs) {
+    // Shift+Tab from a link lands on the previous text stop (the hidden
+    // terminal input); walk forward to the button once more. Every other
+    // engine, Linux WebKit included, returns straight to the button.
     await expect(page.locator(terminalInput)).toBeFocused();
     await page.locator(terminalInput).press("Alt+Tab");
   }
