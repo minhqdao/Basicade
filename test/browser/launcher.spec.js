@@ -90,6 +90,102 @@ test("typing, backspace, display capitalization, and Enter advance input", async
   await expect(page.locator("#status")).toBeHidden();
 });
 
+test("composed input echoes faithfully and submits the normalized line", async ({
+  page,
+}) => {
+  await openLauncher(page);
+
+  // What the Vietnamese Telex IME leaves in the field for "look": the
+  // second "o" was consumed to compose ô over the first. The echo must
+  // show the composed character and the field must keep it verbatim --
+  // stripping it deleted the base letter with it, the original
+  // vanishing-character bug.
+  await page.locator(terminalInput).fill("loôk");
+  await expect(page.locator("#input")).toHaveText("LOÔK");
+  await expect(page.locator(terminalInput)).toHaveValue("loôk");
+
+  await page.locator(terminalInput).press("Enter");
+
+  await expect(page.locator("#output")).toContainText("LOOK");
+  await expect(page.locator(terminalInput)).toHaveValue("");
+  await expect(page.locator("#status")).toBeHidden();
+});
+
+test("IME composition owns the caret; plain typing re-pins it", async ({
+  page,
+}) => {
+  await openLauncher(page);
+
+  // A selection write under an active composition corrupts the IME's
+  // marked range -- every update then re-inserts the whole pending
+  // composition (AÁASASS...) instead of replacing. The synthetic events
+  // below drive the launcher's own composition state machine in the real
+  // browser: no caret write between compositionstart and compositionend.
+  const { plainWrites, composingWrites, states, committed, totalWrites } =
+    await page.locator(terminalInput).evaluate((input) => {
+      let caretWrites = 0;
+      const native = input.setSelectionRange.bind(input);
+      input.setSelectionRange = (...arguments_) => {
+        caretWrites += 1;
+        return native(...arguments_);
+      };
+      const echo = document.getElementById("input");
+      const states = [];
+      const type = (value) => {
+        input.value = value;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        states.push(echo.textContent);
+      };
+
+      type("OK"); // plain typing re-pins the caret (append-only contract)
+      const plainWrites = caretWrites;
+
+      input.dispatchEvent(new Event("compositionstart", { bubbles: true }));
+      for (const marked of ["a", "á", "ás", "áss", "ásss"]) type(marked);
+      const composingWrites = caretWrites - plainWrites;
+
+      input.dispatchEvent(new Event("compositionend", { bubbles: true }));
+      return {
+        plainWrites,
+        composingWrites,
+        states,
+        committed: echo.textContent,
+        totalWrites: caretWrites,
+      };
+    });
+
+  expect(plainWrites).toBe(1);
+  expect(composingWrites).toBe(0);
+  expect(states).toEqual(["OK", "A", "Á", "ÁS", "ÁSS", "ÁSSS"]);
+  expect(totalWrites).toBe(2);
+  expect(committed).toBe("ÁSSS");
+});
+
+test("Enter inside a composition commits it; the next Enter submits", async ({
+  page,
+}) => {
+  await openLauncher(page);
+
+  await page.locator(terminalInput).evaluate((input) => {
+    input.value = "loôk";
+    input.dispatchEvent(new Event("compositionstart", { bubbles: true }));
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    // The committing Enter in Android's legacy shape (keyCode 229).
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", keyCode: 229, bubbles: true }),
+    );
+  });
+  await expect(page.locator("#output")).not.toContainText("LOOK");
+
+  await page.locator(terminalInput).evaluate((input) => {
+    input.dispatchEvent(new Event("compositionend", { bubbles: true }));
+  });
+  await page.locator(terminalInput).press("Enter");
+
+  await expect(page.locator("#output")).toContainText("LOOK");
+  await expect(page.locator(terminalInput)).toHaveValue("");
+});
+
 test("restart is safe both immediately and while waiting for input", async ({
   page,
 }) => {
