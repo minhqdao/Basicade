@@ -187,17 +187,17 @@ assert.match(
 );
 assert.match(
   launcherMarkup,
-  /@media \(max-width: 560px\)[\s\S]*#terminal-input\s*{[^}]*position: static;/,
-  "mobile places the focused input at the active terminal line",
+  /@media \(pointer: coarse\) and \(hover: none\)[\s\S]*#terminal-input\s*{[^}]*opacity: 0;/,
+  "mobile keeps the focused input pinned over the terminal's top edge",
 );
 assert.match(
   launcherMarkup,
-  /@media \(max-width: 560px\)[\s\S]*#terminal-input\s*{[^}]*width: 100%;/,
-  "mobile preserves enough native input width for reliable caret tracking",
+  /#terminal-input\s*{[^}]*width: 100%;/,
+  "the full-width hidden input keeps caret tracking reliable",
 );
 assert.match(
   launcherMarkup,
-  /@media \(max-width: 560px\)[\s\S]*#terminal-container\s*{[^}]*flex: 1 1 auto;[^}]*min-height: 240px;/,
+  /@media \(pointer: coarse\) and \(hover: none\) and \(max-width: 560px\)[\s\S]*#terminal-container\s*{[^}]*min-height: 160px;/,
   "the portrait terminal fills available space while retaining a minimum",
 );
 assert.match(launcherScript, /terminalInput\.addEventListener\("input"/);

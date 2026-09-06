@@ -4,12 +4,7 @@ import {
   isTouchPointer,
   moveInputCaretToEnd,
 } from "../demos/terminal-input.js";
-import {
-  isTerminalScrolledToBottom,
-  scrollTerminalToBottom,
-  terminalActiveLineOverlap,
-  terminalHeightAboveViewport,
-} from "../demos/terminal-scroll.js";
+import { scrollTerminalToBottom } from "../demos/terminal-scroll.js";
 import {
   hasTextSelection,
   updateTextContent,
@@ -61,39 +56,6 @@ assert.equal(
   screen.scrollTop,
   480,
   "new terminal input and output remain visible at the bottom",
-);
-assert.equal(isTerminalScrolledToBottom(screen), true);
-screen.scrollTop = 200;
-assert.equal(
-  isTerminalScrolledToBottom(screen),
-  false,
-  "manual terminal scrolling is distinguishable from a pinned prompt",
-);
-
-const visibleActiveLine = {
-  getBoundingClientRect: () => ({ bottom: 440 }),
-};
-assert.equal(
-  terminalActiveLineOverlap(visibleActiveLine, 480),
-  0,
-  "opening the keyboard does not move an already visible prompt",
-);
-
-const obscuredActiveLine = {
-  getBoundingClientRect: () => ({ bottom: 520 }),
-};
-assert.equal(
-  terminalActiveLineOverlap(obscuredActiveLine, 480),
-  48,
-  "an obscured prompt triggers a keyboard-safe terminal height",
-);
-const mobileTerminal = {
-  getBoundingClientRect: () => ({ top: 120 }),
-};
-assert.equal(
-  terminalHeightAboveViewport(mobileTerminal, 480),
-  352,
-  "the terminal ends just above the keyboard without scrolling the page",
 );
 
 let caret;

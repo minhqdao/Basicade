@@ -6,7 +6,25 @@
       name="description"
       content="Run classic BASIC computer games in your browser with WebAssembly."
     />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      interactive-widget=resizes-content (Chrome desktop and Android, and
+      Firefox by default) resizes the layout viewport itself for the soft
+      keyboard instead of leaving a keyboard-hidden area below it. That
+      hidden area is why a one-finger drag anywhere on the page could pan
+      the whole page down off-screen -- and every element then resized
+      toward the new transient viewport ("pull down, header moves and
+      gray shows at the bottom, snap back on release"). With the area
+      gone, a plain pull is a plain overscroll: glow, then
+      pull-to-refresh. Safari ignores the tag; its keyboard rides outside
+      the document, so launcher.js forecasts the keyboard inset at focus
+      and animates the terminal's shrink in sync with the keyboard slide
+      (terminal-keyboard.js), while a touchmove gate blocks the northward
+      drag Safari's pan slack would otherwise allow.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, interactive-widget=resizes-content"
+    />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0b0c0b" />
 
@@ -62,6 +80,10 @@
         margin: 0;
         min-height: 100vh;
         padding: 32px 16px;
+        /* Kills the double-tap zoom: one less pulse on every tap, snappier
+           ones. Panning and pinch are untouched, so pull-to-refresh still
+           works. */
+        touch-action: manipulation;
       }
       main {
         margin: 0 auto;
@@ -121,11 +143,6 @@
         min-height: 360px;
         overflow: hidden;
         position: relative;
-      }
-      #terminal-container.keyboard-constrained {
-        flex: none;
-        height: var(--keyboard-terminal-height);
-        min-height: 0;
       }
       #terminal-container::before {
         background: repeating-linear-gradient(
@@ -335,65 +352,112 @@
           opacity: 0;
         }
       }
-      @media (max-width: 560px) {
+      /* Touch-only app shell: one branch for every touch-sized viewport.
+         main is pinned to the viewport (it can no longer scroll): the
+         keyboard inset is measured off main's rect, and an iOS page that
+         scrolls would otherwise read its scroll offset as keyboard motion
+         and resize the terminal under the finger. The insets are the
+         padding main used to inherit from body, which no longer applies
+         to an out-of-flow box. Scoped to hover:none (phones/tablets, not
+         touch laptops, which keep the scrolling desktop layout).
+         Below, only width may vary -- never height. A height query is
+         re-evaluated against the very viewport the keyboard just shrank,
+         so an old (max-height: 500px) block flipped true mid-open and
+         moved main's top from 16px to 10px: the Android top-edge tick.
+         Width, pointer and hover are the only inputs a soft keyboard
+         cannot change, so nothing switches while it is opening.
+         launcher.js mirrors the shell query (see usesFixedShell). */
+      @media (pointer: coarse) and (hover: none) {
         body {
-          padding: 16px 10px;
+          /* Pull-to-refresh needs a scroll range, and browsers drop it on
+             a page with nothing to scroll: one pixel past svh --
+             imperceptible, and the launcher's scroll pin eats it
+             northward. svh, not lvh: the page cannot scroll, so the
+             toolbars never retract and the range stays exactly one pixel
+             in every toolbar state. */
+          min-height: calc(100svh + 1px);
         }
         main {
+          --pad-x: 10px;
+          /* Compact chrome. Every touch screen wider than a phone in
+             portrait is the landscape / big-keyboard case, where height --
+             not width -- is the scarce dimension. */
+          --pad-y: 10px;
+          position: fixed;
+          top: var(--pad-y);
+          right: var(--pad-x);
+          left: var(--pad-x);
+          /* Fixed window onto the transcript, scrolling internally: svh
+             less the chrome and the keyboard inset launcher.js measures
+             so the prompt rides above the keyboard. With resizes-content
+             on Chrome the inset stays 0 and svh itself is the shrunk
+             visible height; on iOS the measured inset does the work. */
           display: flex;
           flex-direction: column;
-          min-height: calc(100vh - 32px);
-          min-height: calc(100dvh - 32px);
+          height: calc(100svh - var(--pad-y) * 2 - var(--keyboard-inset, 0px));
+          /* Breathing room over the keyboard, none while it is closed. */
+          padding-bottom: min(8px, var(--keyboard-inset, 0px));
         }
         .launcher {
           flex: none;
+        }
+        #terminal-container {
+          /* Fills the bounded main column. The floor keeps the transcript
+             readable rather than collapsing it, and stays low enough that
+             a short landscape screen plus keyboard does not overflow. */
+          flex: 1 1 0;
+          min-height: 120px;
+        }
+        #screen {
+          /* Inside the shell the transcript is NOT a native scroller. A
+             non-scroller has no overscroll physics at all -- nothing to
+             rubber-band, nothing to chain, no matter where a gesture
+             starts (WebKit decides a gesture's overscroll up front, so
+             overscroll-behavior could not cover a drag that ARRIVES at an
+             edge mid-gesture). scrollTop still works programmatically:
+             the touch driver in launcher.js is the only writer, and the
+             ends are hard by construction. Desktop keeps the native
+             scroller from the base rule above. */
+          overflow: hidden;
+        }
+        /* Android only (launcher.js sets the attribute): native transcript
+           there too, for the same reason as desktop -- the browser owns the
+           gesture, chains a spent end to the page and runs pull-to-refresh
+           at the top by itself, with no preventDefault race to lose. iOS
+           keeps overflow hidden and the driven log. */
+        html[data-basicade-log="native"] #screen {
+          overflow-y: auto;
+        }
+        #terminal-input {
+          /* Stays pinned to the container's TOP edge like on desktop (the
+             base rule): the caret is then always visible and WebKit runs
+             no reveal pan on focus -- the root-cause fix for the whole
+             page being dragged north when the keyboard opens. The echoed
+             line in the transcript is the visible prompt; the field
+             itself stays invisible. */
+          opacity: 0;
+        }
+      }
+      /* A phone in portrait has height to spare, so it gets the roomier
+         chrome and the taller floor. Width is the discriminator because
+         height is exactly what the keyboard takes away. */
+      @media (pointer: coarse) and (hover: none) and (max-width: 560px) {
+        main {
+          --pad-y: 16px;
+          padding-bottom: min(16px, var(--keyboard-inset, 0px));
+        }
+        .launcher {
           grid-template-columns: 1fr;
         }
         #status {
           grid-column: auto;
         }
         #terminal-container {
-          flex: 1 1 auto;
-          height: auto;
-          min-height: 240px;
+          min-height: 160px;
         }
         #screen {
           font-size: 14px;
           padding: 18px;
-        }
-        #terminal-input {
-          display: block;
-          opacity: 0;
-          position: static;
-          width: 100%;
-          z-index: auto;
-        }
-      }
-      @media (max-height: 500px) and (pointer: coarse) {
-        body {
-          padding: 10px;
-        }
-        main {
-          display: flex;
-          flex-direction: column;
-          min-height: calc(100vh - 20px);
-          min-height: calc(100dvh - 20px);
-        }
-        .launcher {
-          flex: none;
-          grid-template-columns: 1fr 1fr;
-        }
-        #terminal-container {
-          flex: 1 1 auto;
-          height: auto;
-          min-height: 180px;
-        }
-        #terminal-input {
-          display: block;
-          opacity: 0;
-          position: static;
-          width: 100%;
-          z-index: auto;
         }
       }
     </style>
@@ -464,6 +528,152 @@
         </a>
       </div>
     </main>
+    <script>
+      // Boot-phase guard. index.html only paints a static "LOADING..." line;
+      // every dynamic state is owned by launcher.js. Before it (or the worker
+      // graph behind it) finishes loading, no launcher code exists to report
+      // anything, so failures here would otherwise leave the terminal stuck
+      // on LOADING... forever. Three independent nets:
+      //
+      // 1. Module instantiation failures (the classic post-deploy skew:
+      //    "SyntaxError: Importing binding name 'x' is not found") fire the
+      //    window error event with a message. One guarded recovery reload
+      //    fixes the ordinary case -- a stale cached entry module mixing
+      //    with fresh siblings -- because a reload revalidates the
+      //    top-level document (browsers bypass its cache even though GH
+      //    Pages caps HTML at the same fixed max-age=600 as every other
+      //    file), and Pages deployments now ship the entry as one
+      //    self-contained bundle whose bindings cannot skew. The
+      //    sessionStorage guard mirrors the coi-serviceworker pattern: at
+      //    most one recovery reload per session, never a loop.
+      // 2. Module fetch failures (404/OMT/transient network) fire the same
+      //    event with no message; those get the same single guarded reload
+      //    (a transient blip usually clears on retry) and only then surface
+      //    as text. Non-script resource errors (favicons, images) are
+      //    ignored: they fire the identical capture-phase event but cannot
+      //    fail the boot. Unhandled promise rejections (dynamic import()
+      //    failures) are folded into the same path.
+      // 3. A watchdog for everything that slips past (no error event, or a
+      //    worker that dies before its first output): if the terminal still
+      //    shows only the static LOADING... line after 30s, say so. The
+      //    launcher owns #status once it runs, and disarms the watchdog by
+      //    setting data-basicade-boot-done as soon as the interpreter
+      //    produces its first output, so the hint never fires for a healthy
+      //    (if slow) startup. 30s, not colossal's 20s: a game's BASIC
+      //    source fetch legitimately retries for up to 2 x 10s here before
+      //    the interpreter even starts.
+      (function () {
+        var status = document.getElementById("status");
+        if (!status) return;
+        var output = document.getElementById("output");
+        var recoveryKey = "basicade-module-reload";
+
+        function showBootStatus(message) {
+          if (status.textContent) return;
+          status.textContent = message;
+          status.hidden = false;
+        }
+
+        function isBootDone() {
+          return Boolean(document.documentElement.dataset.basicadeBootDone);
+        }
+
+        // Only boot-entry scripts can fail the boot. Icons, images and
+        // fonts fire the same capture-phase error event with no message;
+        // treating those as fatal is the classic false-positive
+        // ("favicon 404" -> "game failed to load").
+        function isIgnorableResourceTarget(target) {
+          if (!target || target === window) return false;
+          var tag = (target.tagName || "").toUpperCase();
+          return tag !== "SCRIPT";
+        }
+
+        // A skew-induced instantiation error -- or a transient fetch blip --
+        // is usually recoverable by one reload; if it persists (this session
+        // already retried), leave a visible diagnosis instead of looping.
+        // sessionStorage can throw in some private modes; a failed read just
+        // means "do not reload", which is the safe direction. Both boot-guard
+        // branches share the one key, so the guard reloads at most once per
+        // session in total. Returns true when a reload was issued.
+        function tryRecoveryReload() {
+          var retriedThisSession = false;
+          try {
+            retriedThisSession = Boolean(sessionStorage.getItem(recoveryKey));
+          } catch {
+            retriedThisSession = true;
+          }
+          if (retriedThisSession) return false;
+          if (!/^https?:$/.test(window.location.protocol)) return false;
+          try {
+            sessionStorage.setItem(recoveryKey, "1");
+          } catch {
+            // Without storage the reload cannot be guarded; skip it.
+            return false;
+          }
+          window.location.reload();
+          return true;
+        }
+
+        function handleBootError(message, target) {
+          if (isBootDone()) return;
+          if (isIgnorableResourceTarget(target)) return;
+          if (!message) {
+            if (tryRecoveryReload()) return;
+            showBootStatus(
+              "The game failed to load. Reload the page to retry.",
+            );
+            return;
+          }
+          if (tryRecoveryReload()) return;
+          showBootStatus(
+            "Failed to load: " +
+              message +
+              " (a reload did not help; try a hard reload / clearing the site data)",
+          );
+        }
+
+        window.addEventListener(
+          "error",
+          function (event) {
+            // Module scripts report instantiation errors on window;
+            // resource load errors carry the failed element instead.
+            var target =
+              event.target && event.target !== window ? event.target : window;
+            handleBootError(event.message || "", target);
+          },
+          true,
+        );
+
+        window.addEventListener("unhandledrejection", function (event) {
+          if (isBootDone()) return;
+          var reason = event.reason;
+          var message = "";
+          if (typeof reason === "string") {
+            message = reason;
+          } else if (reason && typeof reason.message === "string") {
+            message = reason.message;
+          }
+          try {
+            event.preventDefault();
+          } catch {
+            // Some shims expose a read-only preventDefault; the guard's
+            // own handling below is what matters.
+          }
+          handleBootError(message, window);
+        });
+
+        setTimeout(function () {
+          if (document.documentElement.dataset.basicadeBootDone) return;
+          // Trim so the launcher's own "LOADING...\n" (no interpreter
+          // output yet) is still caught: a stall at this stage is the
+          // common case.
+          if (output && output.textContent.trim() !== "LOADING...") return;
+          showBootStatus(
+            "Still loading after 30 seconds. Reload the page, or a hard reload if it persists.",
+          );
+        }, 30_000);
+      })();
+    </script>
     <script src="./demos/launcher.js" type="module"></script>
   </body>
 </html>

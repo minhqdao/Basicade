@@ -123,25 +123,26 @@ test("restoring visibility repaints and focuses input without moving the termina
   await page.locator("#game-select").focus();
   await expect(page.locator("#game-select")).toBeFocused();
 
-  const before = await page.locator("#screen").evaluate((screen) => {
-    screen.scrollTop = Math.floor((screen.scrollHeight - screen.clientHeight) / 2);
-    return {
-      output: screen.textContent,
-      scrollTop: screen.scrollTop,
-      scrollable: screen.scrollHeight > screen.clientHeight,
-    };
-  });
-  expect(before.scrollable).toBe(true);
-
-  await page.evaluate(() =>
-    document.dispatchEvent(new Event("visibilitychange")),
+  // Snapshot, dispatch, and re-snapshot inside one evaluate: a pending
+  // render-batch frame cannot interrupt a single task, so the visibility
+  // dispatch itself is the only thing being observed.
+  const { before, after } = await page.locator("#screen").evaluate(
+    (screen) => {
+      const snapshot = () => ({
+        output: screen.textContent,
+        scrollTop: screen.scrollTop,
+        scrollable: screen.scrollHeight > screen.clientHeight,
+      });
+      screen.scrollTop = Math.floor(
+        (screen.scrollHeight - screen.clientHeight) / 2,
+      );
+      const before = snapshot();
+      document.dispatchEvent(new Event("visibilitychange"));
+      const after = snapshot();
+      return { before, after };
+    },
   );
-
-  const after = await page.locator("#screen").evaluate((screen) => ({
-    output: screen.textContent,
-    scrollTop: screen.scrollTop,
-    scrollable: screen.scrollHeight > screen.clientHeight,
-  }));
+  expect(before.scrollable).toBe(true);
   expect(after).toEqual(before);
   await expect(page.locator(terminalInput)).toBeFocused();
   await expect(page.locator("#status")).toBeHidden();
@@ -302,7 +303,7 @@ test("game source retry is bounded", async ({ page }) => {
   await expect(page.locator("#status")).toContainText(
     "Could not load examples/creative-computing-magazine/oregon.bas",
   );
-  expect(await page.evaluate(() => window.gameSourceFetchAttempts)).toBe(2);
+  expect(await page.evaluate(() => window.gameSourceFetchAttempts)).toBe(3);
 });
 
 test("worker startup retry is bounded", async ({ page }) => {
@@ -331,10 +332,10 @@ test("worker startup retry is bounded", async ({ page }) => {
   await expect(page.locator("#status")).toHaveText(
     "Simulated persistent worker failure",
   );
-  expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(2);
+  expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(3);
 });
 
-test("worker startup timeout retries once and then reports failure", async ({
+test("worker startup timeout retries twice and then reports failure", async ({
   page,
 }) => {
   await page.clock.install();
@@ -354,28 +355,40 @@ test("worker startup timeout retries once and then reports failure", async ({
 
   await page.goto("oregon-trail/", { waitUntil: "domcontentloaded" });
   await expect
-    .poll(async () => {
-      try {
-        return await page.evaluate(() => window.crossOriginIsolated);
-      } catch {
-        return false;
-      }
-    })
+    .poll(
+      async () => {
+        try {
+          return await page.evaluate(() => window.crossOriginIsolated);
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 15_000 },
+    )
     .toBe(true);
+  // Clear the service-worker isolation grace window (faked clock) so the
+  // first worker attempt can be constructed.
+  await page.clock.fastForward(1_501);
   await expect
     .poll(() => page.evaluate(() => window.workerConstructionAttempts))
     .toBe(1);
 
-  await page.clock.fastForward(15_001);
+  // Each hanging attempt burns the 8s startup timeout; the next attempt is
+  // backed off linearly (600ms, then 1200ms).
+  await page.clock.fastForward(8_601);
   await expect
     .poll(() => page.evaluate(() => window.workerConstructionAttempts))
     .toBe(2);
-  await page.clock.fastForward(15_001);
+  await page.clock.fastForward(9_201);
+  await expect
+    .poll(() => page.evaluate(() => window.workerConstructionAttempts))
+    .toBe(3);
 
+  await page.clock.fastForward(8_001);
   await expect(page.locator("#status")).toHaveText(
     "The interpreter worker timed out during startup.",
   );
-  expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(2);
+  expect(await page.evaluate(() => window.workerConstructionAttempts)).toBe(3);
 });
 
 test("STARTED permits a BASIC program to remain silent past the startup timeout", async ({
@@ -393,6 +406,11 @@ test("STARTED permits a BASIC program to remain silent past the startup timeout"
 
       postMessage(message) {
         if (message.type === "INIT") {
+          // The real launcher disarms index.html's boot watchdog when the
+          // interpreter produces its first output; a silent-but-started
+          // interpreter disarms it here for the same reason, so this test
+          // exercises only the launcher's startup-timeout contract.
+          document.documentElement.dataset.basicadeBootDone = "1";
           queueMicrotask(() => this.onmessage?.({ data: { type: "READY" } }));
         } else if (message.type === "START") {
           queueMicrotask(() => {
@@ -407,6 +425,9 @@ test("STARTED permits a BASIC program to remain silent past the startup timeout"
   });
 
   await page.goto("oregon-trail/", { waitUntil: "domcontentloaded" });
+  // Clear the service-worker isolation grace window (faked clock) so the
+  // interpreter start can begin.
+  await page.clock.fastForward(1_501);
   await expect
     .poll(async () => {
       try {
@@ -518,7 +539,7 @@ test("the pointer-specific focus path keeps terminal input active", async ({
   await expect(page.locator(terminalInput)).toBeFocused();
 });
 
-test("tapping an active mobile terminal does not refocus or reposition it", async ({
+test("tapping an active mobile terminal re-raises focus without moving the transcript", async ({
   page,
   isMobile,
 }) => {
@@ -553,11 +574,20 @@ test("tapping an active mobile terminal does not refocus or reposition it", asyn
   await page.locator("#output").tap({ position: { x: 20, y: 8 } });
 
   await expect(page.locator(terminalInput)).toBeFocused();
+  // A tap on the already-focused field deliberately blurs and re-focuses
+  // it: iOS only raises the soft keyboard for a focus() call made inside a
+  // released tap, and the auto-focus that requested input left the field
+  // focused with the keyboard still closed. The caret is re-parked at the
+  // end and the cursor animation is untouched.
   expect(await page.evaluate(() => window.terminalInputCalls)).toEqual({
-    focus: 0,
-    selection: 0,
+    focus: 1,
+    selection: 1,
     cursorMutations: 0,
   });
+  // The keyboard driver's no-show guard undoes its forecast: with no honest
+  // viewport change the terminal is back at full size, and the transcript
+  // never moved.
+  await page.waitForTimeout(1_600);
   expect(
     await page.evaluate(() => ({
       height: document
@@ -660,30 +690,44 @@ test("mobile portrait and landscape preserve the active input layout", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await openLauncher(page);
 
-  await expect(page.locator(terminalInput)).toHaveCSS("position", "static");
-  const portraitWidths = await page.evaluate(() => ({
-    input: document
+  // The touch shell pins main to the viewport; the hidden input stays
+  // absolute at the container's TOP edge so WebKit runs no reveal pan on
+  // focus -- the echoed line in the transcript is the visible prompt.
+  await expect(page.locator(terminalInput)).toHaveCSS("position", "absolute");
+  await expect(page.locator(terminalInput)).toHaveCSS("opacity", "0");
+  const portrait = await page.evaluate(() => ({
+    launcherColumns: getComputedStyle(document.querySelector(".launcher"))
+      .gridTemplateColumns.split(" ").length,
+    mainHeight: document.querySelector("main").getBoundingClientRect().height,
+    innerHeight: window.innerHeight,
+    inputWidth: document
       .getElementById("terminal-input")
       .getBoundingClientRect().width,
-    screen: document.getElementById("screen").clientWidth,
+    screenWidth: document.getElementById("screen").clientWidth,
+    containerMinHeight: getComputedStyle(
+      document.getElementById("terminal-container"),
+    ).minHeight,
   }));
-  expect(portraitWidths.input).toBeGreaterThan(250);
-  expect(portraitWidths.input).toBeLessThanOrEqual(portraitWidths.screen);
-  await expect(page.locator("#terminal-container")).toHaveCSS(
-    "min-height",
-    "240px",
-  );
+  expect(portrait.launcherColumns).toBe(1);
+  expect(portrait.mainHeight).toBeLessThanOrEqual(portrait.innerHeight);
+  expect(portrait.inputWidth).toBeGreaterThan(250);
+  expect(portrait.inputWidth).toBeLessThanOrEqual(portrait.screenWidth);
+  expect(portrait.containerMinHeight).toBe("160px");
 
   await page.setViewportSize({ width: 844, height: 390 });
-  await expect(page.locator(terminalInput)).toHaveCSS("position", "static");
-  await expect(page.locator("#terminal-container")).toHaveCSS(
-    "min-height",
-    "180px",
-  );
+  const landscape = await page.evaluate(() => ({
+    launcherColumns: getComputedStyle(document.querySelector(".launcher"))
+      .gridTemplateColumns.split(" ").length,
+    containerMinHeight: getComputedStyle(
+      document.getElementById("terminal-container"),
+    ).minHeight,
+  }));
+  expect(landscape.launcherColumns).toBe(2);
+  expect(landscape.containerMinHeight).toBe("120px");
   await expect(page.locator(terminalInput)).toBeFocused();
 });
 
-test("a mobile keyboard constrains the terminal without scrolling the page", async ({
+test("a mobile keyboard shrinks the terminal in place without scrolling the page", async ({
   page,
   isMobile,
 }) => {
@@ -691,8 +735,8 @@ test("a mobile keyboard constrains the terminal without scrolling the page", asy
   await page.addInitScript(() => {
     const viewport = new EventTarget();
     Object.assign(viewport, {
-      height: 844,
-      width: 390,
+      height: window.innerHeight,
+      width: window.innerWidth,
       offsetTop: 0,
     });
     Object.defineProperty(window, "visualViewport", {
@@ -710,60 +754,84 @@ test("a mobile keyboard constrains the terminal without scrolling the page", asy
   await openLauncher(page);
 
   const initialPageScroll = await page.evaluate(() => window.scrollY);
+  const readInset = () =>
+    page.evaluate(() => {
+      const value = document
+        .querySelector("main")
+        .style.getPropertyValue("--keyboard-inset");
+      return value ? Number.parseFloat(value) : 0;
+    });
+
+  // Raise the keyboard so it covers everything above the terminal's bottom
+  // minus 30px. The driver animates --keyboard-inset until the terminal
+  // bottom sits above the keyboard, and the page itself never scrolls.
   const keyboardTop = await page.evaluate(async () => {
-    const promptBottom = document
-      .getElementById("terminal-input")
+    const terminalBottom = document
+      .getElementById("terminal-container")
       .getBoundingClientRect().bottom;
-    const height = promptBottom - 30;
+    const height = terminalBottom - 30;
     await window.setTestVisualViewportHeight(height);
     return height;
   });
-  await expect(page.locator("#terminal-container")).toHaveClass(
-    /keyboard-constrained/,
-  );
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          document.getElementById("terminal-input").getBoundingClientRect()
-            .bottom,
-      ),
-    )
-    .toBeLessThanOrEqual(keyboardTop);
-  expect(await page.evaluate(() => window.scrollY)).toBe(initialPageScroll);
-
-  const manuallyScrolled = await page.evaluate(() => {
-    const output = document.getElementById("output");
-    const screen = document.getElementById("screen");
-    const terminal = document.getElementById("terminal-container");
-    output.textContent += `\n${"EARLIER TERMINAL OUTPUT\n".repeat(40)}`;
-    screen.scrollTop = screen.scrollHeight - screen.clientHeight - 40;
-    return {
-      height: terminal.getBoundingClientRect().height,
-      scrollTop: screen.scrollTop,
-    };
-  });
-  await page.evaluate(
-    async (height) => window.setTestVisualViewportHeight(height),
-    keyboardTop + 20,
-  );
+  await expect.poll(readInset).toBeGreaterThan(50);
   await expect
     .poll(() =>
       page.evaluate(
         () =>
           document.getElementById("terminal-container").getBoundingClientRect()
-            .height,
+            .bottom,
       ),
     )
-    .toBe(manuallyScrolled.height);
+    .toBeLessThanOrEqual(keyboardTop + 1);
+  expect(await page.evaluate(() => window.scrollY)).toBe(initialPageScroll);
+
+  // A reader who scrolled up into history stays there while the keyboard
+  // resizes again: the wheel marks the scroll as user-owned, releasing the
+  // keyboard glue that would otherwise re-pin the transcript.
+  const scrolledUp = await page.evaluate(() => {
+    const output = document.getElementById("output");
+    const screen = document.getElementById("screen");
+    output.textContent += `\n${"EARLIER TERMINAL OUTPUT\n".repeat(40)}`;
+    screen.scrollTop = screen.scrollHeight - screen.clientHeight - 40;
+    return screen.scrollTop;
+  });
+  await page.evaluate(() => {
+    document
+      .getElementById("screen")
+      .dispatchEvent(new WheelEvent("wheel", { deltaY: -60, cancelable: true }));
+  });
+  const afterWheel = await page.evaluate(
+    () => document.getElementById("screen").scrollTop,
+  );
+  expect(afterWheel).toBeLessThan(scrolledUp);
+  await page.evaluate(
+    (height) => window.setTestVisualViewportHeight(height),
+    keyboardTop + 20,
+  );
+  // The driver settles on the honest reading for the new viewport: the
+  // main's inset-free bottom (rect bottom + applied inset, an invariant)
+  // minus the visible bottom. The reader's scroll survives the resize.
+  await expect
+    .poll(readInset, { timeout: 10_000 })
+    .toBeCloseTo(
+      await page.evaluate(() => {
+        const main = document.querySelector("main");
+        return (
+          main.getBoundingClientRect().bottom +
+          Number.parseFloat(main.style.getPropertyValue("--keyboard-inset")) -
+          (window.visualViewport.offsetTop + window.visualViewport.height)
+        );
+      }),
+      0,
+    );
   expect(
     await page.evaluate(() => document.getElementById("screen").scrollTop),
-  ).toBe(manuallyScrolled.scrollTop);
+  ).toBe(afterWheel);
 
-  await page.evaluate(async () => window.setTestVisualViewportHeight(844));
-  await expect(page.locator("#terminal-container")).not.toHaveClass(
-    /keyboard-constrained/,
-  );
+  // Keyboard closed: the inset returns to 0, main regains its full height,
+  // and the page still never scrolled.
+  await page.evaluate(() => window.setTestVisualViewportHeight(window.innerHeight));
+  await expect.poll(readInset).toBe(0);
   expect(await page.evaluate(() => window.scrollY)).toBe(initialPageScroll);
 });
 
