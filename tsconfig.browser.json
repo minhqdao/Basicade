@@ -15,7 +15,6 @@
     "demos/catalog.js",
     "demos/catalog-manifest.js",
     "demos/catalog-schema.js",
-    "demos/runner-protocol.js",
-    "demos/terminal-*.js"
+    "node_modules/terminal-shell/src/*.js"
   ]
 }

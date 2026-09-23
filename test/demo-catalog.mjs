@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import {
   DEFAULT_GAME_ID,
@@ -10,7 +11,11 @@ import {
 } from "../demos/catalog.js";
 import { catalogManifest } from "../demos/catalog-manifest.js";
 import { compileCatalog } from "../demos/catalog-schema.js";
-import { runnerCommand, runnerEvent } from "../demos/runner-protocol.js";
+import {
+  createKeysBuffer,
+  runnerCommand,
+  runnerEvent,
+} from "terminal-shell/protocol";
 import { staticRoutes } from "../demos/routes.js";
 
 const defaultSelection = resolveSelection();
@@ -123,6 +128,7 @@ duplicateRouteManifest.games[0].route = "bcg-hammurabi";
 assert.throws(() => compileCatalog(duplicateRouteManifest), /routes must be unique/);
 
 const protocolBuffer = new SharedArrayBuffer(4);
+const protocolKeys = createKeysBuffer();
 assert.equal(runnerCommand({ type: "INIT", wasmUrl: "/runner.js" }).type, "INIT");
 assert.equal(
   runnerCommand({
@@ -130,7 +136,7 @@ assert.equal(
     source: "10 END",
     filename: "test.bas",
     buffer: protocolBuffer,
-    keys: protocolBuffer,
+    keys: protocolKeys,
   }).type,
   "START",
 );
@@ -200,19 +206,28 @@ assert.match(
   /@media \(pointer: coarse\) and \(hover: none\) and \(max-width: 560px\)[\s\S]*#terminal-container\s*{[^}]*min-height: 160px;/,
   "the portrait terminal fills available space while retaining a minimum",
 );
-assert.match(launcherScript, /terminalInput\.addEventListener\("input"/);
+// The command line is event-driven inside terminal-shell; the launcher only
+// wires the shell to the field and forwards submitted lines to the
+// interpreter buffer.
+const shellScript = readFileSync(
+  fileURLToPath(import.meta.resolve("terminal-shell/terminal-shell")),
+  "utf8",
+);
+assert.match(shellScript, /field\.addEventListener\("input"/);
 assert.doesNotMatch(
-  launcherScript,
-  /terminalInput\.value\s*=\s*currentInput/,
+  shellScript,
+  /field\.value\s*=\s*currentInput/,
   "display uppercasing never rewrites the native mobile input",
 );
 assert.match(
-  launcherScript,
-  /terminalContainer\.addEventListener\("pointerdown", handleTerminalPointerDown\)/,
+  shellScript,
+  /container\.addEventListener\("pointerdown", handleTerminalPointerDown\)/,
 );
 assert.match(
-  launcherScript,
-  /terminalContainer\.addEventListener\("click", handleTerminalClick\)/,
+  shellScript,
+  /container\.addEventListener\("click", handleTerminalClick\)/,
 );
+assert.match(launcherScript, /createTerminalShell\(/);
+assert.match(launcherScript, /onLine: handleLine/);
 
 console.log("test: demo catalog URL selection");

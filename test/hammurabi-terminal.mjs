@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { sanitizeTerminalOutput } from "../demos/terminal-output.js";
+import { sanitizeTerminalOutput } from "terminal-shell/terminal-output";
 
 const source = readFileSync(
   "examples/basic-computer-games/hammurabi.bas",

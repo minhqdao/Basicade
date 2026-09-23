@@ -1,6 +1,6 @@
 // @ts-check
 
-import { runnerCommand, runnerEvent } from "./runner-protocol.js";
+import { runnerCommand, runnerEvent } from "terminal-shell/protocol";
 
 let createModule;
 
