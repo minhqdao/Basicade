@@ -9,7 +9,12 @@ const gamesToTest = Object.values(games).filter(
 
 function smokeTest(game) {
   return new Promise((resolveTest, rejectTest) => {
-    const child = spawn(interpreterPath, [resolve(game.sourcePath)]);
+    // --dartmouth-loops: the 101 games are DEC/Dartmouth sources, whose
+    // exhausted FOR loops skip their body (see packages/retrobasic-wasm).
+    const child = spawn(interpreterPath, [
+      "--dartmouth-loops",
+      resolve(game.sourcePath),
+    ]);
     let stdout = "";
     let stderr = "";
     let timedOut = false;

@@ -10,7 +10,14 @@ export interface RunBasicOptions {
   stdin?: readonly string[];
 }
 
-const run = createRunBasic(() => import("../wasm/retrobasic.js"));
+const run = createRunBasic(
+  () => import("../wasm/retrobasic.js"),
+  [
+    // The catalog is DEC/Dartmouth sources, which expect an exhausted FOR to
+    // skip its body; upstream RetroBASIC keeps MS fall-through by default.
+    "--dartmouth-loops",
+  ],
+);
 
 /** Runs a BASIC program with RetroBASIC. */
 export function runBasic(options: RunBasicOptions): Promise<number> {

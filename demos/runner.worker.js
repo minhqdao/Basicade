@@ -10,6 +10,7 @@ import { runnerCommand, runnerEvent } from "terminal-shell/protocol";
 
 /** @type {((options: object) => Promise<EmscriptenModule>) | undefined} */
 let createModule;
+let wasmUrl = "";
 
 /** @param {object} message */
 function send(message) {
@@ -22,6 +23,7 @@ self.onmessage = async (event) => {
     if (data.type === "INIT") {
       const mod = await import(/* @vite-ignore */ data.wasmUrl);
       createModule = mod.default;
+      wasmUrl = data.wasmUrl;
       send({ type: "READY" });
       return;
     }
@@ -91,7 +93,13 @@ self.onmessage = async (event) => {
 
     module.FS.writeFile(`/${data.filename}`, data.source);
     send({ type: "STARTED" });
-    module.callMain([`/${data.filename}`]);
+    // The catalog is DEC/Dartmouth sources, which expect an exhausted FOR to
+    // skip its body; upstream RetroBASIC keeps MS fall-through by default.
+    module.callMain(
+      wasmUrl.includes("retrobasic")
+        ? ["--dartmouth-loops", `/${data.filename}`]
+        : [`/${data.filename}`],
+    );
     flushStdout();
     send({ type: "EXIT" });
     self.close();

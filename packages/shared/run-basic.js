@@ -4,7 +4,10 @@
 /** @typedef {import("./run-basic.d.ts").RunBasicOptions} RunBasicOptions */
 
 /** Creates an interpreter-specific `runBasic` function around a WASM loader. */
-export function createRunBasic(/** @type {LoadModule} */ loadModule) {
+export function createRunBasic(
+  /** @type {LoadModule} */ loadModule,
+  /** @type {readonly string[]} */ extraArgv = [],
+) {
   return async function runBasic(/** @type {RunBasicOptions} */ options) {
     const { default: createModule } = await loadModule();
     const emscriptenOptions = { noInitialRun: true };
@@ -32,7 +35,7 @@ export function createRunBasic(/** @type {LoadModule} */ loadModule) {
     module.FS.writeFile("app.bas", options.source);
 
     try {
-      return module.callMain(["app.bas"]);
+      return module.callMain([...extraArgv, "app.bas"]);
     } catch (error) {
       if (
         error &&

@@ -31,4 +31,5 @@ export type LoadModule = () => Promise<{ default: CreateModule }>;
 
 export function createRunBasic(
   loadModule: LoadModule,
+  extraArgv?: readonly string[],
 ): (options: RunBasicOptions) => Promise<number>;

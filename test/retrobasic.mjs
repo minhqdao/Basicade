@@ -114,7 +114,11 @@ for (const { file, input, expect } of tests) {
   mod.FS.writeFile(`/${file}`, source);
 
   try {
-    mod.callMain([`/${file}`]);
+    // The catalog is DEC/Dartmouth sources (see packages/retrobasic-wasm):
+    // exhausted FOR loops skip their body under --dartmouth-loops.
+    mod.callMain(
+      interpreter === "retrobasic" ? ["--dartmouth-loops", `/${file}`] : [`/${file}`],
+    );
   } catch {
     // Emscripten may propagate exit codes as exceptions
   }

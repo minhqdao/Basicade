@@ -85,7 +85,13 @@ mod.FS.writeFile("/oregon.bas", source);
 // retrobasic calls exit(EXIT_FAILURE) when stdin is exhausted mid-INPUT,
 // which Emscripten propagates to the process exit code. Reset it so only
 // our own assertions determine the final exit code.
-mod.callMain(["/oregon.bas"]);
+// (--dartmouth-loops: the catalog is DEC/Dartmouth sources, whose exhausted
+// FOR loops skip their body; see packages/retrobasic-wasm.)
+mod.callMain(
+  interpreter === "retrobasic"
+    ? ["--dartmouth-loops", "/oregon.bas"]
+    : ["/oregon.bas"],
+);
 process.exitCode = undefined;
 
 const full = outputs.join("\n");
