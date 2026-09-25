@@ -2,8 +2,16 @@
 
 import { runnerCommand, runnerEvent } from "terminal-shell/protocol";
 
+/**
+ * @typedef {object} EmscriptenModule
+ * @property {(args: string[]) => void} callMain
+ * @property {{ init: Function, writeFile: (path: string, data: string) => void }} FS
+ */
+
+/** @type {((options: object) => Promise<EmscriptenModule>) | undefined} */
 let createModule;
 
+/** @param {object} message */
 function send(message) {
   self.postMessage(runnerEvent(message));
 }
@@ -20,6 +28,12 @@ self.onmessage = async (event) => {
 
     if (data.type !== "START" || !createModule) return;
 
+    // This worker only runs interpreted programs: the fetched BASIC source
+    // is written into the virtual FS. Narrow the START union (whose other
+    // shape boots a compiled module with no source) before touching the
+    // interpreter-only fields below.
+    if (!("filename" in data)) return;
+
     const sharedBuffer = new Int32Array(data.buffer);
     const sharedKeys = new Uint8Array(data.keys);
     let keyIndex = 0;
@@ -34,7 +48,7 @@ self.onmessage = async (event) => {
 
     const module = await createModule({
       noInitialRun: true,
-      preRun: (emscriptenModule) => {
+      preRun: (/** @type {EmscriptenModule} */ emscriptenModule) => {
         emscriptenModule.FS.init(
           () => {
             flushStdout();
@@ -60,7 +74,7 @@ self.onmessage = async (event) => {
             if (keyIndex >= inputLength) awaitingEOF = true;
             return charCode;
           },
-          (charCode) => {
+          (/** @type {number} */ charCode) => {
             const character = String.fromCharCode(charCode);
             if (character === "\n") {
               send({ type: "STDOUT", text: `${stdoutBuffer}\n` });
@@ -69,7 +83,8 @@ self.onmessage = async (event) => {
               stdoutBuffer += character;
             }
           },
-          (charCode) => console.warn(String.fromCharCode(charCode)),
+          (/** @type {number} */ charCode) =>
+            console.warn(String.fromCharCode(charCode)),
         );
       },
     });

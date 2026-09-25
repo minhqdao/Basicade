@@ -10,12 +10,14 @@ export const DEFAULT_INTERPRETER_ID = catalog.defaultInterpreterId;
 export const games = catalog.games;
 export const interpreters = catalog.interpreters;
 
+/** @param {string} pathname */
 function routeGameId(pathname) {
   const route = pathname.split("/").filter(Boolean).at(-1);
   if (!route) return undefined;
   return Object.values(games).find((game) => game.route === route)?.id;
 }
 
+/** @param {string} pathname */
 function basePathname(pathname) {
   const parts = pathname.split("/").filter(Boolean);
   const lastPart = parts.at(-1);
@@ -23,6 +25,11 @@ function basePathname(pathname) {
   return `/${parts.length ? `${parts.join("/")}/` : ""}`;
 }
 
+/**
+ * @param {string} [search]
+ * @param {string} [pathname]
+ * @returns {import("./catalog-schema.js").CatalogSelection}
+ */
 export function resolveSelection(search = "", pathname = "") {
   const params = new URLSearchParams(search);
   const requestedGameId = params.get("game") ?? routeGameId(pathname);
@@ -43,6 +50,12 @@ export function resolveSelection(search = "", pathname = "") {
   };
 }
 
+/**
+ * @param {URL | Location} location
+ * @param {import("./catalog-schema.js").CatalogSelection} selection
+ * @param {string} [applicationBase]
+ * @returns {URL}
+ */
 export function selectionUrl(location, { game, interpreter }, applicationBase) {
   const url = new URL(location.href);
   const basePath = applicationBase

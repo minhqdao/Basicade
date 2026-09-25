@@ -1,10 +1,59 @@
 // @ts-check
 
-/** @returns {never} */
+/**
+ * @typedef {object} CatalogSource
+ * @property {string} url
+ * @property {string} license
+ */
+
+/**
+ * @typedef {object} CatalogInterpreter
+ * @property {string} id
+ * @property {string} name
+ * @property {string} wasmPath
+ */
+
+/**
+ * @typedef {object} CatalogGame
+ * @property {string} id
+ * @property {string} title
+ * @property {string} collection
+ * @property {string} description
+ * @property {string} route
+ * @property {string} sourcePath
+ * @property {Readonly<CatalogSource>} source
+ * @property {readonly string[]} interpreters
+ * @property {string | undefined} compatibility
+ */
+
+/**
+ * @typedef {object} Catalog
+ * @property {string} defaultGameId
+ * @property {string} defaultInterpreterId
+ * @property {Readonly<Record<string, Readonly<CatalogGame>>>} games
+ * @property {Readonly<Record<string, Readonly<CatalogInterpreter>>>} interpreters
+ */
+
+/**
+ * @typedef {object} CatalogSelection
+ * @property {CatalogGame} game
+ * @property {CatalogInterpreter} interpreter
+ */
+
+/**
+ * @param {string} path
+ * @param {string} message
+ * @returns {never}
+ */
 function fail(path, message) {
   throw new TypeError(`Invalid catalog manifest at ${path}: ${message}`);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} path
+ * @returns {Record<string, unknown>}
+ */
 function record(value, path) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     fail(path, "expected an object");
@@ -12,22 +61,44 @@ function record(value, path) {
   return /** @type {Record<string, unknown>} */ (value);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} path
+ * @returns {string}
+ */
 function string(value, path) {
   if (typeof value !== "string" || !value) fail(path, "expected a string");
   return /** @type {string} */ (value);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} path
+ * @returns {string[]}
+ */
 function stringArray(value, path) {
   if (!Array.isArray(value) || value.length === 0) {
     fail(path, "expected a non-empty string array");
   }
-  return value.map((entry, index) => string(entry, `${path}[${index}]`));
+  return /** @type {unknown[]} */ (value).map((entry, index) =>
+    string(entry, `${path}[${index}]`),
+  );
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} path
+ * @returns {string | undefined}
+ */
 function optionalString(value, path) {
   return value === undefined ? undefined : string(value, path);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} path
+ * @returns {Readonly<CatalogSource>}
+ */
 function source(value, path) {
   const item = record(value, path);
   return Object.freeze({
@@ -36,6 +107,12 @@ function source(value, path) {
   });
 }
 
+/**
+ * @param {string} file
+ * @param {Record<string, unknown>} titles
+ * @param {"capitalize" | "uppercase"} style
+ * @returns {string}
+ */
 function title(file, titles, style) {
   const override = titles[file];
   if (override !== undefined) return string(override, `titles.${file}`);
@@ -44,6 +121,11 @@ function title(file, titles, style) {
     : file[0].toUpperCase() + file.slice(1);
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} path
+ * @returns {string}
+ */
 function routeSlug(value, path) {
   const slug = string(value, path)
     .normalize("NFKD")
@@ -55,6 +137,12 @@ function routeSlug(value, path) {
   return slug;
 }
 
+/**
+ * @param {unknown} value
+ * @param {string} path
+ * @param {ReadonlySet<string>} interpreterIds
+ * @returns {Readonly<CatalogGame>}
+ */
 function freezeGame(value, path, interpreterIds) {
   const game = record(value, path);
   const interpreters = stringArray(game.interpreters, `${path}.interpreters`);
@@ -81,7 +169,11 @@ function freezeGame(value, path, interpreterIds) {
   return Object.freeze(frozen);
 }
 
-/** Validates and compiles the declarative catalog into launcher-ready records. */
+/**
+ * Validates and compiles the declarative catalog into launcher-ready records.
+ * @param {unknown} value
+ * @returns {Readonly<Catalog>}
+ */
 export function compileCatalog(value) {
   const manifest = record(value, "catalog");
   if (manifest.schemaVersion !== 1) fail("catalog.schemaVersion", "expected 1");
@@ -90,7 +182,9 @@ export function compileCatalog(value) {
   if (!Array.isArray(manifestInterpreters)) {
     fail("catalog.interpreters", "expected an array");
   }
-  const interpreterEntries = manifestInterpreters.map((value, index) => {
+  const interpreterValues = /** @type {unknown[]} */ (manifestInterpreters);
+  /** @type {[string, Readonly<CatalogInterpreter>][]} */
+  const interpreterEntries = interpreterValues.map((value, index) => {
     const item = record(value, `catalog.interpreters[${index}]`);
     const interpreter = Object.freeze({
       id: string(item.id, `catalog.interpreters[${index}].id`),
@@ -102,18 +196,23 @@ export function compileCatalog(value) {
     });
     return [interpreter.id, interpreter];
   });
+  /** @type {Readonly<Record<string, Readonly<CatalogInterpreter>>>} */
   const interpreters = Object.freeze(Object.fromEntries(interpreterEntries));
   const interpreterIds = new Set(Object.keys(interpreters));
   if (interpreterIds.size !== interpreterEntries.length) {
     fail("catalog.interpreters", "interpreter IDs must be unique");
   }
 
-  const gameValues = Array.isArray(manifest.games) ? [...manifest.games] : [];
+  /** @type {unknown[]} */
+  const gameValues = Array.isArray(manifest.games)
+    ? [.../** @type {unknown[]} */ (manifest.games)]
+    : [];
   const generatedCollections = manifest.generatedCollections;
   if (!Array.isArray(generatedCollections)) {
     fail("catalog.generatedCollections", "expected an array");
   }
-  const collections = generatedCollections
+  const collectionValues = /** @type {unknown[]} */ (generatedCollections);
+  const collections = collectionValues
     .map((value, index) => ({
       value: record(value, `catalog.generatedCollections[${index}]`),
       index,
@@ -170,10 +269,13 @@ export function compileCatalog(value) {
     if (!new Set(["capitalize", "uppercase"]).has(titleStyle)) {
       fail(`${path}.titleStyle`, "expected capitalize or uppercase");
     }
+    const validatedTitleStyle = /** @type {"capitalize" | "uppercase"} */ (
+      titleStyle
+    );
     const collectionSource = source(collection.source, `${path}.source`);
 
     for (const file of files) {
-      const gameTitle = title(file, titles, titleStyle);
+      const gameTitle = title(file, titles, validatedTitleStyle);
       const routeName =
         routeNames[file] === undefined
           ? routeSlug(gameTitle, `${path}.titles.${file}`)
@@ -201,10 +303,12 @@ export function compileCatalog(value) {
     }
   }
 
+  /** @type {[string, Readonly<CatalogGame>][]} */
   const gameEntries = gameValues.map((game, index) => {
     const frozen = freezeGame(game, `catalog.games[${index}]`, interpreterIds);
     return [frozen.id, frozen];
   });
+  /** @type {Readonly<Record<string, Readonly<CatalogGame>>>} */
   const games = Object.freeze(Object.fromEntries(gameEntries));
   if (Object.keys(games).length !== gameEntries.length) {
     fail("catalog.games", "game IDs must be unique");

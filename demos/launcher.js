@@ -21,17 +21,27 @@ import {
   writeInputLine,
 } from "terminal-shell";
 
-const output = document.getElementById("output");
-const input = document.getElementById("input");
-const cursor = document.getElementById("cursor");
-const screen = document.getElementById("screen");
-const terminalContainer = document.getElementById("terminal-container");
-const gameSelect = document.getElementById("game-select");
-const interpreterSelect = document.getElementById("interpreter-select");
-const status = document.getElementById("status");
-const restartButton = document.getElementById("restart-game");
-const terminalInput = document.getElementById("terminal-input");
-const main = document.querySelector("main");
+const output = /** @type {HTMLElement} */ (document.getElementById("output"));
+const input = /** @type {HTMLElement} */ (document.getElementById("input"));
+const cursor = /** @type {HTMLElement} */ (document.getElementById("cursor"));
+const screen = /** @type {HTMLElement} */ (document.getElementById("screen"));
+const terminalContainer = /** @type {HTMLElement} */ (
+  document.getElementById("terminal-container")
+);
+const gameSelect = /** @type {HTMLSelectElement} */ (
+  document.getElementById("game-select")
+);
+const interpreterSelect = /** @type {HTMLSelectElement} */ (
+  document.getElementById("interpreter-select")
+);
+const status = /** @type {HTMLElement} */ (document.getElementById("status"));
+const restartButton = /** @type {HTMLButtonElement} */ (
+  document.getElementById("restart-game")
+);
+const terminalInput = /** @type {HTMLInputElement} */ (
+  document.getElementById("terminal-input")
+);
+const main = /** @type {HTMLElement | null} */ (document.querySelector("main"));
 
 const applicationBase = new URL(
   import.meta.env.BASE_URL,
@@ -49,6 +59,7 @@ if (canonicalUrl.href !== window.location.href) {
 
 document.title = `${selection.game.title} — Basicade`;
 
+/** @type {Map<string, import("./catalog-schema.js").CatalogGame[]>} */
 const gameCollections = new Map();
 for (const game of Object.values(games)) {
   const collection = gameCollections.get(game.collection) ?? [];
@@ -144,10 +155,13 @@ function setStatus(message) {
 
 // --- worker lifecycle ----------------------------------------------------------
 
+/** @type {Worker | undefined} */
 let worker;
+/** @type {number | undefined} */
 let workerStartupTimer;
 let runId = 0;
 let lastWorkerMessageAt = 0;
+/** @type {number | undefined} */
 let inputResponseTimer;
 const maxStartupRetries = 2;
 const sourceFetchTimeoutMs = 10_000;
@@ -212,7 +226,9 @@ function releaseWorker() {
 
 // --- cross-origin isolation ----------------------------------------------------
 
+/** @type {Int32Array | undefined} */
 let sharedBuffer;
+/** @type {Uint8Array | undefined} */
 let sharedKeys;
 const isolationReloadKey = "basicade-isolation-reload";
 
@@ -322,6 +338,11 @@ async function start() {
   launchWorker(source, buffer, keys, currentRunId);
 }
 
+/**
+ * @param {number} currentRunId
+ * @param {number} [attempt]
+ * @returns {Promise<string>}
+ */
 async function fetchGameSource(currentRunId, attempt = 0) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), sourceFetchTimeoutMs);
@@ -359,7 +380,7 @@ async function fetchGameSource(currentRunId, attempt = 0) {
  * @param {number} [attempt]
  */
 function scheduleStartupRetry(source, buffer, keys, currentRunId, attempt) {
-  const nextAttempt = attempt + 1;
+  const nextAttempt = (attempt ?? 0) + 1;
   const delayMs = startupRetryBaseDelayMs * nextAttempt;
   setTimeout(() => {
     if (currentRunId !== runId) return;
@@ -377,6 +398,7 @@ function scheduleStartupRetry(source, buffer, keys, currentRunId, attempt) {
 function launchWorker(source, buffer, keys, currentRunId, attempt = 0) {
   if (currentRunId !== runId) return;
 
+  /** @type {Worker} */
   let activeWorker;
   try {
     activeWorker = new Worker(new URL("./runner.worker.js", import.meta.url), {
@@ -398,6 +420,7 @@ function launchWorker(source, buffer, keys, currentRunId, attempt = 0) {
     workerStartupTimer = undefined;
   }
 
+  /** @param {string} message */
   function handleStartupFailure(message) {
     if (worker !== activeWorker) return;
     clearTimeout(workerStartupTimer);
