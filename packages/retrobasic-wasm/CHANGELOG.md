@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Changed
+
+- Re-sync the vendored interpreter to upstream RetroBASIC master `b9265c2` (post-3.0.6). No behavioral change: the `FOR` re-entry and unassigned-string comparison fixes now come from upstream instead of local patches.
+
 ## [0.1.4] - 2026-09-25
 
 ### Changed
