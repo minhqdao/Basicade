@@ -116,8 +116,9 @@ The repository includes an interactive browser demo running [The Oregon Trail](h
 # From the repository root
 npm install
 
-# Build the WASM binary
+# Build the WASM binary, then re-bundle dist/ against it
 npm run build:wasm
+npm run build
 
 # Start the Vite dev server (demo)
 npm run dev
