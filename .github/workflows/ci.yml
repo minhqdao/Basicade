@@ -12,7 +12,7 @@ on:
 
 env:
   NODE_VERSION: 24.18.0
-  EMSCRIPTEN_VERSION: 6.0.6
+  EMSCRIPTEN_VERSION: 6.0.10
 
 jobs:
   verify:

@@ -17,8 +17,8 @@ cp parse.tab.h parse.h
 
 # Compile to WASM
 # -include sys/time.h: statistics.h forward-declares struct timeval without
-# including its definition, which newer Emscripten sysroots (6.0.10, vs the
-# 6.0.6 pinned in CI) reject. Pre-including the header works on both.
+# including its definition, which Emscripten sysroots since 6.0.10 (pinned
+# in CI) reject. Pre-including the header keeps the build working.
 emcc \
     -include sys/time.h \
     main.c retrobasic.c errors.c format.c io.c list.c list_output.c \
