@@ -1954,38 +1954,38 @@ value_t evaluate_expression(const expression_t *expression)
             if (parameters[0].type >= NUMBER)
               result = double_to_value(-(a == b));
             else
-              result = double_to_value(-!strcmp(parameters[0].string, parameters[1].string));
+              result = double_to_value(-!strcmp(parameters[0].string ? parameters[0].string : "", parameters[1].string ? parameters[1].string : ""));
             break;
           case '<':
 						if (parameters[0].type >= NUMBER)
 							result = double_to_value(-(a < b));
 						else
-							result = double_to_value(strcmp(parameters[0].string, parameters[1].string) < 0 ? -1 : 0);
+							result = double_to_value(strcmp(parameters[0].string ? parameters[0].string : "", parameters[1].string ? parameters[1].string : "") < 0 ? -1 : 0);
 						break;
           case '>':
 						if (parameters[0].type >= NUMBER)
 							result = double_to_value(-(a > b));
 						else
-							result = double_to_value(strcmp(parameters[0].string, parameters[1].string) > 0 ? -1 : 0);
+							result = double_to_value(strcmp(parameters[0].string ? parameters[0].string : "", parameters[1].string ? parameters[1].string : "") > 0 ? -1 : 0);
 						break;
           case CMP_LE:
 						if (parameters[0].type >= NUMBER)
 							result = double_to_value(-(a <= b));
 						else
-							result = double_to_value(strcmp(parameters[0].string, parameters[1].string) <= 0 ? -1 : 0);
+							result = double_to_value(strcmp(parameters[0].string ? parameters[0].string : "", parameters[1].string ? parameters[1].string : "") <= 0 ? -1 : 0);
 						break;
           case CMP_GE:
 						if (parameters[0].type >= NUMBER)
 							result = double_to_value(-(a >= b));
 						else
-							result = double_to_value(strcmp(parameters[0].string, parameters[1].string) >= 0 ? -1 : 0);
+							result = double_to_value(strcmp(parameters[0].string ? parameters[0].string : "", parameters[1].string ? parameters[1].string : "") >= 0 ? -1 : 0);
 						break;
           case CMP_NE:
           case HASH:
 						if (parameters[0].type >= NUMBER)
 							result = double_to_value(-(a != b));
 						else
-							result = double_to_value(strcmp(parameters[0].string, parameters[1].string) != 0 ? -1 : 0);
+							result = double_to_value(strcmp(parameters[0].string ? parameters[0].string : "", parameters[1].string ? parameters[1].string : "") != 0 ? -1 : 0);
 						break;
           case AND:
             result = double_to_value((int)a & (int)b);
@@ -3554,7 +3554,7 @@ static void perform_statement(list_t *statement_entry)
           stack_entry_t *entry = (stack_entry_t *)stack_node->data;
           if (entry->type == for_entry && 
               strcmp(entry->_for.index_variable->name, statement->parms._for.variable->name) == 0) {
-            interpreter_state.runtime_stack = lst_remove_node_with_data(interpreter_state.runtime_stack, stack_node);
+            interpreter_state.runtime_stack = lst_remove_node_with_data(interpreter_state.runtime_stack, entry);
             free(entry);
           }
           stack_node = next_node;
