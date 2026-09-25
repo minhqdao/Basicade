@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
-### Fixed
+## [0.1.4] - 2026-09-25
 
-- Correct string `<` and `<=` comparisons so equality is no longer treated as strictly less than and is included in less-than-or-equal comparisons.
+### Changed
+
+- Sync the vendored interpreter to upstream RetroBASIC 3.0.6, replacing local patches for string `<` and `<=` comparisons, `FOR` re-entry, numeric `CLK()`, backslash separators, double-printed numbers, and `INPUT` newlines.
+- Pass `--dartmouth-loops` so an exhausted `FOR` loop skips its body, replacing the local skip patch.
+- Pre-include `sys/time.h` in the WebAssembly build for newer Emscripten sysroots.
 
 ## [0.1.3] - 2026-08-12
 
