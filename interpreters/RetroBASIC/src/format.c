@@ -177,9 +177,20 @@ format_dialect_t format_detect_dialect(const char *format_str)
         if (format_str[i] == '\\')
             return DIALECT_QBASIC;
         
-        /* Plus/minus outside of parentheses at start suggests QBasic */
-        if (i == 0 && (format_str[i] == '+' || format_str[i] == '-'))
-            return DIALECT_QBASIC;
+        /* Plus/minus at start: check if it's HP carriage control (followed by comma)
+         * or MS-BASIC-80 sign indicator (followed by # or 0) */
+        if (i == 0 && (format_str[i] == '+' || format_str[i] == '-')) {
+            if (i + 1 < strlen(format_str)) {
+                char next_char = format_str[i + 1];
+                /* If followed by comma, it's HP carriage control */
+                if (next_char == ',')
+                    return DIALECT_HP;
+                /* If followed by digit placeholder or dollar, it's MS-BASIC-80 */
+                if (next_char == '#' || next_char == '0' || next_char == '$' || isdigit(next_char))
+                    return DIALECT_MSBASIC80;
+                /* Otherwise ambiguous, but default to MS-BASIC-80 */
+            }
+        }
     }
     
     /* Default to MS-BASIC-80 */
@@ -304,11 +315,8 @@ char* format_apply_values(const format_string_t *fmt,
                          int num_values)
 {
     if (!fmt || !values || num_values < 1) {
-        fprintf(stderr, "DEBUG: format_apply_values called with empty params\n");
         return NULL;
     }
-    
-    fprintf(stderr, "DEBUG: format_apply_values: fmt has %d specs, %d values\n", fmt->num_specs, num_values);
     
     /* Allocate output buffer - will be reallocated as needed */
     size_t output_size = 1024;
@@ -325,21 +333,17 @@ char* format_apply_values(const format_string_t *fmt,
         char *formatted = NULL;
         size_t formatted_len = 0;
         
-        fprintf(stderr, "DEBUG: Processing spec %d type=%d\n", spec_idx, spec->type);
         
         switch (spec->type) {
             case SPEC_TYPE_LITERAL:
                 formatted = spec->detail.literal.text;
                 formatted_len = spec->detail.literal.length;
-                fprintf(stderr, "DEBUG: LITERAL: %s (len=%zu)\n", formatted, formatted_len);
                 break;
             
             case SPEC_TYPE_STRING:
-                fprintf(stderr, "DEBUG: STRING spec\n");
                 if (value_idx < num_values && values[value_idx].type == 1) {
                     formatted = format_string_value(spec, values[value_idx].value.string);
                     formatted_len = formatted ? strlen(formatted) : 0;
-                    fprintf(stderr, "DEBUG: STRING value: %s (len=%zu)\n", formatted, formatted_len);
                     value_idx++;
                 }
                 break;
@@ -347,7 +351,6 @@ char* format_apply_values(const format_string_t *fmt,
             case SPEC_TYPE_INTEGER:
             case SPEC_TYPE_FIXED:
             case SPEC_TYPE_FLOAT:
-                fprintf(stderr, "DEBUG: NUMERIC spec type=%d\n", spec->type);
                 if (value_idx < num_values && values[value_idx].type == 0) {
                     if (spec->type == SPEC_TYPE_INTEGER) {
                         formatted = format_integer_value(spec, values[value_idx].value.numeric);
@@ -357,7 +360,6 @@ char* format_apply_values(const format_string_t *fmt,
                         formatted = format_float_value(spec, values[value_idx].value.numeric);
                     }
                     formatted_len = formatted ? strlen(formatted) : 0;
-                    fprintf(stderr, "DEBUG: NUMERIC value: %s (len=%zu)\n", formatted, formatted_len);
                     value_idx++;
                 }
                 break;
@@ -367,12 +369,10 @@ char* format_apply_values(const format_string_t *fmt,
                 for (int i = 0; i < spec->detail.spacing.count; i++) {
                     formatted_len++;
                 }
-                fprintf(stderr, "DEBUG: SPACING %d\n", spec->detail.spacing.count);
                 break;
             
             case SPEC_TYPE_SEPARATOR:
                 /* Commas are typically not output in formatted specs */
-                fprintf(stderr, "DEBUG: SEPARATOR\n");
                 break;
         }
         
@@ -425,7 +425,6 @@ char* format_apply_values(const format_string_t *fmt,
     }
     output[output_pos] = '\0';
     
-    fprintf(stderr, "DEBUG: Returning formatted output: %s\n", output);
     return output;
 }
 
@@ -450,8 +449,6 @@ char* format_apply_values(const format_string_t *fmt,
 static format_string_t* parse_hp_format(const char *format_str)
 {
     if (!format_str) return NULL;
-    
-    fprintf(stderr, "DEBUG: Parsing HP format: %s\n", format_str);
     
     format_string_t *fmt = (format_string_t*)malloc(sizeof(format_string_t));
     if (!fmt) return NULL;
@@ -482,10 +479,8 @@ static format_string_t* parse_hp_format(const char *format_str)
     }
     
     /* Parse format specifications */
-    fprintf(stderr, "DEBUG: Starting parse at pos %d\n", pos);
     while (format_str[pos] != '\0') {
         char c = format_str[pos];
-        fprintf(stderr, "DEBUG: At pos %d, char='%c'\n", pos, c);
         
         if (isspace(c)) {
             pos++;
@@ -507,7 +502,6 @@ static format_string_t* parse_hp_format(const char *format_str)
                 fmt->specs = new_specs;
             }
             fmt->specs[fmt->num_specs++] = sep;
-            fprintf(stderr, "DEBUG: Added SEPARATOR spec\n");
             pos++;
             continue;
         }
@@ -530,7 +524,6 @@ static format_string_t* parse_hp_format(const char *format_str)
                 fmt->specs = new_specs;
             }
             fmt->specs[fmt->num_specs++] = br;
-            fprintf(stderr, "DEBUG: Added LINEBREAK spec\n");
             pos++;
             continue;
         }
@@ -564,7 +557,6 @@ static format_string_t* parse_hp_format(const char *format_str)
                 fmt->specs = new_specs;
             }
             fmt->specs[fmt->num_specs++] = lit;
-            fprintf(stderr, "DEBUG: Added LITERAL spec: %s\n", lit.detail.literal.text);
             
             if (format_str[pos] == '"') pos++;
             continue;
@@ -585,7 +577,6 @@ static format_string_t* parse_hp_format(const char *format_str)
                     fmt->specs = new_specs;
                 }
                 fmt->specs[fmt->num_specs++] = spec;
-                fprintf(stderr, "DEBUG: Added NUMERIC spec type=%d\n", spec.type);
             } else if (c == 'A' || c == 'X') {
                 format_spec_t spec = parse_hp_string_spec(format_str, &pos);
                 if (fmt->num_specs >= fmt->capacity) {
@@ -598,15 +589,12 @@ static format_string_t* parse_hp_format(const char *format_str)
                     fmt->specs = new_specs;
                 }
                 fmt->specs[fmt->num_specs++] = spec;
-                fprintf(stderr, "DEBUG: Added STRING/SPACING spec type=%d\n", spec.type);
             }
         } else {
-            fprintf(stderr, "DEBUG: Unknown char '%c', skipping\n", c);
             pos++;
         }
     }
     
-    fprintf(stderr, "DEBUG: HP format parse complete, %d specs created\n", fmt->num_specs);
     return fmt;
 }
 
@@ -641,14 +629,11 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
     int has_e = 0;
     sign_placement_t sign_pos = SIGN_NONE;
     
-    fprintf(stderr, "  DEBUG: parse_hp_numeric_spec starting at pos %d, char='%c'\n", *pos, str[*pos]);
-    
     /* Check for leading S (sign before digits) */
     if (str[*pos] == 'S') {
         has_sign = 1;
         sign_pos = SIGN_FLOATING_LEFT;
         (*pos)++;
-        fprintf(stderr, "  DEBUG: Found leading S\n");
     }
     
     /* Parse repetition factor (leading digits before format character) */
@@ -660,13 +645,11 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
             rep_factor = rep_factor * 10 + (str[*pos] - '0');
             (*pos)++;
         }
-        fprintf(stderr, "  DEBUG: Found repetition factor %d\n", rep_factor);
     }
     
     /* Now we MUST see D's */
     if (str[*pos] != 'D') {
         /* No D found, this isn't a valid numeric spec. Return empty spec */
-        fprintf(stderr, "  DEBUG: ERROR - Expected D after repetition factor, found '%c'\n", str[*pos]);
         spec.type = 0;  /* Empty/error spec */
         return spec;
     }
@@ -676,11 +659,9 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
     while (str[*pos] == 'D') {
         (*pos)++;  /* Skip the D's */
     }
-    fprintf(stderr, "  DEBUG: Set before_decimal=%d from rep_factor\n", before_decimal);
     
     /* Check for decimal point */
     if (str[*pos] == '.') {
-        fprintf(stderr, "  DEBUG: Found decimal point\n");
         (*pos)++;
         
         /* Parse repetition factor after decimal (if any) */
@@ -691,7 +672,6 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
                 after_rep = after_rep * 10 + (str[*pos] - '0');
                 (*pos)++;
             }
-            fprintf(stderr, "  DEBUG: Found repetition factor after decimal: %d\n", after_rep);
         }
         
         /* Use rep factor for after-decimal field width; consume all consecutive D's */
@@ -700,7 +680,6 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
             while (str[*pos] == 'D') {
                 (*pos)++;  /* Skip the D's */
             }
-            fprintf(stderr, "  DEBUG: Set after_decimal=%d from rep_factor\n", after_decimal);
         }
     }
     
@@ -709,14 +688,12 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
         has_sign = 1;
         sign_pos = SIGN_FIXED_RIGHT;
         (*pos)++;
-        fprintf(stderr, "  DEBUG: Found trailing S\n");
     }
     
     /* Check for exponential E */
     if (str[*pos] == 'E') {
         has_e = 1;
         (*pos)++;
-        fprintf(stderr, "  DEBUG: Found exponential E\n");
     }
     
     /* Determine spec type based on what we found */
@@ -728,7 +705,6 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
         spec.detail.floating.has_sign = has_sign;
         spec.detail.floating.sign_pos = sign_pos;
         spec.detail.floating.variant = INT_NORMAL;
-        fprintf(stderr, "  DEBUG: Created FLOAT spec: before=%d after=%d\n", before_decimal, after_decimal);
     } else if (after_decimal > 0) {
         spec.type = SPEC_TYPE_FIXED;
         spec.detail.fixed.before_decimal = before_decimal;
@@ -738,7 +714,6 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
         spec.detail.fixed.variant = INT_NORMAL;
         spec.detail.fixed.has_comma = 0;
         spec.detail.fixed.percent_overflow = 0;
-        fprintf(stderr, "  DEBUG: Created FIXED spec: before=%d after=%d\n", before_decimal, after_decimal);
     } else if (before_decimal > 0) {
         spec.type = SPEC_TYPE_INTEGER;
         spec.detail.integer.width = before_decimal;
@@ -747,7 +722,6 @@ static format_spec_t parse_hp_numeric_spec(const char *str, int *pos)
         spec.detail.integer.variant = INT_NORMAL;
         spec.detail.integer.has_comma = 0;
         spec.detail.integer.percent_overflow = 0;
-        fprintf(stderr, "  DEBUG: Created INTEGER spec: width=%d\n", before_decimal);
     }
     
     return spec;
@@ -803,20 +777,25 @@ static format_spec_t parse_hp_string_spec(const char *str, int *pos)
 /**
  * Parse MS-BASIC-80 format string.
  *
- * This is a placeholder function for MS-BASIC-80 format support.
- * MS-BASIC-80 format specifications include:
+ * Parses MS-BASIC-80 format specifications including:
  * - #: Digit placeholder
- * - .: Decimal point
- * - +/-: Sign indicators
+ * - 0: Force leading zeros
+ * - .: Decimal point position
+ * - ,: Thousands separator
+ * - +: Force sign display (before)
+ * - -: Force trailing sign
  * - $: Currency symbol
- * - *: Asterisk fill
- * - &/^^^: String and exponential formats
- * - %, _: Overflow and spacing
- *
- * TODO: Implement full MS-BASIC-80 parsing
+ * - **: Asterisk fill
+ * - **$: Asterisk fill with currency
+ * - E/e: Exponential notation
+ * - !: First character only (string)
+ * - &: Variable-width string
+ * - \...\: Literal text
+ * - %: Percent sign
+ * - _: Literal next character
  *
  * @param format_str The MS-BASIC-80 format string
- * @return Empty format_string_t structure (not yet implemented)
+ * @return Parsed format_string_t structure
  */
 static format_string_t* parse_msbasic80_format(const char *format_str)
 {
@@ -836,7 +815,310 @@ static format_string_t* parse_msbasic80_format(const char *format_str)
     fmt->group_sizes = NULL;
     fmt->num_groups = 0;
     
-    /* TODO: Implement MS-BASIC-80 format parsing */
+    int pos = 0;
+    
+    while (format_str[pos] != '\0') {
+        char c = format_str[pos];
+        
+        /* Skip whitespace */
+        if (isspace(c)) {
+            pos++;
+            continue;
+        }
+        
+        /* Handle backslash-delimited literal strings */
+        if (c == '\\') {
+            pos++;
+            int lit_start = pos;
+            while (format_str[pos] != '\\' && format_str[pos] != '\0') {
+                pos++;
+            }
+            
+            format_spec_t lit;
+            lit.type = SPEC_TYPE_LITERAL;
+            lit.detail.literal.length = pos - lit_start;
+            lit.detail.literal.text = (char*)malloc(lit.detail.literal.length + 1);
+            if (!lit.detail.literal.text) {
+                format_free(fmt);
+                return NULL;
+            }
+            strncpy(lit.detail.literal.text, &format_str[lit_start], lit.detail.literal.length);
+            lit.detail.literal.text[lit.detail.literal.length] = '\0';
+            
+            if (fmt->num_specs >= fmt->capacity) {
+                fmt->capacity *= 2;
+                format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                if (!new_specs) {
+                    format_free(fmt);
+                    return NULL;
+                }
+                fmt->specs = new_specs;
+            }
+            fmt->specs[fmt->num_specs++] = lit;
+            
+            if (format_str[pos] == '\\') pos++;
+            continue;
+        }
+        
+        /* Handle underscore literal (next character is output literally) */
+        if (c == '_') {
+            pos++;
+            if (format_str[pos] != '\0') {
+                format_spec_t lit;
+                lit.type = SPEC_TYPE_LITERAL;
+                lit.detail.literal.length = 1;
+                lit.detail.literal.text = (char*)malloc(2);
+                if (!lit.detail.literal.text) {
+                    format_free(fmt);
+                    return NULL;
+                }
+                lit.detail.literal.text[0] = format_str[pos];
+                lit.detail.literal.text[1] = '\0';
+                
+                if (fmt->num_specs >= fmt->capacity) {
+                    fmt->capacity *= 2;
+                    format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                    if (!new_specs) {
+                        format_free(fmt);
+                        return NULL;
+                    }
+                    fmt->specs = new_specs;
+                }
+                fmt->specs[fmt->num_specs++] = lit;
+                pos++;
+            }
+            continue;
+        }
+        
+        /* Handle string format codes: !, & */
+        if (c == '!' || c == '&') {
+            format_spec_t str_spec;
+            str_spec.type = SPEC_TYPE_STRING;
+            str_spec.detail.string.variant = (c == '!') ? STR_FIRST_CHAR : STR_VARIABLE;
+            str_spec.detail.string.width = (c == '!') ? 1 : 0;
+            
+            if (fmt->num_specs >= fmt->capacity) {
+                fmt->capacity *= 2;
+                format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                if (!new_specs) {
+                    format_free(fmt);
+                    return NULL;
+                }
+                fmt->specs = new_specs;
+            }
+            fmt->specs[fmt->num_specs++] = str_spec;
+            pos++;
+            continue;
+        }
+        
+        /* Handle numeric format codes: #, 0, +, -, $, *, E, ., , */
+        if (c == '#' || c == '0' || c == '+' || c == '-' || c == '$' || c == '*' || 
+            c == 'E' || c == 'e' || c == '.' || c == ',' || c == '%') {
+            
+            format_spec_t num_spec;
+            memset(&num_spec, 0, sizeof(num_spec));
+            
+            int before_decimal = 0;
+            int after_decimal = 0;
+            int has_decimal = 0;
+            int has_exponent = 0;
+            int has_sign = 0;
+            int sign_is_trailing = 0;
+            int has_currency = 0;
+            int has_asterisk_fill = 0;
+            int has_comma = 0;
+            int has_percent = 0;
+            
+            /* Track position at start of numeric spec */
+            int spec_start = pos;
+            
+            /* Parse numeric format pieces */
+            while (format_str[pos] != '\0') {
+                char ch = format_str[pos];
+                
+                /* Dollar sign */
+                if (ch == '$') {
+                    has_currency = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Asterisk fill (** or **$) */
+                if (ch == '*') {
+                    if (format_str[pos + 1] == '*') {
+                        has_asterisk_fill = 1;
+                        pos += 2;
+                        if (format_str[pos] == '$') {
+                            has_currency = 1;
+                            pos++;
+                        }
+                        continue;
+                    } else {
+                        break;  /* Single * not part of MS format */
+                    }
+                }
+                
+                /* Plus sign (leading sign) */
+                if (ch == '+' && before_decimal == 0 && after_decimal == 0) {
+                    has_sign = 1;
+                    sign_is_trailing = 0;
+                    pos++;
+                    continue;
+                }
+                
+                /* Minus sign (trailing sign) */
+                if (ch == '-' && before_decimal == 0 && after_decimal == 0) {
+                    has_sign = 1;
+                    sign_is_trailing = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Percent sign (at end) */
+                if (ch == '%') {
+                    has_percent = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Digit placeholders before decimal */
+                if ((ch == '#' || ch == '0') && !has_decimal) {
+                    before_decimal++;
+                    pos++;
+                    continue;
+                }
+                
+                /* Decimal point */
+                if (ch == '.') {
+                    has_decimal = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Digit placeholders after decimal */
+                if ((ch == '#' || ch == '0') && has_decimal) {
+                    after_decimal++;
+                    pos++;
+                    continue;
+                }
+                
+                /* Thousands separator */
+                if (ch == ',' && !has_decimal) {
+                    has_comma = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Exponential notation */
+                if ((ch == 'E' || ch == 'e') && (before_decimal > 0 || after_decimal > 0)) {
+                    has_exponent = 1;
+                    pos++;
+                    
+                    /* Look for exponent width specifier (usually +## or -##) */
+                    int exp_width = 0;
+                    if (format_str[pos] == '+' || format_str[pos] == '-') {
+                        pos++;  /* Skip the sign */
+                        while (format_str[pos] == '#' || format_str[pos] == '0') {
+                            exp_width++;
+                            pos++;
+                        }
+                    }
+                    if (exp_width == 0) exp_width = 2;  /* Default */
+                    
+                    continue;
+                }
+                
+                /* Not a numeric format character, break out */
+                break;
+            }
+            
+            /* Ensure we parsed at least something numeric */
+            if (before_decimal == 0 && after_decimal == 0 && pos == spec_start) {
+                /* This might be a literal character, skip it */
+                pos++;
+                continue;
+            }
+            
+            /* Create the appropriate spec type */
+            if (has_exponent) {
+                num_spec.type = SPEC_TYPE_FLOAT;
+                num_spec.detail.floating.before_decimal = (before_decimal > 0) ? before_decimal : 1;
+                num_spec.detail.floating.after_decimal = after_decimal;
+                num_spec.detail.floating.exponent_width = 4;  /* Usually E+## */
+                num_spec.detail.floating.has_sign = has_sign;
+                num_spec.detail.floating.sign_pos = sign_is_trailing ? SIGN_TRAILING : SIGN_FLOATING_LEFT;
+                num_spec.detail.floating.variant = has_asterisk_fill ? INT_ASTERISK : 
+                                                    (has_currency && has_asterisk_fill) ? INT_ASTERISK_DOLLAR :
+                                                    has_currency ? INT_DOLLAR : INT_NORMAL;
+                num_spec.detail.floating.spaces_after_e = 0;
+            } else if (has_decimal) {
+                num_spec.type = SPEC_TYPE_FIXED;
+                num_spec.detail.fixed.before_decimal = (before_decimal > 0) ? before_decimal : 1;
+                num_spec.detail.fixed.after_decimal = after_decimal;
+                num_spec.detail.fixed.has_sign = has_sign;
+                num_spec.detail.fixed.sign_pos = sign_is_trailing ? SIGN_TRAILING : SIGN_FLOATING_LEFT;
+                num_spec.detail.fixed.has_comma = has_comma;
+                num_spec.detail.fixed.percent_overflow = has_percent;
+                num_spec.detail.fixed.variant = has_asterisk_fill ? INT_ASTERISK : 
+                                                 (has_currency && has_asterisk_fill) ? INT_ASTERISK_DOLLAR :
+                                                 has_currency ? INT_DOLLAR : INT_NORMAL;
+            } else if (before_decimal > 0) {
+                num_spec.type = SPEC_TYPE_INTEGER;
+                num_spec.detail.integer.width = before_decimal;
+                num_spec.detail.integer.has_sign = has_sign;
+                num_spec.detail.integer.sign_pos = sign_is_trailing ? SIGN_TRAILING : SIGN_FLOATING_LEFT;
+                num_spec.detail.integer.has_comma = has_comma;
+                num_spec.detail.integer.percent_overflow = has_percent;
+                num_spec.detail.integer.variant = has_asterisk_fill ? INT_ASTERISK : 
+                                                   (has_currency && has_asterisk_fill) ? INT_ASTERISK_DOLLAR :
+                                                   has_currency ? INT_DOLLAR : INT_NORMAL;
+            } else {
+                pos++;
+                continue;  /* Skip unrecognized */
+            }
+            
+            if (num_spec.type > 0) {
+                if (fmt->num_specs >= fmt->capacity) {
+                    fmt->capacity *= 2;
+                    format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                    if (!new_specs) {
+                        format_free(fmt);
+                        return NULL;
+                    }
+                    fmt->specs = new_specs;
+                }
+                fmt->specs[fmt->num_specs++] = num_spec;
+            }
+            continue;
+        }
+        
+        /* Unknown character - could be literal text */
+        /* For now, treat single unknown characters as output literals */
+        if (!isspace(c)) {
+            format_spec_t lit;
+            lit.type = SPEC_TYPE_LITERAL;
+            lit.detail.literal.length = 1;
+            lit.detail.literal.text = (char*)malloc(2);
+            if (!lit.detail.literal.text) {
+                format_free(fmt);
+                return NULL;
+            }
+            lit.detail.literal.text[0] = c;
+            lit.detail.literal.text[1] = '\0';
+            
+            if (fmt->num_specs >= fmt->capacity) {
+                fmt->capacity *= 2;
+                format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                if (!new_specs) {
+                    format_free(fmt);
+                    return NULL;
+                }
+                fmt->specs = new_specs;
+            }
+            fmt->specs[fmt->num_specs++] = lit;
+        }
+        pos++;
+    }
     
     return fmt;
 }
@@ -862,6 +1144,24 @@ static format_string_t* parse_msbasic80_format(const char *format_str)
  * @param format_str The QBasic format string
  * @return Empty format_string_t structure (not yet implemented)
  */
+/**
+ * Parse QBasic format string.
+ *
+ * Parses QBasic format specifications including:
+ * - !: First character only (string)
+ * - \...\: Fixed-width string field
+ * - &: Variable-width string field
+ * - #: Digit placeholder
+ * - **: Asterisk fill
+ * - $$: Dollar prefix currency
+ * - ****$: Asterisk fill with dollar
+ * - ^^^^: Exponential format (4 carets)
+ * - _: Underscore (escape next character)
+ * - %: Percent separator
+ *
+ * @param format_str The QBasic format string
+ * @return Parsed format_string_t structure
+ */
 static format_string_t* parse_qbasic_format(const char *format_str)
 {
     if (!format_str) return NULL;
@@ -880,7 +1180,323 @@ static format_string_t* parse_qbasic_format(const char *format_str)
     fmt->group_sizes = NULL;
     fmt->num_groups = 0;
     
-    /* TODO: Implement QBasic format parsing */
+    int pos = 0;
+    
+    while (format_str[pos] != '\0') {
+        char c = format_str[pos];
+        
+        /* Skip whitespace */
+        if (isspace(c)) {
+            pos++;
+            continue;
+        }
+        
+        /* Handle backslash-delimited literal strings */
+        if (c == '\\') {
+            pos++;
+            int lit_start = pos;
+            while (format_str[pos] != '\\' && format_str[pos] != '\0') {
+                pos++;
+            }
+            
+            format_spec_t lit;
+            lit.type = SPEC_TYPE_LITERAL;
+            lit.detail.literal.length = pos - lit_start;
+            lit.detail.literal.text = (char*)malloc(lit.detail.literal.length + 1);
+            if (!lit.detail.literal.text) {
+                format_free(fmt);
+                return NULL;
+            }
+            strncpy(lit.detail.literal.text, &format_str[lit_start], lit.detail.literal.length);
+            lit.detail.literal.text[lit.detail.literal.length] = '\0';
+            
+            if (fmt->num_specs >= fmt->capacity) {
+                fmt->capacity *= 2;
+                format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                if (!new_specs) {
+                    format_free(fmt);
+                    return NULL;
+                }
+                fmt->specs = new_specs;
+            }
+            fmt->specs[fmt->num_specs++] = lit;
+            
+            if (format_str[pos] == '\\') pos++;
+            continue;
+        }
+        
+        /* Handle underscore literal (next character is output literally) */
+        if (c == '_') {
+            pos++;
+            if (format_str[pos] != '\0') {
+                format_spec_t lit;
+                lit.type = SPEC_TYPE_LITERAL;
+                lit.detail.literal.length = 1;
+                lit.detail.literal.text = (char*)malloc(2);
+                if (!lit.detail.literal.text) {
+                    format_free(fmt);
+                    return NULL;
+                }
+                lit.detail.literal.text[0] = format_str[pos];
+                lit.detail.literal.text[1] = '\0';
+                
+                if (fmt->num_specs >= fmt->capacity) {
+                    fmt->capacity *= 2;
+                    format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                    if (!new_specs) {
+                        format_free(fmt);
+                        return NULL;
+                    }
+                    fmt->specs = new_specs;
+                }
+                fmt->specs[fmt->num_specs++] = lit;
+                pos++;
+            }
+            continue;
+        }
+        
+        /* Handle string format codes: !, & */
+        if (c == '!' || c == '&') {
+            format_spec_t str_spec;
+            str_spec.type = SPEC_TYPE_STRING;
+            str_spec.detail.string.variant = (c == '!') ? STR_FIRST_CHAR : STR_VARIABLE;
+            str_spec.detail.string.width = (c == '!') ? 1 : 0;
+            
+            if (fmt->num_specs >= fmt->capacity) {
+                fmt->capacity *= 2;
+                format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                if (!new_specs) {
+                    format_free(fmt);
+                    return NULL;
+                }
+                fmt->specs = new_specs;
+            }
+            fmt->specs[fmt->num_specs++] = str_spec;
+            pos++;
+            continue;
+        }
+        
+        /* Handle numeric format codes: #, 0, +, -, $, *, E, ^, ., , */
+        if (c == '#' || c == '0' || c == '+' || c == '-' || c == '$' || c == '*' || 
+            c == 'E' || c == 'e' || c == '^' || c == '.' || c == ',' || c == '%') {
+            
+            format_spec_t num_spec;
+            memset(&num_spec, 0, sizeof(num_spec));
+            
+            int before_decimal = 0;
+            int after_decimal = 0;
+            int has_decimal = 0;
+            int has_exponent = 0;
+            int has_sign = 0;
+            int sign_is_trailing = 0;
+            int has_currency = 0;
+            int has_asterisk_fill = 0;
+            int has_comma = 0;
+            int has_percent = 0;
+            
+            int spec_start = pos;
+            
+            /* Parse numeric format pieces */
+            while (format_str[pos] != '\0') {
+                char ch = format_str[pos];
+                
+                /* Dollar sign (or $$) */
+                if (ch == '$') {
+                    has_currency = 1;
+                    pos++;
+                    if (format_str[pos] == '$') {
+                        pos++;  /* Skip the second $ */
+                    }
+                    continue;
+                }
+                
+                /* Asterisk fill (** or ****$) */
+                if (ch == '*') {
+                    if (format_str[pos + 1] == '*') {
+                        has_asterisk_fill = 1;
+                        pos += 2;
+                        /* Check for ****$ pattern */
+                        if (format_str[pos] == '*' && format_str[pos + 1] == '*' && format_str[pos + 2] == '$') {
+                            has_currency = 1;
+                            pos += 3;
+                        }
+                        continue;
+                    } else {
+                        break;  /* Single * not part of QBasic format */
+                    }
+                }
+                
+                /* Plus sign (leading sign) */
+                if (ch == '+' && before_decimal == 0 && after_decimal == 0) {
+                    has_sign = 1;
+                    sign_is_trailing = 0;
+                    pos++;
+                    continue;
+                }
+                
+                /* Minus sign (trailing sign) */
+                if (ch == '-' && before_decimal == 0 && after_decimal == 0) {
+                    has_sign = 1;
+                    sign_is_trailing = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Percent sign */
+                if (ch == '%') {
+                    has_percent = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Digit placeholders before decimal */
+                if ((ch == '#' || ch == '0') && !has_decimal) {
+                    before_decimal++;
+                    pos++;
+                    continue;
+                }
+                
+                /* Decimal point */
+                if (ch == '.') {
+                    has_decimal = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Digit placeholders after decimal */
+                if ((ch == '#' || ch == '0') && has_decimal) {
+                    after_decimal++;
+                    pos++;
+                    continue;
+                }
+                
+                /* Thousands separator */
+                if (ch == ',' && !has_decimal) {
+                    has_comma = 1;
+                    pos++;
+                    continue;
+                }
+                
+                /* Exponential notation: E or ^^^^ */
+                if ((ch == 'E' || ch == 'e') && (before_decimal > 0 || after_decimal > 0)) {
+                    has_exponent = 1;
+                    pos++;
+                    
+                    /* Look for exponent width specifier (usually +## or -##) */
+                    int exp_width = 0;
+                    if (format_str[pos] == '+' || format_str[pos] == '-') {
+                        pos++;
+                        while (format_str[pos] == '#' || format_str[pos] == '0') {
+                            exp_width++;
+                            pos++;
+                        }
+                    }
+                    if (exp_width == 0) exp_width = 2;
+                    
+                    continue;
+                }
+                
+                /* QBasic-specific: ^^^^ for exponential */
+                if (ch == '^' && (before_decimal > 0 || after_decimal > 0)) {
+                    has_exponent = 1;
+                    /* Count the carets (typically 4) */
+                    int caret_count = 0;
+                    while (format_str[pos] == '^') {
+                        caret_count++;
+                        pos++;
+                    }
+                    continue;
+                }
+                
+                /* Not a numeric format character, break out */
+                break;
+            }
+            
+            /* Ensure we parsed at least something numeric */
+            if (before_decimal == 0 && after_decimal == 0 && pos == spec_start) {
+                pos++;
+                continue;
+            }
+            
+            /* Create the appropriate spec type */
+            if (has_exponent) {
+                num_spec.type = SPEC_TYPE_FLOAT;
+                num_spec.detail.floating.before_decimal = (before_decimal > 0) ? before_decimal : 1;
+                num_spec.detail.floating.after_decimal = after_decimal;
+                num_spec.detail.floating.exponent_width = 4;
+                num_spec.detail.floating.has_sign = has_sign;
+                num_spec.detail.floating.sign_pos = sign_is_trailing ? SIGN_TRAILING : SIGN_FLOATING_LEFT;
+                num_spec.detail.floating.variant = has_asterisk_fill ? INT_ASTERISK : 
+                                                    (has_currency && has_asterisk_fill) ? INT_ASTERISK_DOLLAR :
+                                                    has_currency ? INT_DOLLAR : INT_NORMAL;
+                num_spec.detail.floating.spaces_after_e = 0;
+            } else if (has_decimal) {
+                num_spec.type = SPEC_TYPE_FIXED;
+                num_spec.detail.fixed.before_decimal = (before_decimal > 0) ? before_decimal : 1;
+                num_spec.detail.fixed.after_decimal = after_decimal;
+                num_spec.detail.fixed.has_sign = has_sign;
+                num_spec.detail.fixed.sign_pos = sign_is_trailing ? SIGN_TRAILING : SIGN_FLOATING_LEFT;
+                num_spec.detail.fixed.has_comma = has_comma;
+                num_spec.detail.fixed.percent_overflow = has_percent;
+                num_spec.detail.fixed.variant = has_asterisk_fill ? INT_ASTERISK : 
+                                                 (has_currency && has_asterisk_fill) ? INT_ASTERISK_DOLLAR :
+                                                 has_currency ? INT_DOLLAR : INT_NORMAL;
+            } else if (before_decimal > 0) {
+                num_spec.type = SPEC_TYPE_INTEGER;
+                num_spec.detail.integer.width = before_decimal;
+                num_spec.detail.integer.has_sign = has_sign;
+                num_spec.detail.integer.sign_pos = sign_is_trailing ? SIGN_TRAILING : SIGN_FLOATING_LEFT;
+                num_spec.detail.integer.has_comma = has_comma;
+                num_spec.detail.integer.percent_overflow = has_percent;
+                num_spec.detail.integer.variant = has_asterisk_fill ? INT_ASTERISK : 
+                                                   (has_currency && has_asterisk_fill) ? INT_ASTERISK_DOLLAR :
+                                                   has_currency ? INT_DOLLAR : INT_NORMAL;
+            } else {
+                pos++;
+                continue;
+            }
+            
+            if (num_spec.type > 0) {
+                if (fmt->num_specs >= fmt->capacity) {
+                    fmt->capacity *= 2;
+                    format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                    if (!new_specs) {
+                        format_free(fmt);
+                        return NULL;
+                    }
+                    fmt->specs = new_specs;
+                }
+                fmt->specs[fmt->num_specs++] = num_spec;
+            }
+            continue;
+        }
+        
+        /* Unknown character - treat as literal */
+        if (!isspace(c)) {
+            format_spec_t lit;
+            lit.type = SPEC_TYPE_LITERAL;
+            lit.detail.literal.length = 1;
+            lit.detail.literal.text = (char*)malloc(2);
+            if (!lit.detail.literal.text) {
+                format_free(fmt);
+                return NULL;
+            }
+            lit.detail.literal.text[0] = c;
+            lit.detail.literal.text[1] = '\0';
+            
+            if (fmt->num_specs >= fmt->capacity) {
+                fmt->capacity *= 2;
+                format_spec_t *new_specs = REALLOC_SPECS(fmt->specs, fmt->capacity);
+                if (!new_specs) {
+                    format_free(fmt);
+                    return NULL;
+                }
+                fmt->specs = new_specs;
+            }
+            fmt->specs[fmt->num_specs++] = lit;
+        }
+        pos++;
+    }
     
     return fmt;
 }
@@ -910,6 +1526,7 @@ static char* format_string_value(const format_spec_t *spec, const char *value)
     int len = strlen(value);
     
     if (spec->detail.string.variant == STR_FIXED_WIDTH) {
+        /* Fixed-width string: pad with spaces on the right */
         int width = spec->detail.string.width;
         result = (char*)malloc(width + 1);
         if (!result) return NULL;
@@ -925,6 +1542,17 @@ static char* format_string_value(const format_spec_t *spec, const char *value)
             }
             result[width] = '\0';
         }
+    } else if (spec->detail.string.variant == STR_FIRST_CHAR) {
+        /* First character only (QBasic !) */
+        result = (char*)malloc(2);
+        if (!result) return NULL;
+        result[0] = (len > 0) ? value[0] : ' ';
+        result[1] = '\0';
+    } else if (spec->detail.string.variant == STR_VARIABLE) {
+        /* Variable-width string (QBasic &): output as-is */
+        result = (char*)malloc(len + 1);
+        if (!result) return NULL;
+        strcpy(result, value);
     }
     
     return result;

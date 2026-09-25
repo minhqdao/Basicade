@@ -195,9 +195,9 @@ ERN       { return ER; }
 ERR\$     { return ERR; }
 
  /* various operators and punctuation */
- /* Basicade: BASIC-PLUS uses backslash as a statement separator. */
-\\                              { return ':'; }
-[:,;()\[\]\^=+\-*/\<\>\&]     { return yytext[0]; }
+ /* DEC EduSystem dialects use backslash as a statement separator */
+ \\                              { return STMT_SEP; }
+ [:,;()\[\]\^=+\-*/\<\>\&]     { return yytext[0]; }
 MOD       { return MOD; }
 DIV       { return DIV; }
 MAX       { return MAX; }
@@ -245,8 +245,8 @@ TIME      { return TIME; }
  /* and their alternate short forms */
 TI\$      { return TIME_STR; }
 TI        { return TIME; }
-CLK\$     { return TIME_STR; } // from BASIC-PLUS, Univac System 9 has CLK(x) where x is numeric
-CLK       { return CLK; }     // numeric CLK(x) — hours since midnight with sub-second precision
+CLK       { return CLK; } // fractional hours since midnight
+CLK\$     { return TIME_STR; } // from BASIC-PLUS
 
  /* HEX, OCT and BIN conversions */
 BIN       { return BIN; }
@@ -348,7 +348,7 @@ NUM       { return NUM; }  // number of items type in a single INPUT, or VAL in 
 [,] { return ','; } // triggers the exprlist syntax
  
  /* colons or line-ends end the data statement and reset the state */
-[:\\] { BEGIN(INITIAL); return ':'; }
+[:] { BEGIN(INITIAL); return ':'; }
 [\n] { BEGIN(INITIAL); return '\n'; }
 }
 

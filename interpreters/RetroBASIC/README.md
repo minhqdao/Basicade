@@ -1,7 +1,7 @@
 # RetroBASIC interpreter
 
 Vendored from [maurymarkowitz/RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC)
-for the Basicade WebAssembly build.
+(version 3.0.6) for the Basicade WebAssembly build.
 
 ## License
 

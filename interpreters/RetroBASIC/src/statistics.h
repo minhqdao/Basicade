@@ -23,7 +23,6 @@
 
 #include "stdhdr.h"
 #include "retrobasic.h"
-#include <sys/time.h>
 
 /**
  * @file statistics.h

@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/time.h> // for run timers
+#include <time.h>     // for CLK(x)
 #if defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <io.h>
 #endif
@@ -75,6 +76,7 @@ bool string_slicing = false;					// are references like A$(1,1) referring to an 
 bool goto_next_highest = false;				// if a branch targets an non-existant line, should we go to the next highest?
 bool ansi_on_boundaries = false;			// if the value for an ON statement <1 or >num entries, should it continue or error?
 bool ansi_tab_behaviour = false;			// if a TAB < current column, ANSI inserts a CR, MS does not
+bool dartmouth_loops = false;				// skip FOR loop body if bounds are exhausted (Dartmouth behavior)
 
 char *source_file = "";
 char *input_file = "";
@@ -269,6 +271,53 @@ int interpreter_parse_cli_input(const char *input, list_t **statements)
     length = strlen(buffer);
   }
 
+  /* If this is a program line edit (not immediate execution), sever all concatenation links
+     that may have been created by a previous RUN command BEFORE we parse the new line.
+     
+     This must happen BEFORE parsing because the parser will overwrite lines[edited_line],
+     and we need to find the old data to know what to sever.
+   */
+  if (!use_zero_line) {
+    /* Sever ALL concatenation links to restore independent line chains */
+    for (int i = 0; i < MAX_LINE_NUMBER - 1; i++) {
+      if (interpreter_state.lines[i] != NULL) {
+        /* Find statements in this line's chain and check if any link to another line */
+        list_t *last_stmt = interpreter_state.lines[i];
+        while (last_stmt && last_stmt->next != NULL) {
+          /* Check if next points to another line's entry point */
+          bool found_next_line = false;
+          for (int j = i + 1; j < MAX_LINE_NUMBER; j++) {
+            if (interpreter_state.lines[j] != NULL && interpreter_state.lines[j] == last_stmt->next) {
+              /* This statement points to another line - sever the connection */
+              list_t *next_node = last_stmt->next;
+              last_stmt->next = NULL;
+              if (next_node != NULL) {
+                next_node->prev = NULL;
+              }
+              found_next_line = true;
+              break;
+            }
+          }
+          
+          if (!found_next_line) {
+            last_stmt = last_stmt->next;
+          } else {
+            break;
+          }
+        }
+        
+        /* Also break the prev link for the first statement in each line */
+        if (interpreter_state.lines[i]->prev != NULL) {
+          list_t *prev_node = interpreter_state.lines[i]->prev;
+          interpreter_state.lines[i]->prev = NULL;
+          if (prev_node != NULL) {
+            prev_node->next = NULL;
+          }
+        }
+      }
+    }
+  }
+  
   YY_BUFFER_STATE yybuf = yy_scan_string(buffer);
   int result = yyparse();
   yy_delete_buffer(yybuf);
@@ -851,12 +900,21 @@ static value_t read_next_data_value(void)
   
   // look for the next valid DATA item
   if (interpreter_state.current_data_element == NULL) {
-    interpreter_state.current_data_statement = lst_next(interpreter_state.current_data_statement);
+    if (interpreter_state.current_data_statement != NULL &&
+        interpreter_state.current_data_statement->data != NULL &&
+        ((statement_t *)(interpreter_state.current_data_statement->data))->type != DATA) {
+      interpreter_state.current_data_statement = lst_next(interpreter_state.current_data_statement);
+    }
     while (interpreter_state.current_data_statement != NULL) {
       if ((interpreter_state.current_data_statement->data != NULL) &&
           (((statement_t *)(interpreter_state.current_data_statement->data))->type == DATA))
         break;
       interpreter_state.current_data_statement = lst_next(interpreter_state.current_data_statement);
+    }
+    if (interpreter_state.current_data_statement == NULL) {
+      handle_error(ern_OUT_OF_DATA, "No more DATA for READ");
+      data_value.type = 0;
+      return data_value;
     }
     interpreter_state.current_data_element = lst_first_node(((statement_t *)(interpreter_state.current_data_statement->data))->parms.data);
   }
@@ -1439,6 +1497,22 @@ value_t evaluate_expression(const expression_t *expression)
 					}
 						break;
 
+					// returns fractional hours since midnight (arity-0 version)
+					case CLK:
+					{
+						time_t now = time(NULL);
+						struct tm *local_time = localtime(&now);
+						
+						// calculate seconds since midnight
+						int seconds_since_midnight = local_time->tm_hour * 3600 + 
+						                               local_time->tm_min * 60 + 
+						                               local_time->tm_sec;
+						
+						// convert to fractional hours
+						result.number = (double)seconds_since_midnight / 3600.0;
+					}
+						break;
+
           case INKEY:
           {
             // INKEY returns a string containing either nothing or the character
@@ -1520,19 +1594,24 @@ value_t evaluate_expression(const expression_t *expression)
             result.string = str_new(c);
           }
             break;
-          case CLK:
-          {
-            // CLK(X) returns hours since midnight with sub-second precision
-            // The parameter X is ignored (matches bwbasic behavior)
-            struct timeval tv;
-            gettimeofday(&tv, NULL);
-            struct tm *lt = localtime(&tv.tv_sec);
-            double sec_since_midnight = lt->tm_hour * 3600.0 + lt->tm_min * 60.0 + lt->tm_sec + (double)tv.tv_usec / 1000000.0;
-            result.number = sec_since_midnight / 3600.0;
-          }
-            break;
           case CLOG:
             result.number = log10(a);
+            break;
+          case CLK:
+          {
+            // CLK(x) returns fractional hours since midnight
+            // the parameter x is ignored (dummy parameter)
+            time_t now = time(NULL);
+            struct tm *local_time = localtime(&now);
+            
+            // calculate seconds since midnight
+            int seconds_since_midnight = local_time->tm_hour * 3600 + 
+                                         local_time->tm_min * 60 + 
+                                         local_time->tm_sec;
+            
+            // convert to fractional hours
+            result.number = (double)seconds_since_midnight / 3600.0;
+          }
             break;
           case _EOF:
           {
@@ -2269,8 +2348,8 @@ static void print_value(value_t v, const char *format, FILE* fp)
       {
         // for some reason, PRINT adds a space at the end of numbers
         char* a = number_to_string(v.number);
-        interpreter_state.cursor_column += fprintf(out, "%s ", a); // note the trailing space
-        }
+        interpreter_state.cursor_column += fprintf(out, "%s ", a);
+      }
         break;
       case STRING:
         // printf will print "(null)" when used with a specifier, so...
@@ -3466,37 +3545,22 @@ static void perform_statement(list_t *statement_entry)
         
       case FOR:
       {
-        // Re-entering a FOR with the same control variable replaces its old
-        // loop context. A GOTO may have bypassed that loop's NEXT, and leaving
-        // the abandoned entry on the stack makes a later NEXT match the wrong
-        // loop. Do not cross a GOSUB boundary: a subroutine may legitimately
-        // use the same control variable as its caller.
-        list_t *existing_for_node = lst_last_node(interpreter_state.runtime_stack);
-        while (existing_for_node != NULL) {
-          stack_entry_t *existing_entry = existing_for_node->data;
-          if (existing_entry->type == gosub_entry)
-            break;
-          if (strcmp(existing_entry->_for.index_variable->name,
-                     statement->parms._for.variable->name) == 0) {
-            list_t *discard_node = lst_last_node(interpreter_state.runtime_stack);
-            while (discard_node != NULL) {
-              list_t *previous_node = lst_previous(discard_node);
-              stack_entry_t *discard_entry = discard_node->data;
-              bool removed_existing_for = discard_node == existing_for_node;
-              interpreter_state.runtime_stack = lst_remove_node_with_data(
-                interpreter_state.runtime_stack, discard_entry);
-              free(discard_entry);
-              if (removed_existing_for)
-                break;
-              discard_node = previous_node;
-            }
-            break;
+        // Before creating a new FOR entry, check if there's already a FOR entry
+        // for this variable on the stack. If so, remove it to prevent corruption
+        // when re-entering a FOR loop via a GOTO that bypasses the NEXT.
+        list_t *stack_node = lst_first_node(interpreter_state.runtime_stack);
+        while (stack_node != NULL) {
+          list_t *next_node = lst_next(stack_node);
+          stack_entry_t *entry = (stack_entry_t *)stack_node->data;
+          if (entry->type == for_entry && 
+              strcmp(entry->_for.index_variable->name, statement->parms._for.variable->name) == 0) {
+            interpreter_state.runtime_stack = lst_remove_node_with_data(interpreter_state.runtime_stack, stack_node);
+            free(entry);
           }
-          existing_for_node = lst_previous(existing_for_node);
+          stack_node = next_node;
         }
-
+        
         stack_entry_t *new_for = calloc(1, sizeof(*new_for));
-        interpreter_state.runtime_stack = lst_append(interpreter_state.runtime_stack, new_for);
         
         new_for->type = for_entry;
         new_for->_for.head = statement_entry; // unlike a gosub, we return to the front of the FOR
@@ -3518,36 +3582,43 @@ static void perform_statement(list_t *statement_entry)
         else
           new_for->_for.step = 1;
         
-        // update the variable in storage to the starting value
-        int type = 0;
-        either_t *loop_value = variable_value(new_for->_for.index_variable, &type);
-        loop_value->number = new_for->_for.begin;
-
-        // A FOR whose bounds are already exhausted must not execute its body.
-        // Find the matching NEXT, accounting for nested loops and NEXT I,J.
-        if (((new_for->_for.step > 0) && (new_for->_for.begin > new_for->_for.end)) ||
-            ((new_for->_for.step < 0) && (new_for->_for.begin < new_for->_for.end))) {
-          interpreter_state.runtime_stack = lst_remove_node_with_data(interpreter_state.runtime_stack, new_for);
+        // Check if the FOR loop bounds are exhausted
+        // This happens when: (step > 0 and begin > end) OR (step < 0 and begin < end)
+        bool loop_exhausted = (new_for->_for.step > 0 && new_for->_for.begin > new_for->_for.end) ||
+                              (new_for->_for.step < 0 && new_for->_for.begin < new_for->_for.end);
+        
+        // If exhausted and flag is set, skip to matching NEXT instead of executing body
+        if (loop_exhausted && dartmouth_loops) {
+          // Free the FOR entry we created since we're not using it
           free(new_for);
-
-          int nested_for_count = 0;
-          list_t *test_statement = interpreter_state.next_statement;
-          while (test_statement != NULL) {
-            statement_t *test = test_statement->data;
-            if (test->type == FOR) {
-              nested_for_count++;
-            } else if (test->type == NEXT) {
-              int next_count = lst_length(test->parms.next);
-              if (next_count == 0)
-                next_count = 1;
-              if (next_count > nested_for_count) {
-                interpreter_state.next_statement = lst_next(test_statement);
+          
+          // Find the matching NEXT statement
+          list_t *test_statement = lst_next(statement_entry);
+          int nesting_level = 1;
+          while (test_statement != NULL && nesting_level > 0) {
+            statement_t *stmt = (statement_t *)test_statement->data;
+            if (stmt->type == FOR)
+              nesting_level++;
+            else if (stmt->type == NEXT) {
+              nesting_level--;
+              if (nesting_level == 0)
                 break;
-              }
-              nested_for_count -= next_count;
             }
             test_statement = lst_next(test_statement);
           }
+          
+          // Jump past the NEXT statement
+          if (test_statement != NULL && ((statement_t *)test_statement->data)->type == NEXT) {
+            interpreter_state.next_statement = lst_next(test_statement);
+          }
+        } else {
+          // Normal case: push FOR entry to stack and execute body
+          interpreter_state.runtime_stack = lst_append(interpreter_state.runtime_stack, new_for);
+          
+          // update the variable in storage to the starting value
+          int type = 0;
+          either_t *loop_value = variable_value(new_for->_for.index_variable, &type);
+          loop_value->number = new_for->_for.begin;
         }
       }
         break;
@@ -3716,17 +3787,19 @@ REDO_INPUT:
           if (input_result <= 0)
             exit(EXIT_FAILURE);
           
-          // strip trailing newline/carriage return if present (fgets may include them)
-          size_t input_len = strlen(line);
-          while (input_len > 0 && (line[input_len - 1] == '\n' || line[input_len - 1] == '\r'))
-            line[--input_len] = '\0';
-          
           // test to see if the input is zero length, if so,
           // exit INPUT and continue running the program with the old values
           if (strlen(line) == 0)
             break;
           
           size_t len = strlen(line);
+          
+          // the last item on fgets is likely a newline, if so remove it
+          // (this is important for Windows and non-TTY inputs which use fgets)
+          if (line[len - 1] == '\n') {
+            line[len - 1] = '\0';
+            len--;
+          }
           
           // optionally convert to upper case
           if (upper_case) {
