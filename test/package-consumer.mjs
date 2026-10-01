@@ -28,7 +28,7 @@ try {
   for (const packageName of packages) {
     const packDirectory = join(temporaryRoot, "tarballs");
     await mkdir(packDirectory, { recursive: true });
-    const packResult = JSON.parse(
+    const packOutput = JSON.parse(
       runNpm([
         "pack",
         "--json",
@@ -40,6 +40,10 @@ try {
         `packages/${packageName}`,
       ]),
     );
+    // npm >=12 returns an object keyed by package name, older npm returns an array.
+    const packResult = Array.isArray(packOutput)
+      ? packOutput
+      : Object.values(packOutput);
     assert.equal(packResult.length, 1, `${packageName} produced one tarball`);
     assert.equal(
       packResult[0].files.some((file) => file.path.endsWith(".map")),
