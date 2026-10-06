@@ -6,9 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-06
+
 ### Changed
 
-- Re-sync the vendored interpreter to upstream RetroBASIC master `b9265c2` (post-3.0.6). No behavioral change: the `FOR` re-entry and unassigned-string comparison fixes now come from upstream instead of local patches.
+- Sync the vendored interpreter to upstream RetroBASIC 3.0.8 and adopt its `PRINT` fix, which stops padding numbers in semicolon-separated lists. Comma-separated output is now correctly aligned: `SCORE:  0  TO  2` becomes `SCORE: 0 TO  2`, and `THIS IS HOUR 1 , AT WHAT ANGLE` becomes `THIS IS HOUR 1, AT WHAT ANGLE`. Upstream 3.0.8 itself is packaging-only — a Linux `.desktop` file and its install rules — so the behavioural change here is entirely 3.0.7's.
+- Restore the space between a printed number and an adjacent string, which upstream 3.0.7 also removed. Without this, `PRINT "YOU MADE";N;"JUMPS"` renders as `YOU MADE 0JUMPS`. Verified across the full catalog: no program loses a word boundary, and 65 pick up better comma-separated alignment.
+- Upstream 3.0.7 also fixes `PRINT USING`, which used to treat any `e` in a format string as an exponent marker, and teaches its CLI `?` as a shorthand for `PRINT`. Neither affects the WebAssembly build, which always runs a file and has no interactive mode.
+
+### Added
+
+- Document the five local patches carried on top of upstream in `interpreters/RetroBASIC/README.md`.
 
 ## [0.1.4] - 2026-09-25
 

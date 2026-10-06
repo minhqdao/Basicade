@@ -2287,6 +2287,35 @@ value_t evaluate_expression(const expression_t *expression)
 } //evaluate_expression
 
 /**
+ * True when the last value printed on the current line was a NUMBER that was
+ * not followed by a separator. Upstream 3.0.7 stopped padding numbers with a
+ * trailing space, which fixes comma-separated columns but runs words together
+ * in ';'-separated lists (PRINT "YOU MADE";N;"JUMPS"). We defer the decision:
+ * set this when a number goes out, and clear it at every column/line boundary.
+ * A following NUMBER ignores it; a following STRING spends it as a space.
+ */
+static bool print_number_needs_separator = false;
+
+/**
+ * Emits a pending number separator, if one is owed, as a single space.
+ *
+ * print_value spends this itself when a string follows a number, but some
+ * output does not go through it: the default INPUT prompt is a bare printf.
+ * Call this before writing such text, otherwise a number printed by an earlier
+ * statement is glued to it (PRINT "GUESS #";Q; then INPUT gives "GUESS # 1?").
+ *
+ * Deliberately does not touch cursor_column, matching the raw prompt output
+ * this is restoring parity with.
+ */
+static void flush_print_number_separator(void)
+{
+  if (!print_number_needs_separator)
+    return;
+  printf(" ");
+  print_number_needs_separator = false;
+}
+
+/**
  * Handles the PRINT and PRINT USING statements, which can get complex.
  */
 static void print_value(value_t v, const char *format, FILE* fp)
@@ -2346,15 +2375,28 @@ static void print_value(value_t v, const char *format, FILE* fp)
     switch (v.type) {
       case NUMBER:
       {
-        // for some reason, PRINT adds a space at the end of numbers
+        // 3.0.7 no longer pads numbers with a trailing space. Remember that a
+        // number went out so a following string can be separated from it.
         char* a = number_to_string(v.number);
-        interpreter_state.cursor_column += fprintf(out, "%s ", a);
+        interpreter_state.cursor_column += fprintf(out, "%s", a);
+        // only stdout output can be continued by the terminal, so only stdout
+        // output owes a separator; 3.0.6 wrote the space into the file instead
+        print_number_needs_separator = (out == stdout);
       }
         break;
       case STRING:
         // printf will print "(null)" when used with a specifier, so...
-        if (v.string)
+        if (v.string) {
+          // spend a pending separator, so PRINT N;"X" does not yield "1X".
+          // Only stdout output can owe one, so a PRINT to a file neither spends
+          // it nor leaks a stray space into the file.
+          if (print_number_needs_separator && out == stdout) {
+            fprintf(out, " ");
+            interpreter_state.cursor_column++;
+            print_number_needs_separator = false;
+          }
           interpreter_state.cursor_column += fprintf(out, "%-s", v.string);
+        }
         break;
     }
   }
@@ -3767,6 +3809,8 @@ static void perform_statement(list_t *statement_entry)
 REDO_INPUT:
           // if we got this far, the current item has to be a variable we want
           // to get a value for, so we print the question mark...
+          // a number printed by an earlier statement may still owe a separator
+          flush_print_number_separator();
           if (isFirst)
             printf("? "); // we include the space, as in CB. AB, doesn't
           else
@@ -4383,6 +4427,10 @@ EXIT_MAT_INPUT:
         // in contrast to normal print, a missing separator does not mean semi
         char sep = 0;
 
+        // as with PRINT, a separator owed by an earlier statement does not
+        // carry over into this one
+        print_number_needs_separator = false;
+
         // loop over the items in the print list
         for (list_t *I = statement->parms.print.item_list; I != NULL; I = lst_next(I)) {
           printitem_t *print_item = I->data;
@@ -4431,18 +4479,23 @@ EXIT_MAT_INPUT:
               
               // now tab it out if we are not at the end
               if (i < len) {
-                if (sep == ',')
+                if (sep == ',') {
+                  print_number_needs_separator = false;
                   while (interpreter_state.cursor_column % tab_columns != 0) {
                     printf(" ");
                     interpreter_state.cursor_column++;
                   }
+                }
                 // if the separator is null, add a return
-                else if (sep == 0)
+                else if (sep == 0) {
+                  print_number_needs_separator = false;
                   putchar('\n');
+                }
               }
             }
             // mat print always closes the line
             interpreter_state.cursor_column = 0;
+            print_number_needs_separator = false;
             putchar('\n');
           }
           else if (dims == 2) {
@@ -4465,14 +4518,17 @@ EXIT_MAT_INPUT:
                 value_t val = either_to_value(array_store->array[slot], array_store->type);
                 print_value(val, NULL, NULL);
                 // and advance the cursor based on the separator, which defaults to comma for arrays, not semi
-                if (sep != ';')
+                if (sep != ';') {
+                  print_number_needs_separator = false;
                   while (interpreter_state.cursor_column % tab_columns != 0) {
                     printf(" ");
                     interpreter_state.cursor_column++;
                   }
+                }
               }
               // according to Illustrating BASIC, there should also be a blank row, but Dartmouth shows otherwise
               interpreter_state.cursor_column = 0;
+              print_number_needs_separator = false;
               putchar('\n');
             }
           }
@@ -4863,6 +4919,11 @@ EXIT_MAT_INPUT:
       {
         printitem_t *pp;
         
+        // NOTE: a separator owed by an earlier statement is deliberately NOT
+        // cleared here. A PRINT ending in ';' continues the same visual line,
+        // so 3.0.6's behaviour of separating the number from whatever came
+        // next has to be preserved across the statement boundary.
+        
         // default to stdout unless it's a a PRINT_FILE
         FILE* fp = stdout;
         if (statement->type == PRINT_FILE) {
@@ -4887,6 +4948,8 @@ EXIT_MAT_INPUT:
 				
 				// if there's a format string, use the format.c library to handle it
 				if (format_string.string != NULL && strlen(format_string.string) > 0) {
+					// USING does its own spacing, so no pending separator applies
+					print_number_needs_separator = false;
 					// Parse the format string
 					format_string_t *fmt = format_parse(format_string.string, DIALECT_HP);
 					if (fmt == NULL) {
@@ -4947,12 +5010,16 @@ EXIT_MAT_INPUT:
 						
 						// for each item in the list, look at the separator, if there is one
 						// and it's a comma, advance the cursor to the next tab column
-						if (pp->separator == ',')
+						if (pp->separator == ',') {
 							//FIXME: this should wrap at 80 columns
+							// the tab padding is itself the separator, so drop any pending one
+							if (fp == stdout)
+								print_number_needs_separator = false;
 							while (interpreter_state.cursor_column % tab_columns != 0) {
 								fprintf(fp, " ");
 								interpreter_state.cursor_column++;
 							}
+						}
 					}
 					
 					// now get the last item in the list so we can see if it's a ; or ,
@@ -4970,6 +5037,9 @@ EXIT_MAT_INPUT:
 					if (pp == NULL || pp->separator == 0) {
 						fprintf(fp, "\n");
 						interpreter_state.cursor_column = 0; // and reset this!
+						// a newline in a file does not end the terminal's line
+						if (fp == stdout)
+							print_number_needs_separator = false;
 					}
 				}
         // ensure output is flushed in case we're in raw mode

@@ -7,3 +7,6 @@ LICENSE.
 Complete corresponding source, build scripts, and modification history:
 https://github.com/minhqdao/Basicade/tree/main/interpreters/RetroBASIC
 https://github.com/minhqdao/Basicade/tree/main/packages/retrobasic-wasm
+
+This build is RetroBASIC 3.0.8 plus the five local patches listed in
+interpreters/RetroBASIC/README.md.
