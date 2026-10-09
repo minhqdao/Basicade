@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Changed
+
+- Sync the vendored interpreter to upstream RetroBASIC 3.0.9:
+  - A `-r`/`--random` value now always overrides an in-program `RANDOMIZE`; a bare `-r` no longer consumes the following token as its seed. `RANDOMIZE TIMER` is handled as a bare `RANDOMIZE`, and a `RANDOMIZE` string argument is now a `TYPE MISMATCH` (no catalog program passes one).
+  - Upstream also added a negative-`RND(n)` reseed, but it is unreachable: `RND` still parses as an optional-parameter function whose argument is ignored, so `RND(-5)` draws from the current stream exactly as before. Verified natively.
+  - `CONT` without a resume point now reports `Can't continue` (error 41) instead of silently doing nothing. Only reachable outside a running program (the CLI forces a running state for immediate statements), so file-run behavior — including the WebAssembly build, which always runs a file — is unchanged. Verified natively.
+  - Upstream reverted its 3.0.7 `PRINT` change (the number/string separator fix, originally contributed from this project) to restore BBC BASIC parity. The local deferred-separator patch keeps the behavior this package shipped in 0.1.5, so `PRINT` output is unchanged: word boundaries are preserved, without stray spaces before commas or at line ends. Verified natively (`PRINT "A";1;"B"` yields `A 1 B` with no trailing space).
+  - The nanosecond random-seed patch moved from `main.c` to the new `reseed_random()`, where upstream 3.0.9 now does the seeding.
+
 ## [0.1.5] - 2026-10-06
 
 ### Changed

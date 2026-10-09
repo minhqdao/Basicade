@@ -38,7 +38,7 @@
 
 
 /** current version string */
-#define VERSION_STRING "3.0.8"
+#define VERSION_STRING "3.0.9"
 
 /** retrobasic allows line numbers up to FF */
 #define MAX_LINE_NUMBER 65535
@@ -274,6 +274,12 @@ value_t evaluate_expression(const expression_t *expression);
 
 /* called by main to set up the interpreter state */
 void interpreter_setup(void);
+
+/* seeds the RNG from time and process ID when seed_value is -1.
+ * For any other value, the seed is converted to an int and used directly.
+ * In both cases, it then calls rand() twice to stabilize the values.
+ */
+void reseed_random(double seed_value);
 
 /* perform post-parse setup */
 void interpreter_post_parse(void);

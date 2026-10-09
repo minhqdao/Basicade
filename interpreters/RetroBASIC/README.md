@@ -1,7 +1,7 @@
 # RetroBASIC interpreter
 
 Vendored from [maurymarkowitz/RetroBASIC](https://github.com/maurymarkowitz/RetroBASIC)
-(version 3.0.8) for the Basicade WebAssembly build.
+(version 3.0.9) for the Basicade WebAssembly build.
 
 ## Local modifications
 
@@ -9,10 +9,10 @@ Vendored from [maurymarkowitz/RetroBASIC](https://github.com/maurymarkowitz/Retr
 <summary>Five small patches on top of upstream (expand)</summary>
 
 - `src/io.c`, `raw_mode_input_line()` (`__EMSCRIPTEN__`): Emscripten always reports stdin as a TTY, but `select()` never fires on it, so force the `fgets` path there. Native logic unchanged.
-- `src/main.c`, `automatic_random_seed()`: seed from `clock_gettime` nanoseconds plus pid instead of `time(NULL)`, so two page loads in the same second don't repeat the same `RND` stream. `-r`/`--random` still wins.
+- `src/retrobasic.c`, `reseed_random()`: seed from `clock_gettime` nanoseconds plus pid instead of `time(NULL)`, so two page loads in the same second don't repeat the same `RND` stream. Upstream 3.0.9 moved the seeding here from `main.c` (the patch moved with it); `-r`/`--random` still wins.
 - `src/retrobasic.c`, `tab_columns = 14`: match Bywater BASIC's zone width instead of upstream's 10 (PET BASIC), so comma-separated columns land in the same place under both interpreters. `--tabs` still overrides.
 - `src/retrobasic.c`, `DIM` handling: allow re-`DIM` with equal or smaller dimensions (common in `GOSUB`/replay loops); only larger dimensions raise `REDIM`.
-- `src/retrobasic.c`, `print_value()` / `print_number_needs_separator`: restore the space between a printed number and a following string that upstream 3.0.7 removed (comma alignment kept). Cleared on comma, newline, `MAT PRINT`, and `USING`; survives a `PRINT`-then-`INPUT` prompt via `flush_print_number_separator()`.
+- `src/retrobasic.c`, `print_value()` / `print_number_needs_separator`: keep the space between a printed number and a following string, but not as a trailing space. Upstream 3.0.9 reinstated the unconditional trailing space (reverting its 3.0.7 change, which ran words together but aligned comma columns); this patch defers the space again so `PRINT "YOU MADE";N;"JUMPS"` keeps its word boundary without stray spaces before commas or at line ends. Cleared on comma, newline, `MAT PRINT`, and `USING`; survives a `PRINT`-then-`INPUT` prompt via `flush_print_number_separator()`.
 
 To re-sync to a new upstream release, diff a fresh clone of the upstream tag against `src/` and re-apply the shims above. Each is marked by a comment at the listed symbol.
 

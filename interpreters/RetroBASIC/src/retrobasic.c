@@ -109,6 +109,30 @@ static int current_line(void);
 static int compute_first_line(void);
 static void perform_statement(list_t *statement_entry);
 
+/** @copydoc reseed_random */
+void reseed_random(double seed_value)
+{
+  unsigned int seed;
+
+  if (seed_value == -1.0) {
+    // Basicade: seed from clock_gettime nanoseconds plus pid instead of
+    // time(NULL), so two page loads in the same second don't repeat the
+    // same RND stream.
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
+      seed = (unsigned int)ts.tv_sec ^ (unsigned int)ts.tv_nsec ^ ((unsigned int)getpid() << 8);
+    else
+      seed = (unsigned int)time(NULL) ^ ((unsigned int)getpid() << 8);
+  } else {
+    seed = (unsigned int)((int)seed_value);
+  }
+
+  srand(seed);
+  (void)rand();
+  (void)rand();
+}
+
 static void print_variables(void);
 static void delete_variables(void);
 static void delete_noncommon_variables(void);
@@ -1664,12 +1688,10 @@ value_t evaluate_expression(const expression_t *expression)
             // this is the more common version of RND, with one parameter, possibly a dummy
           case RND:
           {
-            // if the parameter is negative, perform a randomize with that value
-            if (parameters[0].number < 0.0) {
-              srand(parameters[0].number);
-              // prime the RNG, see notes in main loop
-              (void)rand();
-              (void)rand();
+            // if -r was not passed and the parameter is negative, reseed with absolute value
+            // this handles the MS case where -ve values in RND are used instead of RANDOMIZE
+            if ((random_seed == -1) && (parameters[0].number < 0.0)) {
+              reseed_random(fabs(parameters[0].number));
             }
             
             // get a value between 0..<1
@@ -5097,30 +5119,38 @@ EXIT_MAT_INPUT:
         // GW BASIC and Dartmouth work differently. In Dartmouth, RANDOMIZE with no
         // parameter is supposed to select a random seed, which is what happens here.
         // in GW, it will display a prompt asking for the value, which seems
-        // odd. To get the Dartmouth behaviour in GW, one uses RANDOMIZE TIMER
+        // odd. To get the Dartmouth behaviour in GW, one uses RANDOMIZE TIMER,
         // which is even more odd.
-        
-        // see if there's a parameter, if not, seed time
-        if (statement->parms.generic.generic_parameter == NULL)
-          srand((unsigned int)time(NULL));
-        else {
-          value_t seed_value = evaluate_expression(statement->parms.generic.generic_parameter);
-          if (seed_value.type == NUMBER) {
-            srand(seed_value.number);
-          }
-          else if (seed_value.type == STRING) {
-              if (strcmp(str_toupper(seed_value.string), "TIMER")) {
-                srand((unsigned int)time(NULL));
-              } else{
-                handle_error(ern_TYPE_MISMATCH, "RANDOMIZE being called with string value");
-                break;
-              }
+        //
+        // This code follows the Dartmouth way, and ignores the TIMER if there is one.
+        // If someone does run a GW code with a bare RANDOMIZE, this will not ask the
+        // user for the value, and continues as if it had a TIMER. Looking on the web,
+        // I cannot find any examples of any (real) programs not using TIMER so I think
+        // this is safe.
+        //
+        // also note that if the user supplied an explicit seed via the -r parameter,
+        // it will override any RANDOMIZE value passed here.
+
+        // see if there was an -r parameter, and if so, use that value no matter what the
+        // statement's parameter is set to. this allows the user to override any RANDOMIZE
+        // call in the code, so they can test it without having to edit the program itself.
+        double seed = random_seed;
+
+        // if that was -1, check if there is a parameter here in the statement
+        if (seed == -1) {
+          if (statement->parms.generic.generic_parameter != NULL) {
+            value_t seed_value = evaluate_expression(statement->parms.generic.generic_parameter);
+            if (seed_value.type == NUMBER) {
+              seed = seed_value.number;
+            } else {
+              handle_error(ern_TYPE_MISMATCH, "RANDOMIZE being called with string value");
+              break;
+            }
           }
         }
-				
-				// prime the RNG, see notes in main loop
-				(void)rand();
-				(void)rand();
+
+        // we should have a valid seed now, likely -1 but...
+        reseed_random(seed);
       }
         break;
 
@@ -5161,8 +5191,8 @@ EXIT_MAT_INPUT:
         break;
         
       case RESTORE:
-        // resets the DATA pointer
       {
+        // resets the DATA pointer
         int linenum;
         if (statement->parms.generic.generic_parameter != NULL) {
           value_t line = evaluate_expression(statement->parms.generic.generic_parameter);
@@ -5181,16 +5211,28 @@ EXIT_MAT_INPUT:
         
       case CONT:
       {
+        // only fails if there is no statement to resume from,
+        // which means it will continue with old data in the case of
+        // FOR loops or GOSUBs
+        //
+        // if we're already running there's nothing to do
+        if (interpreter_state.running_state != 0)
+          break;
+
+        // ok we're not running, so make sure we have one
         list_t *resume_statement = interpreter_state.next_statement;
         if (resume_statement == NULL)
           resume_statement = interpreter_state.break_resume_point;
         if (resume_statement == NULL)
           resume_statement = cli_saved_continuation;
 
-        if (interpreter_state.running_state != 0 && resume_statement == NULL)
+        // if there's no statement to resume from, report an error
+        if (resume_statement == NULL) {
+          handle_error(ern_CANT_CONTINUE, "CONT being called without a break point");
           break;
+        }
 
-        if (resume_statement != NULL) {
+        // all good
           interpreter_state.current_statement = resume_statement;
           interpreter_state.next_statement = NULL;
           interpreter_state.break_resume_point = NULL;
@@ -5199,7 +5241,6 @@ EXIT_MAT_INPUT:
           clear_error();
           interpreter_state.running_state = 1;
           interpreter_run();
-        }
       }
         break;
 
