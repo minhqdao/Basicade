@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-10-10
+
 ### Changed
 
 - Sync the vendored interpreter to upstream RetroBASIC 3.0.9:
