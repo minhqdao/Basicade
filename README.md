@@ -30,7 +30,7 @@ Developing Basicade requires Node.js 20.19 or later on the Node 20 line, Node.js
 22.13 or later on the Node 22 line, or Node.js 24 or later. The published WASM
 packages retain their separate Node.js 18 runtime requirement. Building the
 interpreter binaries also requires [Emscripten](https://emscripten.org/);
-CI uses Emscripten 6.0.10 for reproducible WASM builds. RetroBASIC additionally
+CI uses Emscripten 7.0.0 for reproducible WASM builds. RetroBASIC additionally
 needs Bison and Flex.
 
 ```bash

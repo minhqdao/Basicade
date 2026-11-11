@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Changed
+
+- Build the bundled WebAssembly with Emscripten 7.0.0 (up from 6.0.10). No interpreter behavior changes.
+
 ## [0.2.0] - 2026-08-12
 
 ### Changed
