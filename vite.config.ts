@@ -42,5 +42,16 @@ export default defineConfig(({ command }) => ({
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
+  /* Vite >= 8.3 minifies the inline launcher CSS with lightningcss. Without
+     an explicit cssTarget it runs without browser targets and raises
+     `(max-width: 560px)` to the shorter range syntax `(width <= 560px)`.
+     Safari < 16.4 cannot parse range syntax and drops the entire @media
+     block, which silently removed the phone-portrait launcher stacking and
+     the other portrait rules on iOS 15 (Safari 15.4+ is the support floor).
+     An explicit target keeps classic syntax that every browser parses.
+     test/launcher-css-compat.mjs guards this. */
+  build: {
+    cssTarget: "safari15",
+  },
   plugins: [copyLauncherAssets()],
 }));
