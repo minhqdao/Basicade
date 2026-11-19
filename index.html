@@ -438,6 +438,18 @@
           opacity: 0;
         }
       }
+      /* The launcher's two selectors stack whenever the page is narrower
+         than ~560px, pointer notwithstanding: below roughly two 260px
+         columns the side-by-side selects truncate, and full-width rows
+         read better. Width, never height: a soft keyboard changes height
+         only, so nothing flips mid-open on phones, and desktop windows
+         have no soft keyboard at all. Pure layout -- the shell machinery
+         keys on pointer, not width (usesFixedShell). */
+      @media (max-width: 560px) {
+        .launcher {
+          grid-template-columns: 1fr;
+        }
+      }
       /* A phone in portrait has height to spare, so it gets the roomier
          chrome and the taller floor. Width is the discriminator because
          height is exactly what the keyboard takes away. */
@@ -445,9 +457,6 @@
         main {
           --pad-y: 16px;
           padding-bottom: min(16px, var(--keyboard-inset, 0px));
-        }
-        .launcher {
-          grid-template-columns: 1fr;
         }
         #status {
           grid-column: auto;

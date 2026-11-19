@@ -44,33 +44,33 @@ for (const query of queries) {
   );
 }
 
-// The phone-portrait stacking rule that the regression removed must ship in
-// classic syntax.
-const portraitQuery = queries.find((query) => /max-width:\s*560px/.test(query));
-assert.ok(
-  portraitQuery,
-  "the phone-portrait media query (max-width: 560px) is missing from the built CSS",
-);
-const start = css.indexOf(portraitQuery);
-let depth = 0;
-let end = -1;
-for (let i = css.indexOf("{", start); i < css.length; i += 1) {
-  if (css[i] === "{") {
-    depth += 1;
-  } else if (css[i] === "}") {
-    depth -= 1;
-    if (depth === 0) {
-      end = i;
-      break;
+// The launcher stacking rule that the regression removed must ship inside a
+// max-width: 560px media query, in classic syntax. It may live in its own
+// width-only query or share the pointer-gated phone-portrait block.
+const stackingPattern = /\.launcher\{grid-template-columns:1fr\}/;
+const stackingFound = queries.some((query) => {
+  if (!/max-width:\s*560px/.test(query)) return false;
+  const start = css.indexOf(query);
+  let depth = 0;
+  let end = -1;
+  for (let i = css.indexOf("{", start); i < css.length; i += 1) {
+    if (css[i] === "{") {
+      depth += 1;
+    } else if (css[i] === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        end = i;
+        break;
+      }
     }
   }
-}
-assert.ok(end !== -1, "the portrait media query block is closed");
-const body = css.slice(start, end + 1).replace(/\s+/g, "");
-assert.match(
-  body,
-  /\.launcher\{grid-template-columns:1fr\}/,
-  "the phone-portrait media query no longer stacks the launcher selectors",
+  assert.ok(end !== -1, "a max-width media query block is closed");
+  const body = css.slice(start, end + 1).replace(/\s+/g, "");
+  return stackingPattern.test(body);
+});
+assert.ok(
+  stackingFound,
+  "no max-width: 560px media query stacks the launcher selectors",
 );
 
 console.log(
